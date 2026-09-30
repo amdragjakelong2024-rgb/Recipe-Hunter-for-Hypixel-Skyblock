@@ -16,12 +16,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.5'
+      - name: Install Gradle 9.5
+        run: |
+          curl -L https://services.gradle.org/distributions/gradle-9.5-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
       - name: Build and test
-        run: gradle build plannerTest
+        run: /tmp/gradle-9.5/bin/gradle build plannerTest
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
