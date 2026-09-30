@@ -1,5 +1,3 @@
-# Recipe-Hunter-for-Hypixel-Skyblock
-A Fabric mod for Hypixel SkyBlock that helps track crafting recipes and required materials.
 # Recipe Hunter 0.3.0
 
 An independent client-side Ironman recipe planner for Hypixel SkyBlock, on **Fabric / Minecraft 26.1.2**.

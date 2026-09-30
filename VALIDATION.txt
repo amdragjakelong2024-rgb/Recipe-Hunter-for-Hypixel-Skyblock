@@ -1,0 +1,25 @@
+Recipe Hunter 0.3.0 / Minecraft 26.1.2
+
+Java 25 compilation succeeded against original Minecraft 26.1.2,
+Fabric Loader 0.19.3 and Fabric API 0.155.3+26.1.2 dependencies.
+No dependency game binaries are bundled.
+
+Automated result: 88 checks passed.
+Coverage: exact source recipe counts, shared-output rounding, owned intermediates,
+pet metadata, malformed metadata, fuzzy search, persistence and corrupt-file
+preservation; enchanted boundaries; raw versus enchanted mixed inputs;
+Required-quality versus Fine gem modes; crystal costs; reversible checkmarks;
+checked parent pruning; chest snapshot replacement, separate chest aggregation,
+withdrawal update and session clear; chest stock reduces Boots of Divan sludge;
+bounded path success/failure; Ironman guide wording and random dragon type;
+craft context excludes normal chests; saved preferences/history/checkmarks; HUD drag/zoom anchors, boundaries, small-window fit, persistence and older-book migration; original recipe slots and Forge layout.
+
+NOT runtime-tested: Minecraft screen drawing and scaling, live Hypixel menus,
+UseBlock chest association, profile messages, craft/Forge packet timing,
+particle trails and fanfare. This is an experimental build with those explicit
+acceptance checks remaining. No public Modrinth upload has occurred.
+
+Compile (workspace dependency layout):
+javac --release 25 -encoding UTF-8 -cp 'deps/*' -d recipe-hunter/build/public-classes recipe-hunter/src/main/java/dev/recipehunter/*.java
+javac --release 25 -encoding UTF-8 -cp 'deps/*:recipe-hunter/build/public-classes' -d recipe-hunter/build/public-test-classes recipe-hunter/src/test/java/dev/recipehunter/*.java
+java -cp 'deps/*:recipe-hunter/build/public-classes:recipe-hunter/build/public-test-classes' dev.recipehunter.PlannerTest recipe-hunter/src/main/resources/assets/recipehunter/catalog.json
