@@ -1,3 +1,5 @@
+READ: This code was FULLY made by AI. This was made only as helpful tool for ironman profiles in Hypixel Skyblock.
+
 # Recipe Hunter 0.3.0
 
 An independent client-side Ironman recipe planner for Hypixel SkyBlock, on **Fabric / Minecraft 26.1.2**.
