@@ -18,7 +18,7 @@ This is an experimental build. It compiles against the real Minecraft and Fabric
 - `/rh hide` / `/rh show`: hide/show the most recently saved goal.
 - `/rh gui`: drag individual HUD panels; use the mouse wheel over a panel to resize it. Right-click a panel to browse its material pages. Escape saves and closes.
 - `/rh settings`: interface size, default HUD size, celebrations, music, scan controls.
-- `/rh bigger`, `/rh smaller`, `/zvetsit`, `/zmensit`: interface size. Czech accented aliases `/zvětšit` and `/zmenšit` also work.
+- `/rh bigger`, `/rh smaller`: interface size.
 - `/rh assistant`: toggle assistance. Use **Guide** on a specific item to select a destination.
 - Escape closes the screen.
 
