@@ -45,7 +45,7 @@ public final class RecipeHunter implements ClientModInitializer {
         ClientReceiveMessageEvents.GAME.register((message,overlay)->{
             if(catalog!=null&&onHypixel())celebration.message(this,message.getString());
             String text=message.getString().toLowerCase(Locale.ROOT);
-            if(text.contains("profile")&&(text.contains("switched")||text.contains("switching")||text.contains("joined"))){ownership.clear();for(Book.Goal g:book.goals){g.owned.clear();g.checked.clear();}celebration.reset();assistant.reset();hudPlans.clear();}
+            if(text.contains("profile")&&(text.contains("switched")||text.contains("switching")||text.contains("joined"))){ownership.clear();for(Book.Goal g:book.goals)g.owned.clear();celebration.reset();assistant.reset();hudPlans.clear();}
         });
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("recipehunter","goals"),(g,dt)->hud(g));
     }
