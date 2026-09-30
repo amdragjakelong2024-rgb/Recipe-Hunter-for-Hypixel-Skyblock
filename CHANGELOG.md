@@ -1,3 +1,8 @@
+# 0.3.1
+
+- Fixed persistent manual ingredient checkmarks being cleared on reconnect/profile join messages.
+- Manual `[x]` choices now remain saved per goal as intended.
+
 # 0.3.0
 
 - Per-goal draggable HUD panels, mouse-wheel sizing and persistent normalized positions.
