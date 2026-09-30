@@ -36,7 +36,6 @@ public final class RecipeHunter implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher,access)->{dispatcher.register(literal("rh")
             .executes(ctx->{openBook();return 1;})
             .then(argument("query",StringArgumentType.greedyString()).executes(ctx->{command(StringArgumentType.getString(ctx,"query"));return 1;})));
-            for(String alias:List.of("zvetsit","zvětšit","zmensit","zmenšit"))dispatcher.register(literal(alias).executes(ctx->{resizeGui(alias.startsWith("zv")?0.1:-0.1);return 1;}));
         });
         UseBlockCallback.EVENT.register((player,world,hand,hit)->{if(world.isClientSide()&&onHypixel())ownership.clicked(mc,hit.getBlockPos(),context);return InteractionResult.PASS;});
         ClientTickEvents.END_CLIENT_TICK.register(client->tick());
