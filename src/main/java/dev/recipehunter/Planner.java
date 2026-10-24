@@ -16,9 +16,11 @@ public final class Planner {
     public Plan materials(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices){
         return calculate(root,quantity,stock,choices,true,true,Set.of(),Set.of(),false);
     }
-    public Plan goal(Book.Goal g,Map<String,Long> stock){
+    public Plan goal(Book.Goal g,Map<String,Long> stock){return goal(g,stock,Map.of());}
+    public Plan goal(Book.Goal g,Map<String,Long> stock,Map<String,Long> pending){
         if(g.crafted>=g.count)return new Plan();
         Map<String,Long> available=new HashMap<>(stock);if(g.freshCraft||g.crafted>0)available.remove(g.id);
+        pending.forEach((id,n)->available.merge(id,n,Math::addExact));
         return calculate(g.id,g.count-g.crafted,available,g.choices,true,g.fineGems,g.checked,g.expanded,g.compact);
     }
     private Plan calculate(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices,boolean practical,boolean fineGems,Set<String> checked,Set<String> expanded,boolean compact){

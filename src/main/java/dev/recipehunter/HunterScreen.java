@@ -143,7 +143,7 @@ public final class HunterScreen extends Screen {
             var e=entries.get(i);String rateText="";double rate=goal.rates.getOrDefault(e.getKey(),0.0);if(rate>0)rateText=String.format(Locale.US," ~%.1f h",e.getValue()/rate);
             checkedRow(e.getKey(),goal.checked.contains(e.getKey())?"Done (click [x] to undo)":Catalog.amount(e.getKey(),e.getValue())+rateText,bodyY+(i-start)*23,12,width-24);
         }
-        if(entries.isEmpty())label(plan.warnings.isEmpty()?"Materials ready, or this goal is already owned.":"Calculation incomplete — see Sources.",12,bodyY,0xff83d9a5);
+        if(entries.isEmpty())label(plan.warnings.isEmpty()?"No acquisition needed; check pending Forge / diary jobs.":"Calculation incomplete — see Sources.",12,bodyY,0xff83d9a5);
         pages(entries.size());
     }
     private void steps(){

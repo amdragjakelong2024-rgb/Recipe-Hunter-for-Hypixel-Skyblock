@@ -18,7 +18,7 @@ public final class RecipePreview {
             g.textWithWordWrap(app.mc.font,net.minecraft.network.chat.Component.literal(app.trim(source,3*(w-12))),x+6,y+51,w-12,0xffc4d0dc);return;
         }
         int choice=goal==null?0:goal.choices.getOrDefault(id,0);
-        Catalog.Route route=item.routes.get(Math.clamp(choice,0,item.routes.size()-1));
+        Catalog.Route route=item.routes.get(Math.floorMod(choice,item.routes.size()));
         boolean grid=route.slots!=null&&route.slots.size()==9;
         List<Catalog.Ingredient> slots=grid?route.slots:route.inputs;
         g.text(app.mc.font,app.trim((grid?"Crafting":route.type)+" — per craft",w-12),x+6,y+20,0xffbac8d4,false);

@@ -114,11 +114,12 @@ public final class PlannerTest {
         Files.writeString(temp,"invalid");try{Book.read(temp);throw new AssertionError("corrupt book accepted");}catch(IOException expected){check(Files.readString(temp).equals("invalid"),"corrupt original preserved");}
         Book.Goal compact=new Book.Goal("GRIFFIN_UPGRADE_STONE_LEGENDARY");
         eq(p.goal(compact,Map.of()).leaves.get("ENCHANTED_GOLD_BLOCK"),96,"compact retains enchanted blocks");
-        check(!p.goal(compact,Map.of()).leaves.containsKey("ENCHANTED_GOLD"),"compact avoids thousands of enchanted ingots");
+        eq(p.goal(compact,Map.of()).leaves.get("ENCHANTED_GOLD"),16,"only direct enchanted gold remains alongside blocks");
         compact.expanded.add("ENCHANTED_GOLD_BLOCK");
         check(p.goal(compact,Map.of()).leaves.containsKey("ENCHANTED_GOLD"),"explicit expand reveals lower tier");
         Book.Goal repeated=new Book.Goal("REFINED_MITHRIL");repeated.freshCraft=true;
         check(!p.goal(repeated,Map.of("REFINED_MITHRIL",1L)).leaves.isEmpty(),"repeat ignores previously owned target");
+        check(p.goal(repeated,Map.of(),Map.of("REFINED_MITHRIL",1L)).leaves.isEmpty(),"pending repeat output removes grind without being owned");
         repeated.count=3;repeated.crafted=1;
         eq(p.goal(repeated,Map.of("REFINED_MITHRIL",1L)).leaves.get("ENCHANTED_MITHRIL"),320,"batch progress counts each craft once");
         Book.Goal refined=new Book.Goal("REFINED_MITHRIL");refined.count=5;
