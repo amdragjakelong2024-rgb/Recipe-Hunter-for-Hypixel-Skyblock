@@ -22,7 +22,7 @@ public final class ToolsScreen extends Screen {
   if(mode.equals("AI")){
    button(app.ai.provider.name(),8,58,110,()->{app.ai.provider=AiClient.Provider.values()[(app.ai.provider.ordinal()+1)%3];app.ai.clearKey();app.ai.model="";rebuildWidgets();});
    model=field(124,58,Math.max(80,width-132),"Provider model ID");model.setValue(app.ai.model);
-   key=field(8,84,width-16,"API key (session only)");key.setFormatter((s,i)->Component.literal("*".repeat(s.length())).getVisualOrderText());
+   key=field(8,84,width-16,"API key (session only)");key.addFormatter((s,i)->Component.literal("*".repeat(s.length())).getVisualOrderText());
    button("Use key",8,110,80,()->{app.ai.model=model.getValue().trim();if(!key.getValue().isBlank())app.ai.key(key.getValue());key.setValue("");result="Settings applied for this game session.";});
    button("Analyze (API billing)",94,110,160,()->{app.ai.model=model.getValue().trim();app.ai.request(summary());});
    button("Clear key",260,110,85,()->{app.ai.clearKey();result="Key cleared.";});return;
@@ -53,6 +53,7 @@ public final class ToolsScreen extends Screen {
   if(mode.equals("Calculator")){g.textWithWordWrap(font,Component.literal(result),8,112,width-16,0xffdceee4);g.text(font,"Optional mining assumptions (not a measured rate):",8,137,0xffefc77d,false);return;}
   if(mode.equals("AI")){
    g.textWithWordWrap(font,Component.literal("Optional paid request. Plus does not include API credit. Sends goals, observed stats and diary notes to the selected provider. Key stays in RAM; never saved or logged."),8,138,width-16,0xffefc77d);
+   g.text(font,app.trim(result,width-16),8,173,0xffaacbbb,false);
    List<net.minecraft.util.FormattedCharSequence> lines=font.split(Component.literal(app.ai.answer),width-16);int per=Math.max(1,(height-190)/11);int start=Math.min(page*per,Math.max(0,lines.size()-1));for(int i=start;i<Math.min(lines.size(),start+per);i++)g.text(font,lines.get(i),8,185+(i-start)*11,0xffdceee4);return;
   }
   g.text(font,app.trim(result,width-16),8,113,0xffefc77d,false);int per=Math.max(1,(height-165)/34);

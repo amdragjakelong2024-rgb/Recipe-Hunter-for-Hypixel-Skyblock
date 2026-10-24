@@ -18,7 +18,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 public final class HunterScreen extends Screen {
     public enum Mode { SEARCH,BOOK,DETAIL,SETTINGS }
     private final RecipeHunter app;private final Mode mode;private final String query;
-    private String focus;private int tab=0,page=0;private Book.Goal goal;private Planner.Plan plan;
+    private String focus;private int tab=0,page=0,refreshTicks=0;private Book.Goal goal;private Planner.Plan plan;
     private EditBox search,owned,rate;private final List<Icon> icons=new ArrayList<>();private final List<Label> labels=new ArrayList<>();
     private final List<Hover> hovers=new ArrayList<>();
     private record Hover(int x,int y,int w,String text,String id){}
@@ -27,6 +27,7 @@ public final class HunterScreen extends Screen {
     private int bodyY=122,footerY,rowsPerPage;private List<String> notes=List.of();
     public HunterScreen(RecipeHunter app,Mode mode,String q){super(Component.literal("Recipe Hunter"));this.app=app;this.mode=mode;query=q;focus=q;}
     @Override public boolean isPauseScreen(){return false;}
+    @Override public void tick(){super.tick();if(mode==Mode.DETAIL&&tab==5&&++refreshTicks%20==0)refresh();}
     private Button button(String text,int x,int y,int w,Runnable action){return addRenderableWidget(Button.builder(Component.literal(text),b->action.run()).bounds(x,y,w,20).build());}
     private void label(String text,int x,int y,int color){labels.add(new Label(text,x,y,color));}
     @Override protected void init(){
@@ -92,7 +93,7 @@ public final class HunterScreen extends Screen {
         int tw=Math.min(88,(width-24)/tabs.length);
         for(int n=0;n<tabs.length;n++){final int ix=n;button((tab==n?"> ":"")+tabs[n],12+n*tw,78,tw-2,()->{tab=ix;page=0;refresh();});}
         label(app.trim(item.name,width-160),12,105,0xff000000|item.color);
-        
+
         button("-",width-202,101,24,()->{goal.count=Math.max(1,goal.count-1);app.persist();refresh();});
         button("+",width-174,101,24,()->{goal.count=Math.min(1000000,goal.count+1);app.persist();refresh();});
         button("x"+goal.count,width-146,101,70,()->{goal.count=Math.min(1000000,goal.count+10);app.persist();refresh();});

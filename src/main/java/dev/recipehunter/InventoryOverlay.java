@@ -9,8 +9,8 @@ public final class InventoryOverlay {
  public static void register(RecipeHunter app){ScreenEvents.AFTER_INIT.register((client,screen,w,h)->{
   if(!(screen instanceof InventoryScreen)||!app.onHypixel())return;
   final Book.Goal[] drag={null};final double[] offset=new double[2];final long[] page={0};
-  Screens.getButtons(screen).add(Button.builder(Component.literal("RH Book"),b->app.openBook()).bounds(4,h-24,70,20).build());
-  Screens.getButtons(screen).add(Button.builder(Component.literal("Diary"),b->app.open(new ToolsScreen(app,"Craft Diary"))).bounds(78,h-24,55,20).build());
+  Screens.getWidgets(screen).add(Button.builder(Component.literal("RH Book"),b->app.openBook()).bounds(4,h-24,70,20).build());
+  Screens.getWidgets(screen).add(Button.builder(Component.literal("Diary"),b->app.open(new ToolsScreen(app,"Craft Diary"))).bounds(78,h-24,55,20).build());
   ScreenEvents.afterExtract(screen).register((s,g,mx,my,dt)->HudPanels.render(app,g,drag[0]==null?mx:-1,drag[0]==null?my:-1,page[0]));
   ScreenMouseEvents.allowMouseClick(screen).register((s,e)->{
    int index=0;for(var goal:app.book.goals)if(goal.visible){var l=HudPanels.layout(app,goal,index++,w,h);double top=l.top(w,h);if(l.contains(e.x(),e.y(),w,h)&&e.y()<top+17*l.scale(w,h)){
