@@ -1,25 +1,24 @@
-Recipe Hunter 0.3.0 / Minecraft 26.1.2
+Recipe Hunter 0.4.0 / Minecraft 26.1.2
 
-Java 25 compilation succeeded against original Minecraft 26.1.2,
-Fabric Loader 0.19.3 and Fabric API 0.155.3+26.1.2 dependencies.
-No dependency game binaries are bundled.
+GitHub Actions build with JDK 25, Gradle 9.7.0, Loom 1.18.2,
+Fabric Loader 0.19.3 and Fabric API 0.155.3+26.1.2.
 
-Automated result: 88 checks passed.
-Coverage: exact source recipe counts, shared-output rounding, owned intermediates,
-pet metadata, malformed metadata, fuzzy search, persistence and corrupt-file
-preservation; enchanted boundaries; raw versus enchanted mixed inputs;
-Required-quality versus Fine gem modes; crystal costs; reversible checkmarks;
-checked parent pruning; chest snapshot replacement, separate chest aggregation,
-withdrawal update and session clear; chest stock reduces Boots of Divan sludge;
-bounded path success/failure; Ironman guide wording and random dragon type;
-craft context excludes normal chests; saved preferences/history/checkmarks; HUD drag/zoom anchors, boundaries, small-window fit, persistence and older-book migration; original recipe slots and Forge layout.
+Automated assertion suite: 112 checks passed (8848 catalogue items).
+The suite is wired into Gradle check through plannerTest; it is not a JUnit suite.
+Coverage includes original recipe graph/rounding/ownership/persistence checks,
+compact enchanted blocks plus direct lower-tier ingredients, explicit expansion,
+repeat goals and crafted batch progress, pending target output, journal timer parsing,
+Czech quantities, ambiguous/negative notes, reservation deduplication, sack stored counts,
+calculator arithmetic, approximate fortune scaling, request payload and journal/badge persistence.
 
-NOT runtime-tested: Minecraft screen drawing and scaling, live Hypixel menus,
-UseBlock chest association, profile messages, craft/Forge packet timing,
-particle trails and fanfare. This is an experimental build with those explicit
-acceptance checks remaining. No public Modrinth upload has occurred.
+Core calculation smoke test also passed locally against the bundled catalogue.
 
-Compile (workspace dependency layout):
-javac --release 25 -encoding UTF-8 -cp 'deps/*' -d recipe-hunter/build/public-classes recipe-hunter/src/main/java/dev/recipehunter/*.java
-javac --release 25 -encoding UTF-8 -cp 'deps/*:recipe-hunter/build/public-classes' -d recipe-hunter/build/public-test-classes recipe-hunter/src/test/java/dev/recipehunter/*.java
-java -cp 'deps/*:recipe-hunter/build/public-classes:recipe-hunter/build/public-test-classes' dev.recipehunter.PlannerTest recipe-hunter/src/main/resources/assets/recipehunter/catalog.json
+Not runtime-tested: visual layout/input behaviour in an interactive Minecraft client;
+live Hypixel menu titles/lore, storage freshness, profile-change messages, Forge claim
+packet ordering, craft detection under server lag, and actual provider authentication/billing.
+No user API key was used and no paid AI request was made during validation.
+
+API adapters are experimental. The default local planner and estimates do not need them.
+Time estimates remain estimates, with unknown-rate and approximate-model labels.
+
+Reproduce: gradle build plannerTest (JDK 25, Gradle 9.7.0).

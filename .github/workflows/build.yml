@@ -22,9 +22,11 @@ jobs:
           unzip -q /tmp/gradle.zip -d /tmp
       - name: Build and test
         run: /tmp/gradle-9.7.0/bin/gradle build plannerTest
+      - name: Checksum artifacts
+        run: sha256sum build/libs/*.jar > build/libs/SHA256SUMS.txt
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
           name: recipe-hunter-0.4.0-mc26.1.2
-          path: build/libs/*.jar
+          path: build/libs/
           if-no-files-found: error

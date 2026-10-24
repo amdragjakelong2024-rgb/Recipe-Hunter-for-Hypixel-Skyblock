@@ -18,7 +18,7 @@ public final class Celebration {
   Map<String,Long> now=app.ownership.inventory(app.mc);
   if(app.mc.screen instanceof AbstractContainerScreen<?> screen&&craftMenu(screen.getTitle().getString()))craftingGrace=8;else craftingGrace=Math.max(0,craftingGrace-1);
   if(app.mc.screen instanceof AbstractContainerScreen<?> screen&&screen.getTitle().getString().toLowerCase(Locale.ROOT).contains("forge")){
-   forgeGrace=8;for(var slot:screen.getMenu().slots)if(slot.container!=app.mc.player.getInventory()){var stack=slot.getItem();var lore=stack.get(net.minecraft.core.component.DataComponents.LORE);if(lore!=null&&lore.lines().stream().anyMatch(l->l.getString().toLowerCase(Locale.ROOT).contains("claim")))forgeOutputs.add(Ownership.id(stack));}
+   forgeGrace=8;for(var job:app.menus.forge)if(job.active&&job.readyAt<=System.currentTimeMillis())forgeOutputs.add(job.id);for(var slot:screen.getMenu().slots)if(slot.container!=app.mc.player.getInventory()){var stack=slot.getItem();var lore=stack.get(net.minecraft.core.component.DataComponents.LORE);if(lore!=null&&lore.lines().stream().anyMatch(l->l.getString().toLowerCase(Locale.ROOT).matches(".*(?:claim|collect).*")))forgeOutputs.add(Ownership.id(stack));}
   }else {forgeGrace=Math.max(0,forgeGrace-1);if(forgeGrace==0)forgeOutputs.clear();}
   if(forgeGrace>0&&!previous.isEmpty())for(String id:new ArrayList<>(forgeOutputs))if(now.getOrDefault(id,0L)>previous.getOrDefault(id,0L)){long n=now.get(id)-previous.getOrDefault(id,0L);app.menus.claimed(app.book,id,n);app.completed(id,n);start(app,id);}
   if(craftingGrace>0&&!previous.isEmpty())for(String id:app.book.history){if(now.getOrDefault(id,0L)<=previous.getOrDefault(id,0L))continue;

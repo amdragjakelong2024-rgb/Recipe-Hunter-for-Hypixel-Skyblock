@@ -19,7 +19,10 @@ public final class MenuTracker {
   if(!ec&&!sack&&!fg)return;Map<String,Long> contents=new HashMap<>();List<CraftDiary.Entry> jobs=new ArrayList<>();
   for(var slot:screen.getMenu().slots){if(slot.container==app.mc.player.getInventory())continue;var stack=slot.getItem();String id=Ownership.id(stack);var lore=stack.get(DataComponents.LORE);String text=lore==null?"":String.join("\n",lore.lines().stream().map(l->l.getString().replaceAll("§.","")).toList());
    if(ec&&!id.isEmpty()&&!text.toLowerCase(Locale.ROOT).contains("click to view"))contents.merge(id,(long)stack.getCount(),Long::sum);
-   if(sack&&!id.isEmpty()){long n=stored(text);if(n>=0)sacks.put(id,n);}
+   if(sack){long n=stored(text);if(n>=0){
+    if(id.isEmpty()){String name=Catalog.normal(stack.getHoverName().getString());id=app.catalog.items.values().stream().filter(i->Catalog.normal(i.name).equals(name)).map(i->i.id).findFirst().orElse("");}
+    if(!id.isEmpty())sacks.put(id,n);
+   }}
    if(fg&&(text.toLowerCase(Locale.ROOT).contains("time remaining")||text.toLowerCase(Locale.ROOT).contains("click to collect")||text.toLowerCase(Locale.ROOT).contains("click to claim"))){
     if(id.isEmpty()){String name=Catalog.normal(stack.getHoverName().getString());id=app.catalog.items.values().stream().filter(i->Catalog.normal(i.name).equals(name)).map(i->i.id).findFirst().orElse("");}
     if(id.isEmpty()||!app.catalog.items.containsKey(id))continue;
