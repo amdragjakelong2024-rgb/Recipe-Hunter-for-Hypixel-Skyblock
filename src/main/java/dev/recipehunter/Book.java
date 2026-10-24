@@ -9,7 +9,7 @@ public final class Book {
         public String id; public boolean visible=true; public long count=1;
         public Set<String> checked=new HashSet<>();
         public boolean fineGems=false;
-        public boolean compact=true; public long crafted=0; public Set<String> expanded=new HashSet<>();
+        public boolean compact=true,freshCraft=false; public long crafted=0; public Set<String> expanded=new HashSet<>();
         public HudLayout hud;
         public Map<String,Long> owned=new HashMap<>();
         public Map<String,Integer> choices=new HashMap<>();

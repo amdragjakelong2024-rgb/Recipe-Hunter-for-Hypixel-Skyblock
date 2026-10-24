@@ -190,9 +190,9 @@ public final class HunterScreen extends Screen {
     }
     private void inspect(String id){focus=id;tab=0;page=0;refresh();}
     private void row(String id,String suffix,int y,int x,int w,Runnable action){
-        Catalog.Item item=app.catalog.item(id);String name=(app.book.completed.contains(id)?"✓ ":"")+(suffix.isEmpty()?"":suffix+"  ")+item.name;
+        Catalog.Item item=app.catalog.item(id);String name=(suffix.isEmpty()?"":suffix+"  ")+item.name;
         Button b=button(app.trim(name,Math.max(15,w-28)),x+22,y,Math.max(20,w-22),action);
-        b.setMessage(Component.literal(app.trim(name,Math.max(15,w-28))).withStyle(style->style.withColor(item.color)));
+        b.setMessage(Component.literal(app.book.completed.contains(id)?"✓ ":"").withStyle(style->style.withColor(0x55ff55)).append(Component.literal(app.trim(name,Math.max(15,w-40))).withStyle(style->style.withColor(item.color))));
         String tip=item.name+(suffix.isEmpty()?"":"\n"+suffix)+"\n"+(item.requirement==null?"":item.requirement);
         if(!item.sources.isEmpty())tip+="\n"+item.sources.getFirst();tip+="\nClick to inspect this ingredient.";
         hovers.add(new Hover(x+22,y,w-22,tip,id));icons.add(new Icon(id,x+2,y+2,0));

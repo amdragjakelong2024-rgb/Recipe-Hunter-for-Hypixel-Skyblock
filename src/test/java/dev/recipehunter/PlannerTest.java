@@ -117,6 +117,10 @@ public final class PlannerTest {
         check(!p.goal(compact,Map.of()).leaves.containsKey("ENCHANTED_GOLD"),"compact avoids thousands of enchanted ingots");
         compact.expanded.add("ENCHANTED_GOLD_BLOCK");
         check(p.goal(compact,Map.of()).leaves.containsKey("ENCHANTED_GOLD"),"explicit expand reveals lower tier");
+        Book.Goal repeated=new Book.Goal("REFINED_MITHRIL");repeated.freshCraft=true;
+        check(!p.goal(repeated,Map.of("REFINED_MITHRIL",1L)).leaves.isEmpty(),"repeat ignores previously owned target");
+        repeated.count=3;repeated.crafted=1;
+        eq(p.goal(repeated,Map.of("REFINED_MITHRIL",1L)).leaves.get("ENCHANTED_MITHRIL"),320,"batch progress counts each craft once");
         Book.Goal refined=new Book.Goal("REFINED_MITHRIL");refined.count=5;
         eq(p.goal(refined,Map.of()).leaves.get("ENCHANTED_MITHRIL"),800,"root refined recipe still expands");
         var diary=CraftDiary.parse(c,"2 Refined Mithril forge 4h",1000);

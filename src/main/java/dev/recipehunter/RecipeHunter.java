@@ -77,7 +77,7 @@ public final class RecipeHunter implements ClientModInitializer {
                 else open(new HunterScreen(this,HunterScreen.Mode.SEARCH,q));}
         }
     }
-    public Book.Goal goal(String id){Book.Goal g=book.find(id);if(g!=null)return g;if(draft==null||!draft.id.equals(id))draft=new Book.Goal(id);return draft;}
+    public Book.Goal goal(String id){Book.Goal g=book.find(id);if(g!=null)return g;if(draft==null||!draft.id.equals(id)){draft=new Book.Goal(id);draft.freshCraft=book.completed.contains(id);}return draft;}
     public void select(String id,boolean verifyPet){
         lastViewed=id;goal(id);
         if(verifyPet&&catalog.item(id).name.endsWith(" Pet")&&!ownership.petsVisited)say("Open /pet yourself and visit every page to verify your pets. Then reopen /rh book or this recipe.");

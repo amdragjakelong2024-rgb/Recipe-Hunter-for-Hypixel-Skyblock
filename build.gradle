@@ -18,3 +18,7 @@ tasks.register('plannerTest', JavaExec) {
 }
 
 tasks.processResources { from(projectDir) { include "LICENSE", "NEU-DATA-LICENSE.txt" } }
+
+// The regression suite is an executable assertion harness, not JUnit.
+tasks.named('test') { failOnNoDiscoveredTests = false }
+tasks.named('check') { dependsOn tasks.named('plannerTest') }

@@ -16,7 +16,11 @@ public final class Planner {
     public Plan materials(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices){
         return calculate(root,quantity,stock,choices,true,true,Set.of(),Set.of(),false);
     }
-    public Plan goal(Book.Goal g,Map<String,Long> stock){return calculate(g.id,g.count,stock,g.choices,true,g.fineGems,g.checked,g.expanded,g.compact);}
+    public Plan goal(Book.Goal g,Map<String,Long> stock){
+        if(g.crafted>=g.count)return new Plan();
+        Map<String,Long> available=new HashMap<>(stock);if(g.freshCraft||g.crafted>0)available.remove(g.id);
+        return calculate(g.id,g.count-g.crafted,available,g.choices,true,g.fineGems,g.checked,g.expanded,g.compact);
+    }
     private Plan calculate(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices,boolean practical,boolean fineGems,Set<String> checked,Set<String> expanded,boolean compact){
         if(quantity<1||quantity>1_000_000)throw new IllegalArgumentException("Quantity must be 1..1,000,000");
         Plan p=new Plan();List<String> order=new ArrayList<>();Map<String,Integer> state=new HashMap<>();
