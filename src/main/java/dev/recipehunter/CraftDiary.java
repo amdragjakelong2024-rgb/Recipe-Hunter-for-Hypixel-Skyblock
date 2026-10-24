@@ -10,7 +10,7 @@ public final class CraftDiary {
  }
  public static Entry parse(Catalog catalog,String text,long now){
   Entry e=new Entry();e.text=text;e.createdAt=now;
-  String normalized=text.replaceAll("(?iu)\\b(dvě|dva|two)\\b","2").replaceAll("(?iu)\\b(jeden|jednu|one)\\b","1").replaceAll("(?iu)\\b(pět|five)\\b","5").replaceAll("(?iu)mithril(?:ů|u|y|i)\\b","Mithril");
+  String normalized=text.replaceAll("(?iuU)\\b(dvě|dva|two)\\b","2").replaceAll("(?iuU)\\b(jeden|jednu|one)\\b","1").replaceAll("(?iuU)\\b(pět|five)\\b","5").replaceAll("(?iuU)mithril(?:ů|u|y|i)\\b","Mithril");
   String n=Catalog.normal(normalized);
   if(!n.contains("forge")||n.matches(".*\\b(not|never|cancel|cancelled|nechci|nemam|nem m|zruseno)\\b.*"))return e;
   Catalog.Item match=catalog.items.values().stream().filter(i->!i.id.endsWith("_NPC")&&!i.id.endsWith("_BOSS"))
