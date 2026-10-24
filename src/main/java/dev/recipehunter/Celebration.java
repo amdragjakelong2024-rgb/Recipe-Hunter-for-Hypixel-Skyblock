@@ -12,7 +12,7 @@ public final class Celebration {
  public void reset(){previous.clear();craftingGrace=0;forgeGrace=0;forgeOutputs.clear();item="";}
  public void message(RecipeHunter app,String text){
   String s=Catalog.normal(text);if(!s.startsWith("you crafted ")&&!s.startsWith("you have crafted "))return;
-  for(String id:app.book.history){String name=Catalog.normal(app.catalog.item(id).name);if(s.equals("you crafted "+name)||s.startsWith("you crafted "+name+" ")||s.equals("you have crafted "+name)){start(app,id);break;}}
+  for(String id:new ArrayList<>(app.book.history)){String name=Catalog.normal(app.catalog.item(id).name);if(s.equals("you crafted "+name)||s.startsWith("you crafted "+name+" ")||s.equals("you have crafted "+name)){start(app,id);break;}}
  }
  public void tick(RecipeHunter app){
   Map<String,Long> now=app.ownership.inventory(app.mc);
@@ -20,14 +20,14 @@ public final class Celebration {
   if(app.mc.screen instanceof AbstractContainerScreen<?> screen&&screen.getTitle().getString().toLowerCase(Locale.ROOT).contains("forge")){
    forgeGrace=8;for(var slot:screen.getMenu().slots)if(slot.container!=app.mc.player.getInventory()){var stack=slot.getItem();var lore=stack.get(net.minecraft.core.component.DataComponents.LORE);if(lore!=null&&lore.lines().stream().anyMatch(l->l.getString().toLowerCase(Locale.ROOT).contains("claim")))forgeOutputs.add(Ownership.id(stack));}
   }else {forgeGrace=Math.max(0,forgeGrace-1);if(forgeGrace==0)forgeOutputs.clear();}
-  if(forgeGrace>0&&!previous.isEmpty())for(String id:app.book.history)if(forgeOutputs.contains(id)&&now.getOrDefault(id,0L)>previous.getOrDefault(id,0L))start(app,id);
+  if(forgeGrace>0&&!previous.isEmpty())for(String id:new ArrayList<>(forgeOutputs))if(now.getOrDefault(id,0L)>previous.getOrDefault(id,0L)){long n=now.get(id)-previous.getOrDefault(id,0L);app.menus.claimed(app.book,id,n);app.completed(id,n);start(app,id);}
   if(craftingGrace>0&&!previous.isEmpty())for(String id:app.book.history){if(now.getOrDefault(id,0L)<=previous.getOrDefault(id,0L))continue;
     boolean consumed=app.catalog.item(id).routes.stream().filter(r->r.type.equals("crafting")).anyMatch(r->r.inputs.stream().allMatch(in->previous.getOrDefault(in.id,0L)-now.getOrDefault(in.id,0L)>=in.count));
-    if(consumed)start(app,id);
+    if(consumed){app.completed(id,now.get(id)-previous.getOrDefault(id,0L));start(app,id);}
   }
   previous=now;
  }
- public void start(RecipeHunter app,String id){if(!app.book.celebrations)return;long now=System.currentTimeMillis();if(id.equals(lastItem)&&now-lastAt<4000)return;lastItem=id;lastAt=now;item=id;started=now;
+ public void start(RecipeHunter app,String id){if(!app.book.celebrated.add(id))return;app.persist();if(!app.book.celebrations)return;long now=System.currentTimeMillis();if(id.equals(lastItem)&&now-lastAt<4000)return;lastItem=id;lastAt=now;item=id;started=now;
   if(app.book.celebrationSound)app.mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE,1.0f,0.5f));
  }
  public void render(RecipeHunter app,GuiGraphicsExtractor g){

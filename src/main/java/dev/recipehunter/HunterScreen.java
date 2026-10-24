@@ -38,6 +38,7 @@ public final class HunterScreen extends Screen {
         button("Search",width-86,28,74,()->app.command(search.getValue()));
         button("Book",12,53,58,app::openBook);
         button("GUI",width-66,53,54,()->app.open(new HudEditor(app)));
+        if(mode!=Mode.DETAIL){button("Diary",207,53,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",272,53,55,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",332,53,45,()->app.open(new ToolsScreen(app,"AI")));}
         if(mode!=Mode.DETAIL)button("Assistant: "+(app.book.assistant?"ON":"OFF"),76,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});
         if(mode==Mode.SETTINGS)settings();else if(mode==Mode.BOOK)book();else if(mode==Mode.SEARCH)results();else detail();
     }
@@ -50,7 +51,7 @@ public final class HunterScreen extends Screen {
         button("HUD larger",144,144,125,()->{app.book.hudScale=Math.min(1.6,app.book.hudScale+.1);app.persist();refresh();});
         button("Celebration: "+(app.book.celebrations?"ON":"OFF"),12,180,190,()->{app.book.celebrations=!app.book.celebrations;app.persist();refresh();});
         button("Music: "+(app.book.celebrationSound?"ON":"OFF"),210,180,150,()->{app.book.celebrationSound=!app.book.celebrationSound;app.persist();refresh();});
-        button("Forget chest scans",12,210,190,()->{app.ownership.storage.clear();refresh();});button("Pet scan instructions",210,210,190,()->app.scanPets(""));
+        button("Forget storage scans",12,210,190,()->{app.ownership.storage.clear();app.menus.clear();refresh();});button("Pet scan instructions",210,210,190,()->app.scanPets(""));
         label("Chest snapshots: "+app.ownership.storage.size()+" | Pets pages: "+app.ownership.petPageCount(),12,244,0xffb9d5c9);
         label("Open each island chest to scan it. Reopen after changes.",12,264,0xffb9d5c9);
         label("Esc closes this screen. Scans reset on reconnect/profile switch.",12,282,0xffb9d5c9);
@@ -83,18 +84,21 @@ public final class HunterScreen extends Screen {
     private void detail(){
         goal=app.goal(query);plan=app.plan(goal);Catalog.Item item=app.catalog.item(focus);
         button(app.book.find(goal.id)==null?"Save":"Saved",75,53,62,()->{app.save(goal);refresh();});
-        button("Scan Pets",142,53,82,()->app.scanPets(query));
+        button("Finish",142,53,82,()->{app.completed(goal.id,goal.count);app.openBook();});
         if(!focus.equals(query))button("Main goal",229,53,83,()->{focus=query;page=0;tab=0;refresh();});
         else button("Refresh",229,53,83,this::refresh);
         button("Assistant: "+(app.book.assistant?"ON":"OFF"),318,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});
-        String[] tabs={"Recipe","Materials","All steps","Used for","Sources"};
+        String[] tabs={"Recipe","Materials","All steps","Used for","Sources","Grind"};
         int tw=Math.min(88,(width-24)/tabs.length);
         for(int n=0;n<tabs.length;n++){final int ix=n;button((tab==n?"> ":"")+tabs[n],12+n*tw,78,tw-2,()->{tab=ix;page=0;refresh();});}
         label(app.trim(item.name,width-160),12,105,0xff000000|item.color);
-        if(!focus.equals(query))button("Save as goal",width-132,101,120,()->app.select(focus,false));
-        button("Guide",width-202,101,64,()->{app.guide(focus);tab=4;page=0;refresh();});
-        if(tab==0)recipe(item);else if(tab==1)materials();else if(tab==2)steps();else if(tab==3)uses();else sources(item);
-        if(tab!=4)stockControls(item);
+        
+        button("-",width-202,101,24,()->{goal.count=Math.max(1,goal.count-1);app.persist();refresh();});
+        button("+",width-174,101,24,()->{goal.count=Math.min(1000000,goal.count+1);app.persist();refresh();});
+        button("x"+goal.count,width-146,101,70,()->{goal.count=Math.min(1000000,goal.count+10);app.persist();refresh();});
+        button("Calc",width-72,101,60,()->app.open(new ToolsScreen(app,"Calculator")));
+        if(tab==0)recipe(item);else if(tab==1)materials();else if(tab==2)steps();else if(tab==3)uses();else if(tab==5)grind();else sources(item);
+        if(tab!=4&&tab!=5)stockControls(item);
     }
     private Catalog.Route selected(Catalog.Item item){if(item.routes.isEmpty())return null;return item.routes.get(Math.floorMod(goal.choices.getOrDefault(item.id,0),item.routes.size()));}
     private void recipe(Catalog.Item item){
@@ -117,10 +121,18 @@ public final class HunterScreen extends Screen {
         int rx=112,rw=width-124;int available=Math.max(1,(footerY-y-19)/23);int start=page*available;
         Map<String,Long> stock=app.stock(goal);
         for(int n=start;n<Math.min(r.inputs.size(),start+available);n++){
-            Catalog.Ingredient in=r.inputs.get(n);String suffix=Catalog.amount(in.id,in.count)+(stock.getOrDefault(in.id,0L)>0?"  [have "+stock.get(in.id)+"]":"");
+            Catalog.Ingredient in=r.inputs.get(n);long runs=(focus.equals(goal.id)?(goal.count-1)/r.count+1:1);String suffix=Catalog.amount(in.id,Math.multiplyExact(in.count,runs))+(stock.getOrDefault(in.id,0L)>0?"  [have "+stock.get(in.id)+"]":"");
             checkedRow(in.id,suffix,y+(n-start)*23,rx,rw);
         }
         pageButtons(r.inputs.size(),available);
+    }
+    private void grind(){
+        List<String> lines=new ArrayList<>();lines.add("EASIEST -> HARDEST (known rates and requirements; heuristic)");
+        for(var e:app.estimates.rank(app,goal,true))lines.add(e.label(app.catalog));
+        lines.add("LOWEST TIME -> HIGHEST TIME (unknown last)");for(var e:app.estimates.rank(app,goal,false))lines.add(e.label(app.catalog));
+        lines.add("Observed stats: "+app.estimates.stats);lines.add("Sampling counts inventory gains while no menu is open. Drops/pickups may affect it; sacks and compaction need a manually measured rate. Stats alone do not determine RNG or travel.");
+        for(var e:app.menus.forge)lines.add("Forge: "+e.count+"x "+app.catalog.item(e.id).name+" | "+CraftDiary.remaining(e,System.currentTimeMillis()));
+        showNotes(lines);button(app.estimates.recording?"Stop sample":"Record sample",12,height-30,120,()->{if(app.estimates.recording)app.estimates.recording=false;else app.estimates.start();refresh();});button("Refresh",138,height-30,70,this::refresh);button("AI summary",214,height-30,100,()->app.open(new ToolsScreen(app,"AI")));
     }
     private void materials(){
         Map<String,Long> shown=new LinkedHashMap<>(plan.leaves);for(String id:goal.checked)shown.putIfAbsent(id,0L);
@@ -145,14 +157,14 @@ public final class HunterScreen extends Screen {
         if(uses.isEmpty())label("No uses indexed in this snapshot.",12,bodyY,0xffa9bac8);pages(uses.size());}
     private void sources(Catalog.Item item){
         List<String> lines=new ArrayList<>();
-        lines.add("Goal: "+app.catalog.item(query).name);lines.add("Ownership: inventory + visited Pets pages + opened island chest snapshots. Unopened storage is UNKNOWN; revisit chests after changes.");
+        lines.add("Goal: "+app.catalog.item(query).name);lines.add("Ownership: inventory + visited Pets + opened island chests, Ender Chest pages and sacks. Unopened storage is UNKNOWN. Pending Forge/diary jobs reduce missing ingredients but are not owned.");
         for(var e:app.stock(goal).entrySet())if(plan.demand.containsKey(e.getKey())&&e.getValue()>0)lines.add("Verified / entered stock: "+e.getValue()+"x "+app.catalog.item(e.getKey()).name);
         if(!item.requirement.isBlank())lines.add(item.requirement);
         lines.addAll(item.sources);if(item.sources.isEmpty())lines.add("No farming location recorded for this item. Check its wiki.");
         lines.addAll(plan.warnings);
         if(!plan.surplus.isEmpty())for(var e:plan.surplus.entrySet())lines.add("Craft output remainder: "+e.getValue()+"x "+app.catalog.item(e.getKey()).name);
         lines.addAll(Assistant.guide(app.catalog,focus));
-        lines.add("Gems: Required preserves ingredient quality; Fine expands higher qualities. Change using the Gems button. Checkmarks exclude a whole ingredient branch; uncheck to restore it.");
+        lines.add("Compact keeps refined/enchanted intermediates. Inspect an ingredient and Expand inputs to unfold it. Full shows collection units. Checkmarks exclude a whole ingredient branch; uncheck to restore it.");
         lines.add("Time: enter your measured items/hour on the material page. Estimates exclude travel, event downtime and RNG variation. Zero = unknown.");
         lines.add("Kat costs and times in the catalogue are base values; pet level / bonuses may reduce them. Check Kat before upgrading.");
         lines.add("Exact arithmetic uses source recipes; this is not a generative AI chat. Alternative recipes can be chosen with Next route.");
@@ -172,11 +184,12 @@ public final class HunterScreen extends Screen {
         rate=addRenderableWidget(new EditBox(font,104,y,85,20,Component.literal("Measured items per hour")));rate.setMaxLength(14);rate.setValue(Double.toString(goal.rates.getOrDefault(focus,0.0)));
         button("Apply",196,y,62,()->{try{long n=Long.parseLong(owned.getValue().replace(",",""));double r=Double.parseDouble(rate.getValue().replace(",","."));if(n<0||n>1_000_000_000_000L||!Double.isFinite(r)||r<0)throw new NumberFormatException();goal.owned.put(focus,n);goal.rates.put(focus,r);app.persist();refresh();}catch(NumberFormatException e){app.say("Enter non-negative numbers. Have is a total, not an extra amount.");}});
         button("Clear",264,y,55,()->{goal.owned.remove(focus);goal.rates.remove(focus);app.persist();refresh();});
-        button("Gems: "+(goal.fineGems?"Fine":"Required"),325,y,145,()->{goal.fineGems=!goal.fineGems;app.persist();refresh();});
+        button(goal.expanded.contains(focus)?"Collapse":"Expand inputs",325,y,105,()->{if(!goal.expanded.remove(focus))goal.expanded.add(focus);app.persist();tab=1;refresh();});
+        button(goal.compact?"Compact":"Full",435,y,70,()->{goal.compact=!goal.compact;app.persist();refresh();});
     }
     private void inspect(String id){focus=id;tab=0;page=0;refresh();}
     private void row(String id,String suffix,int y,int x,int w,Runnable action){
-        Catalog.Item item=app.catalog.item(id);String name=(suffix.isEmpty()?"":suffix+"  ")+item.name;
+        Catalog.Item item=app.catalog.item(id);String name=(app.book.completed.contains(id)?"✓ ":"")+(suffix.isEmpty()?"":suffix+"  ")+item.name;
         Button b=button(app.trim(name,Math.max(15,w-28)),x+22,y,Math.max(20,w-22),action);
         b.setMessage(Component.literal(app.trim(name,Math.max(15,w-28))).withStyle(style->style.withColor(item.color)));
         String tip=item.name+(suffix.isEmpty()?"":"\n"+suffix)+"\n"+(item.requirement==null?"":item.requirement);
@@ -201,9 +214,10 @@ public final class HunterScreen extends Screen {
         for(Label l:labels)g.text(font,l.text,l.x,l.y,l.color,false);
         super.extractRenderState(g,mx,my,dt);
         for(Icon i:icons){g.fill(i.x-1,i.y-1,i.x+19,i.y+19,0xff293846);g.item(icon(i.id),i.x,i.y);if(i.count>0)g.text(font,Long.toString(i.count),i.x+10,i.y+12,0xffffffff,true);
-            if(mx>=i.x&&mx<i.x+22&&my>=i.y&&my<i.y+22)g.setTooltipForNextFrame(Component.literal(app.catalog.item(i.id).name+(i.count>0?"\n"+Catalog.amount(i.id,i.count):"")),physicalMx,physicalMy);
+            if(mx>=i.x&&mx<i.x+22&&my>=i.y&&my<i.y+22){ /* Icon preview is rendered after the scaled UI below. */ }
         }
         g.pose().popMatrix();
+        for(Icon i:icons)if(mx>=i.x&&mx<i.x+20&&my>=i.y&&my<i.y+20)RecipePreview.render(app,g,i.id,goal,physicalMx,physicalMy);
         for(Hover h:hovers)if(mx>=h.x&&mx<h.x+h.w&&my>=h.y&&my<h.y+20)RecipePreview.render(app,g,h.id,goal,physicalMx,physicalMy);
     }
 }

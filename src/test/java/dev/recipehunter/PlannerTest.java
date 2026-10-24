@@ -73,7 +73,7 @@ public final class PlannerTest {
         var mix=p.materials("TEST_MIXED",1,Map.of(),Map.of());
         eq(mix.leaves.get("COAL"),10,"mixed direct coal retained");
         eq(mix.leaves.get("ENCHANTED_COAL"),2,"mixed enchanted coal separate");
-        Book.Goal boots=new Book.Goal("DIVAN_BOOTS");
+        Book.Goal boots=new Book.Goal("DIVAN_BOOTS");boots.compact=false;
         var required=p.goal(boots,Map.of());
         eq(required.leaves.get("FLAWLESS_RUBY_GEM"),1,"boots keep required Flawless");
         eq(required.leaves.get("FINE_JADE_GEM"),40,"mixtures retain required Fine jade");
@@ -112,6 +112,33 @@ public final class PlannerTest {
         Catalog.Route coal=c.item("ENCHANTED_COAL").routes.getFirst();check(coal.slots.size()==9&&coal.slots.get(0)==null&&coal.slots.get(1).count==32,"preview preserves empty slots and counts");
         check(c.item("PERFECT_JADE_GEM").routes.getFirst().slots.isEmpty(),"Forge has no invented crafting layout");
         Files.writeString(temp,"invalid");try{Book.read(temp);throw new AssertionError("corrupt book accepted");}catch(IOException expected){check(Files.readString(temp).equals("invalid"),"corrupt original preserved");}
+        Book.Goal compact=new Book.Goal("GRIFFIN_UPGRADE_STONE_LEGENDARY");
+        eq(p.goal(compact,Map.of()).leaves.get("ENCHANTED_GOLD_BLOCK"),96,"compact retains enchanted blocks");
+        check(!p.goal(compact,Map.of()).leaves.containsKey("ENCHANTED_GOLD"),"compact avoids thousands of enchanted ingots");
+        compact.expanded.add("ENCHANTED_GOLD_BLOCK");
+        check(p.goal(compact,Map.of()).leaves.containsKey("ENCHANTED_GOLD"),"explicit expand reveals lower tier");
+        Book.Goal refined=new Book.Goal("REFINED_MITHRIL");refined.count=5;
+        eq(p.goal(refined,Map.of()).leaves.get("ENCHANTED_MITHRIL"),800,"root refined recipe still expands");
+        var diary=CraftDiary.parse(c,"2 Refined Mithril forge 4h",1000);
+        eq(diary.count,2,"parse diary quantity");eq(diary.readyAt,14401000,"parse diary timer");
+        check(CraftDiary.parse(c,"2 Refined Mithril forge 4-2h",1000).id.isEmpty(),"ambiguous range not deducted");
+        check(CraftDiary.parse(c,"I want Refined Mithril",1000).id.isEmpty(),"plain note not stock");
+        var job=CraftDiary.parse(c,"5 Refined Mithril forge 2h",1000);
+        eq(CraftDiary.mergeReservations(List.of(diary),List.of(job)).get("REFINED_MITHRIL"),5,"diary and forge not summed twice");
+        diary.active=false;check(CraftDiary.pending(List.of(diary)).isEmpty(),"inactive diary excluded");
+        eq(MenuTracker.stored("Stored: 12,345 / 20,160"),12345,"sack stored amount");
+        eq(MenuTracker.stored("Capacity: 20,160"),-1,"capacity is not stock");
+        check(Calculator.evaluate("(320*160)/64")==800,"calculator precedence");
+        check(Calculator.evaluate("-2 + 3 * 4")==10,"calculator unary");
+        eq(CraftDiary.parse(c,"dal jsem do forge dvě refined mithrili za 4h",1000).count,2,"Czech diary quantity");
+        check(CraftDiary.parse(c,"not forging 2 Refined Mithril forge 4h",1000).id.isEmpty(),"negative note not reserved");
+        check(MiningModel.rate(3000,100,500,1,.5)>0,"mining model valid");
+        check(MiningModel.rate(3000,100,500,1,.5)==2*MiningModel.rate(3000,0,500,1,.5),"fortune scales approximate yield");
+        try{Calculator.evaluate("1/0");throw new AssertionError("infinite result");}catch(IllegalArgumentException expected){}
+        check(!AiClient.payload("test-model","goals").toString().contains("Bearer"),"credentials absent from model payload");
+        b.completed.add("REFINED_MITHRIL");b.diary.add(job);b.write(temp);Book migrated=Book.read(temp);
+        check(migrated.completed.contains("REFINED_MITHRIL"),"completion badge persisted");
+        eq(migrated.diary.getFirst().count,5,"diary persisted");
         System.out.println("PASS: "+checks+" checks; "+c.items.size()+" catalogue items.");
         System.out.println("Legendary stone raw totals: "+stone.leaves);
         System.out.println("Epic -> Legendary totals: "+epicOwned.leaves);

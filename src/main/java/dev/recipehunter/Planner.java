@@ -11,16 +11,16 @@ public final class Planner {
     final Catalog c;
     public Planner(Catalog catalog){c=catalog;}
     public Plan plan(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices){
-        return calculate(root,quantity,stock,choices,false,true,Set.of());
+        return calculate(root,quantity,stock,choices,false,true,Set.of(),Set.of(),false);
     }
     public Plan materials(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices){
-        return calculate(root,quantity,stock,choices,true,true,Set.of());
+        return calculate(root,quantity,stock,choices,true,true,Set.of(),Set.of(),false);
     }
-    public Plan goal(Book.Goal g,Map<String,Long> stock){return calculate(g.id,g.count,stock,g.choices,true,g.fineGems,g.checked);}
-    private Plan calculate(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices,boolean practical,boolean fineGems,Set<String> checked){
+    public Plan goal(Book.Goal g,Map<String,Long> stock){return calculate(g.id,g.count,stock,g.choices,true,g.fineGems,g.checked,g.expanded,g.compact);}
+    private Plan calculate(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices,boolean practical,boolean fineGems,Set<String> checked,Set<String> expanded,boolean compact){
         if(quantity<1||quantity>1_000_000)throw new IllegalArgumentException("Quantity must be 1..1,000,000");
         Plan p=new Plan();List<String> order=new ArrayList<>();Map<String,Integer> state=new HashMap<>();
-        visit(root,choices,state,order,p,new ArrayDeque<>(),practical,fineGems,root);Collections.reverse(order);p.demand.put(root,quantity);
+        visit(root,choices,state,order,p,new ArrayDeque<>(),practical,fineGems,root,expanded,compact);Collections.reverse(order);p.demand.put(root,quantity);
         for(String id:order){
             long demand=p.demand.getOrDefault(id,0L),need=Math.max(0,demand-Math.max(0,stock.getOrDefault(id,0L)));if(checked.contains(id))need=0;p.missing.put(id,need);
             if(need==0)continue;Catalog.Route r=p.routes.get(id);
@@ -31,16 +31,18 @@ public final class Planner {
         return p;
     }
     private boolean enchanted(String id){return id.startsWith("ENCHANTED_") || c.item(id).name.startsWith("Enchanted ");}
-    private void visit(String id,Map<String,Integer> choices,Map<String,Integer> state,List<String> order,Plan p,Deque<String> path,boolean practical,boolean fineGems,String root){
+    private void visit(String id,Map<String,Integer> choices,Map<String,Integer> state,List<String> order,Plan p,Deque<String> path,boolean practical,boolean fineGems,String root,Set<String> expanded,boolean compact){
         if(state.containsKey(id))return;state.put(id,1);path.addLast(id);Catalog.Item item=c.item(id);
         if(!item.raw&&!item.routes.isEmpty()){
             int ix=Math.floorMod(choices.getOrDefault(id,0),item.routes.size());Catalog.Route chosen=item.routes.get(ix);
             // Do not silently invent an alternative if the selected conversion leads to a cycle.
             boolean stop=practical && ((fineGems?id.matches("FINE_[A-Z_]+_GEM"):(!id.equals(root)&&id.matches("(?:ROUGH|FLAWED|FINE|FLAWLESS|PERFECT)_[A-Z_]+_GEM"))) || (enchanted(id) && chosen.inputs.stream().noneMatch(in->enchanted(in.id))));
+            if(compact&&!id.equals(root)&&!expanded.contains(id)&&(id.startsWith("REFINED_")||enchanted(id)))stop=true;
+            if(expanded.contains(id))stop=false;
             boolean cycle=chosen.inputs.stream().anyMatch(in->state.getOrDefault(in.id,0)==1);
             if(stop) { /* This is the requested collection unit; keep its actual recipe inspectable. */ }
             else if(cycle)p.warnings.add("Conversion cycle stopped at "+item.name+". Acquire this item directly or choose another route.");
-            else {p.routes.put(id,chosen);for(Catalog.Ingredient in:chosen.inputs)visit(in.id,choices,state,order,p,path,practical,fineGems,root);}
+            else {p.routes.put(id,chosen);for(Catalog.Ingredient in:chosen.inputs)visit(in.id,choices,state,order,p,path,practical,fineGems,root,expanded,compact);}
         }
         path.removeLast();state.put(id,2);order.add(id);
     }
