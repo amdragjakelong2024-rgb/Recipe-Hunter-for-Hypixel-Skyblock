@@ -13,7 +13,7 @@ public final class ToolsScreen extends Screen {
  @Override protected void init(){
   int aw=app.mc.getWindow().getGuiScaledWidth(),ah=app.mc.getWindow().getGuiScaledHeight();scale=(float)Math.min(1,Math.min(aw/520.0,ah/360.0));width=(int)(aw/scale);height=(int)(ah/scale);
   button("Home",8,27,60,app::openHome);button("Diary",72,27,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",136,27,60,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",200,27,45,()->app.open(new ToolsScreen(app,"AI")));
-  if(mode.equals("Calculator")){input=field(8,60,width-16,"(320 * 160) / 64");button("Calculate",8,85,100,()->{try{result=Double.toString(Calculator.evaluate(input.getValue()));}catch(RuntimeException e){result="Invalid arithmetic expression.";}});
+  if(mode.equals("Calculator")){input=field(8,60,width-16,"(320 * 160) / 64");button("Calculate",8,85,100,()->{try{result=Double.toString(Calculator.evaluate(input.getValue()));UiSounds.count(app);}catch(RuntimeException e){result="Invalid arithmetic expression.";}});
    miningId=field(8,151,width-16,"Material ID, e.g. MITHRIL (model excludes Pristine/RNG)");
    speed=field(8,177,100,"Mining speed");speed.setValue(Double.toString(app.estimates.stats.getOrDefault("mining speed",0.0)));
    fortune=field(114,177,100,"Mining fortune");fortune.setValue(Double.toString(app.estimates.stats.getOrDefault("mining fortune",0.0)));

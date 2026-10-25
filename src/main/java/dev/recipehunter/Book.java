@@ -18,6 +18,7 @@ public final class Book {
     }
     public Set<String> history=new HashSet<>(),completed=new HashSet<>(),celebrated=new HashSet<>();
     public List<CraftDiary.Entry> diary=new ArrayList<>();
+    public boolean uiSounds=true;
     public boolean assistant=false,celebrations=true,celebrationSound=true;
     public double guiScale=1.0,hudScale=1.0;
     public String assistantItem="";

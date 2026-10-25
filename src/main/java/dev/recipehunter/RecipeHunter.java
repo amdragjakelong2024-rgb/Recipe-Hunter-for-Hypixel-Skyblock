@@ -57,7 +57,8 @@ public final class RecipeHunter implements ClientModInitializer {
     public boolean persist(){ensureAccount();if(!writable){say("Cannot save: fix or back up the unreadable book file first.");return false;}try{book.write(bookPath);return true;}catch(IOException e){say("Save failed: "+e.getMessage());return false;}}
     public void say(String s){if(mc.player!=null)mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+s));}
     public void open(Screen s){nextScreen=s;}
-    public void openHome(){ensureAccount();if(catalog==null){say(error);return;}open(new HunterScreen(this,HunterScreen.Mode.HOME,""));}
+    public void openHome(){ensureAccount();if(catalog==null){say(error);return;}open(new BookOpening(this));}
+    public void openHomeContent(){open(new HunterScreen(this,HunterScreen.Mode.HOME,""));}
     public void removeGoal(Book.Goal g){book.goals.remove(g);if(draft==g)draft=null;hudPlans.remove(g.id);book.last=book.goals.isEmpty()?"":book.goals.getFirst().id;persist();}
     public void gameRecipe(String id){if(!onHypixel()||mc.getConnection()==null){say("Join Hypixel SkyBlock to open server recipes.");return;}if(!id.matches("[A-Z0-9_;:-]+"))return;mc.setScreen(null);mc.getConnection().sendCommand("viewrecipe "+id);}
     public void openBook(){ensureAccount();if(catalog==null){say(error);return;}open(new HunterScreen(this,HunterScreen.Mode.BOOK,""));}
@@ -96,7 +97,7 @@ public final class RecipeHunter implements ClientModInitializer {
     public Planner.Plan plan(Book.Goal g){try{return planner.goal(g,stock(g),CraftDiary.mergeReservations(book.diary,menus.forge));}catch(RuntimeException e){Planner.Plan p=new Planner.Plan();p.warnings.add("Cannot calculate this route: "+e.getMessage());return p;}}
     public void save(Book.Goal g){ensureAccount();if(!writable){say("Book file is unreadable; saving is disabled to protect it.");return;}if(book.find(g.id)==null)book.goals.add(g);book.last=g.id;book.assistantItem=g.id;book.history.add(g.id);g.visible=true;if(persist())say("Saved: "+catalog.item(g.id).name);}
     public void completed(String id,long count){
-        Book.Goal g=book.find(id);if(g==null)return;book.completed.add(id);g.crafted=Math.min(g.count,g.crafted+count);
+        Book.Goal g=book.find(id);if(g==null)return;UiSounds.craft(this);book.completed.add(id);g.crafted=Math.min(g.count,g.crafted+count);
         if(g.crafted>=g.count){book.completed.add(id);book.goals.remove(g);if(draft==g)draft=null;hudPlans.remove(id);say("Completed: "+catalog.item(id).name+". You can start this recipe again.");}persist();
     }
     void tick(){

@@ -1,9 +1,9 @@
-Recipe Hunter 0.4.1 / Minecraft 26.1.2
+Recipe Hunter 0.4.2 / Minecraft 26.1.2
 
 GitHub Actions build with JDK 25, Gradle 9.7.0, Loom 1.18.2,
 Fabric Loader 0.19.3 and Fabric API 0.155.3+26.1.2.
 
-Automated assertion suite: 157 checks passed against 8848 catalogue items.
+Automated assertion suite: See the matching Actions run for the assertion count; checks run against 8848 catalogue items.
 The suite is wired into Gradle check through plannerTest; it is not a JUnit suite.
 Coverage includes original recipe graph/rounding/ownership/persistence checks,
 compact enchanted blocks plus direct lower-tier ingredients, explicit expansion,

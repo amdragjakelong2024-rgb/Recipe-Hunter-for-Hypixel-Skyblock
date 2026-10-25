@@ -117,6 +117,14 @@ public final class PlannerTest {
         eq(p.goal(compact,Map.of()).leaves.get("ENCHANTED_GOLD"),16,"only direct enchanted gold remains alongside blocks");
         compact.expanded.add("ENCHANTED_GOLD_BLOCK");
         check(p.goal(compact,Map.of()).leaves.containsKey("ENCHANTED_GOLD"),"explicit expand reveals lower tier");
+        Book.Goal forgeGoal=new Book.Goal("MITHRIL_DRILL_2");
+        var forgeCompact=p.goal(forgeGoal,Map.of());check(forgeCompact.leaves.containsKey("MITHRIL_PLATE"),"compact Forge plate retained");
+        long plates=forgeCompact.leaves.get("MITHRIL_PLATE");
+        forgeGoal.expanded.add("MITHRIL_PLATE");var forgeExpanded=p.goal(forgeGoal,Map.of());check(!forgeExpanded.leaves.containsKey("MITHRIL_PLATE"),"plate expands to ingredients");check(forgeExpanded.leaves.containsKey("REFINED_MITHRIL"),"expanded plate exposes refined mithril");
+        forgeGoal.expanded.remove("MITHRIL_PLATE");eq(p.goal(forgeGoal,Map.of()).leaves.get("MITHRIL_PLATE"),plates,"plate collapse restores compact tier");
+        check(!p.goal(forgeGoal,Map.of(),Map.of("MITHRIL_PLATE",plates)).leaves.containsKey("MITHRIL_PLATE"),"pending Forge plates reduce acquisition");
+        forgeGoal.compact=false;check(!p.goal(forgeGoal,Map.of()).leaves.containsKey("MITHRIL_PLATE"),"full mode expands Forge plate");
+        forgeGoal.compact=true;forgeGoal.count=37;eq(p.goal(forgeGoal,Map.of()).demand.get(forgeGoal.id),37,"custom target quantity");
         Book.Goal repeated=new Book.Goal("REFINED_MITHRIL");repeated.freshCraft=true;
         check(!p.goal(repeated,Map.of("REFINED_MITHRIL",1L)).leaves.isEmpty(),"repeat ignores previously owned target");
         check(p.goal(repeated,Map.of(),Map.of("REFINED_MITHRIL",1L)).leaves.isEmpty(),"pending repeat output removes grind without being owned");

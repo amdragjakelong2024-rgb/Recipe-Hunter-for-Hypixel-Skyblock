@@ -55,6 +55,7 @@ public final class HunterScreen extends Screen {
         button("Forget storage scans",12,210,190,()->{app.ownership.storage.clear();app.menus.clear();refresh();});button("Pet scan instructions",210,210,190,()->app.scanPets(""));
         label("Chest snapshots: "+app.ownership.storage.size()+" | Pets pages: "+app.ownership.petPageCount(),12,244,0xffb9d5c9);
         label("Open each island chest to scan it. Reopen after changes.",12,264,0xffb9d5c9);
+        button("UI sounds: "+(app.book.uiSounds?"ON":"OFF"),12,307,190,()->{app.book.uiSounds=!app.book.uiSounds;app.persist();refresh();});
         label("Esc closes this screen. Scans reset on reconnect/profile switch.",12,282,0xffb9d5c9);
     }
     private void checkedRow(String id,String suffix,int y,int x,int w){
@@ -109,12 +110,12 @@ public final class HunterScreen extends Screen {
         for(int n=0;n<tabs.length;n++){final int ix=n;button((tab==n?"> ":"")+tabs[n],12+n*tw,78,tw-2,()->{tab=ix;page=0;refresh();});}
         label(app.trim(item.name,width-300),12,105,0xff000000|item.color);
 
-        button("-",width-202,101,24,()->{goal.count=Math.max(1,goal.count-1);app.persist();refresh();});
-        button("+",width-174,101,24,()->{goal.count=Math.min(1000000,goal.count+1);app.persist();refresh();});
+        button("-",width-202,101,24,()->{goal.count=Math.max(1,goal.count-1);UiSounds.count(app);app.persist();refresh();});
+        button("+",width-174,101,24,()->{goal.count=Math.min(1000000,goal.count+1);UiSounds.count(app);app.persist();refresh();});
         EditBox quantity=addRenderableWidget(new EditBox(font,width-146,101,64,20,Component.literal("Target quantity")));
         quantity.setMaxLength(7);quantity.setValue(Long.toString(goal.count));
-        button("Reset x1",width-276,101,70,()->{goal.count=1;app.persist();refresh();});
-        button("Set",width-72,101,60,()->{try{long n=Long.parseLong(quantity.getValue());if(n<1||n>1000000)throw new NumberFormatException();goal.count=n;app.hudPlans.clear();app.persist();refresh();}catch(NumberFormatException ex){app.say("Enter a whole quantity from 1 to 1000000.");}});
+        button("Reset x1",width-276,101,70,()->{goal.count=1;UiSounds.count(app);app.persist();refresh();});
+        button("Set",width-72,101,60,()->{try{long n=Long.parseLong(quantity.getValue());if(n<1||n>1000000)throw new NumberFormatException();goal.count=n;UiSounds.count(app);app.hudPlans.clear();app.persist();refresh();}catch(NumberFormatException ex){app.say("Enter a whole quantity from 1 to 1000000.");}});
         if(tab==0)recipe(item);else if(tab==1)materials();else if(tab==2)steps();else if(tab==3)uses();else if(tab==5)grind();else sources(item);
         if(tab!=4&&tab!=5)stockControls(item);
     }
@@ -182,7 +183,7 @@ public final class HunterScreen extends Screen {
         lines.addAll(plan.warnings);
         if(!plan.surplus.isEmpty())for(var e:plan.surplus.entrySet())lines.add("Craft output remainder: "+e.getValue()+"x "+app.catalog.item(e.getKey()).name);
         lines.addAll(Assistant.guide(app.catalog,focus));
-        lines.add("Compact keeps refined/enchanted intermediates. Inspect an ingredient and Expand inputs to unfold it. Full shows collection units. Checkmarks exclude a whole ingredient branch; uncheck to restore it.");
+        lines.add("Compact keeps refined/enchanted and Forge intermediates. Inspect an ingredient and Expand inputs to unfold it. Full shows collection units. Checkmarks exclude a whole ingredient branch; uncheck to restore it.");
         lines.add("Time: enter your measured items/hour on the material page. Estimates exclude travel, event downtime and RNG variation. Zero = unknown.");
         lines.add("Kat costs and times in the catalogue are base values; pet level / bonuses may reduce them. Check Kat before upgrading.");
         lines.add("Exact arithmetic uses source recipes; this is not a generative AI chat. Alternative recipes can be chosen with Next route.");
@@ -216,7 +217,7 @@ public final class HunterScreen extends Screen {
     }
     private void pages(int size){pageButtons(size,rowsPerPage);}
     private void pageButtons(int size,int capacity){int total=Math.max(1,(size+capacity-1)/capacity);page=Math.min(page,total-1);int y=footerY-17;
-        button("<",width-108,y,24,()->{page=Math.max(0,page-1);refresh();});button(">",width-36,y,24,()->{page=Math.min(total-1,page+1);refresh();});label((page+1)+"/"+total,width-80,y+6,0xffa9bac8);}
+        button("<",width-108,y,24,()->{page=Math.max(0,page-1);UiSounds.page(app);refresh();});button(">",width-36,y,24,()->{page=Math.min(total-1,page+1);UiSounds.page(app);refresh();});label((page+1)+"/"+total,width-80,y+6,0xffa9bac8);}
     private ItemStack icon(String id){return Icons.stack(app,id);}
     private MouseButtonEvent scaled(MouseButtonEvent e){return new MouseButtonEvent(e.x()/uiScale,e.y()/uiScale,e.buttonInfo());}
     @Override public boolean mouseClicked(MouseButtonEvent e,boolean twice){

@@ -43,7 +43,7 @@ public final class Planner {
             int ix=Math.floorMod(choices.getOrDefault(id,0),item.routes.size());Catalog.Route chosen=item.routes.get(ix);
             // Do not silently invent an alternative if the selected conversion leads to a cycle.
             boolean stop=practical && ((fineGems?id.matches("FINE_[A-Z_]+_GEM"):(!id.equals(root)&&id.matches("(?:ROUGH|FLAWED|FINE|FLAWLESS|PERFECT)_[A-Z_]+_GEM"))) || (enchanted(id) && chosen.inputs.stream().noneMatch(in->enchanted(in.id))));
-            if(compact&&!id.equals(root)&&!expanded.contains(id)&&(id.startsWith("REFINED_")||enchanted(id)))stop=true;
+            if(compact&&!id.equals(root)&&!expanded.contains(id)&&(id.startsWith("REFINED_")||enchanted(id)||chosen.type.equals("forge")))stop=true;
             if(expanded.contains(id))stop=false;
             boolean cycle=chosen.inputs.stream().anyMatch(in->state.getOrDefault(in.id,0)==1);
             if(stop) { /* This is the requested collection unit; keep its actual recipe inspectable. */ }

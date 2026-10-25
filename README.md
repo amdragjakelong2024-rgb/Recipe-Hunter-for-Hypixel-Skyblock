@@ -1,9 +1,10 @@
 # Recipe Hunter
 
-## 0.4.1 controls
+## 0.4.2 controls
 
-- `/rh`: **Locate any recipe**, search, hide/show, remove and reorder your queue using the arrow buttons.
+- `/rh`: opens the native animated Minecraft book, then **Locate any recipe**, search, hide/show, remove and reorder your queue using the arrow buttons.
 - `/rh book`: queued recipes and completed recipe collection. Only the first visible queue entry appears on the HUD.
+- Compact materials retain Mithril Plate and other Forge intermediates. Inspect one and use **Expand inputs / Collapse** to choose the detail level. **Full** expands the compact Forge tiers. Pending Forge outputs reduce required acquisition after you open The Forge.
 - Enter a target quantity directly or press **Reset x1**. Plus/minus still adjust by one.
 - Press **E**: use **- HUD / + HUD / Reset HUD**, scroll anywhere over the panel to resize, or drag its title to move it. Right-click cycles materials. Click the panel body to open its target recipe on the server.
 - Hover the active panel to see the complete target recipe. Click an item icon or the **In-game** button for `/viewrecipe`; server unlocks and recipe availability still apply.
@@ -14,6 +15,8 @@
 
 Client-side Ironman recipe planner for **Minecraft 26.1.2 / Fabric / Java 25**.
 The bundled NEU recipe catalogue is an offline snapshot. This update does not change Minecraft versions.
+
+Opening, page navigation, quantity confirmation and verified crafts use Minecraft sounds. UI sound effects can be disabled in `/rh settings`; click sounds follow Minecraft audio settings.
 
 ## What's new
 
@@ -32,7 +35,7 @@ The bundled NEU recipe catalogue is an offline snapshot. This update does not ch
 ## Quick start
 
 1. Install Fabric for Minecraft **26.1.2**, Java **25**, and Fabric API **0.155.3+26.1.2** or a compatible release.
-2. Download `recipe-hunter-0.4.1+26.1.2.jar` from GitHub Releases and place it in `mods`. Do not install the `-sources.jar`.
+2. Download `recipe-hunter-0.4.2+26.1.2.jar` from GitHub Releases and place it in `mods`. Do not install the `-sources.jar`.
 3. Search using `/rh <item name>`, select a recipe, choose quantity, and Save.
 4. Open your inventory with `E` to access the book or move goal panels.
 5. Open the storage pages and Forge menu yourself to refresh the observations.

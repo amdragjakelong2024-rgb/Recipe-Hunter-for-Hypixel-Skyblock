@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+- Open the recipe launcher through the native animated Minecraft 3D book.
+- Use Minecraft button textures and page, quantity and crafting sounds.
+- Keep Mithril Plate and other Forge intermediates compact until explicitly expanded.
+
 ## 0.4.1
 
 - Add a recipe launcher with active-goal controls and a reorderable queue.
