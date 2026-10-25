@@ -22,6 +22,8 @@ jobs:
         run: |
           curl -L https://services.gradle.org/distributions/gradle-9.7.0-bin.zip -o /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp
+      - name: Check SkyBlock catalogue scope
+        run: python3 scripts/check_catalog_scope.py
       - name: Build and test
         run: /tmp/gradle-9.7.0/bin/gradle build plannerTest
       - name: Checksum artifacts

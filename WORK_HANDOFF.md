@@ -96,3 +96,7 @@ Give the owner a concise summary of changed files, exact behavior verified, test
 - Include diagnostics showing source / last successful update / item ID / quantity for debug. Report which source types were tested live and which remain unverified.
 
 **Publish gate:** Until this generic tracker and UI have passed the acceptance matrix, leave the public release frozen at 0.4.1. Existing branch `update/live-sacks-20261025` holds only a partial Sack parser/diagnostic change; it does NOT meet the universal acceptance requirement.
+
+## Catalogue scope
+
+Recipe lookup and planning must use the bundled Hypixel SkyBlock (NEU) catalogue only. Do not import the Minecraft recipe registry. Vanilla render icons do not establish recipe availability. Keep shared SkyBlock materials such as Cobblestone and Diamond; exclude Netherite and Ancient Debris. CI runs `scripts/check_catalog_scope.py` to catch accidental vanilla imports.
