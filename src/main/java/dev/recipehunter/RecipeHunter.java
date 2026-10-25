@@ -32,7 +32,7 @@ public final class RecipeHunter implements ClientModInitializer {
     private int ticks;public String context="";public final Assistant assistant=new Assistant();public final Celebration celebration=new Celebration();
     public final Map<String,Planner.Plan> hudPlans=new HashMap<>();
     public final Map<String,List<MaterialProgress.Row>> hudProgress=new HashMap<>();
-    public List<MaterialProgress.Row> progress(Book.Goal goal){var stock=stock(goal);var pending=CraftDiary.mergeReservations(book.diary,menus.forge);return MaterialProgress.rows(goal,planner.goal(goal,stock,pending),stock,pending,CraftDiary.pending(menus.forge));}
+    public List<MaterialProgress.Row> progress(Book.Goal goal){var stock=stock(goal);var pending=CraftDiary.mergeReservations(book.diary,menus.forge);return MaterialProgress.rows(goal,planner.goal(goal,stock,pending),stock,pending,CraftDiary.pending(menus.forge),catalog);}
     @Override public void onInitializeClient(){
         INSTANCE=this; ai.load(FabricLoader.getInstance().getConfigDir().resolve("recipehunter-private")); InventoryOverlay.register(this);
         try{catalog=new Catalog(getClass().getResourceAsStream("/assets/recipehunter/catalog.json"));planner=new Planner(catalog);}catch(Exception e){error=e.getMessage();}

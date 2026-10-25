@@ -14,9 +14,12 @@ public final class HudPanels {
   else if(rows.isEmpty())g.text(app.mc.font,"Ready",7,28,0xff406820,false);
   else for(int i=page*3;i<Math.min(page*3+3,rows.size());i++){
    var row=rows.get(i);int top=25+(i-page*3)*31;g.item(Icons.stack(app,row.id()),5,top);
-   g.text(app.mc.font,app.trim(row.count()+" "+app.catalog.item(row.id()).name,HudLayout.WIDTH-31),26,top,row.done()?0xff396920:Theme.INK,false);
-   String extra=row.forge()>0?"Forge: "+row.forge():row.pending()>0?"Planned: "+row.pending():row.done()?"Done":"";
-   if(!extra.isEmpty())g.text(app.mc.font,extra,26,top+11,Theme.MUTED,false);
+   g.text(app.mc.font,app.trim(app.catalog.item(row.id()).name,HudLayout.WIDTH-31),26,top,row.done()?0xff396920:Theme.INK,false);
+   String extra=row.count();
+   if(row.forge()>0)extra+=" | Forge: "+row.forge();
+   else if(row.pending()>0)extra+=" | Planned: "+row.pending();
+   g.text(app.mc.font,app.trim(extra,HudLayout.WIDTH-93),26,top+11,Theme.MUTED,false);
+   g.text(app.mc.font,row.percent(),HudLayout.WIDTH-64,top+11,row.done()?0xff396920:Theme.INK,false);
    g.fill(26,top+23,HudLayout.WIDTH-8,top+25,0xffb5a477);g.fill(26,top+23,26+(int)((HudLayout.WIDTH-34)*row.fraction()),top+25,0xff72a32b);
   }
   g.text(app.mc.font,(page+1)+"/"+pages,HudLayout.WIDTH-30,HudLayout.HEIGHT-11,Theme.MUTED,false);g.pose().popMatrix();

@@ -160,6 +160,29 @@ public final class PlannerTest {
         reopened.switchProvider();check(!reopened.configured(),"provider keys isolated");reopened.switchProvider();reopened.switchProvider();check(reopened.configured(),"provider key restored");reopened.clearKey();AiClient cleared=new AiClient();cleared.load(secretDir.resolve("ai"));check(!cleared.configured(),"key deletion persisted");
         try(var files=Files.walk(secretDir)){for(Path file:files.sorted(Comparator.reverseOrder()).toList())Files.delete(file);}
         try(var iconStream=PlannerTest.class.getResourceAsStream("/assets/recipehunter/icons.json.gz");var reader=new InputStreamReader(new java.util.zip.GZIPInputStream(iconStream))){var icons=com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();check(icons.size()>=8842,"icon catalogue coverage");check(icons.getAsJsonObject("DIVAN_HELMET").has("texture"),"custom head texture preserved");check(icons.getAsJsonObject("REFINED_MITHRIL").has("model"),"server item model preserved");}
+        // A tier label must not hide progress accumulated as uncrafted raw items.
+        for(String id:List.of("TEST_TIER_RAW","TEST_TIER_ENCHANTED","TEST_TIER_BLOCK")) {
+            Catalog.Item it=new Catalog.Item();it.id=id;it.name=id;it.raw=id.equals("TEST_TIER_RAW");c.items.put(id,it);
+        }
+        route(c,"TEST_TIER_ENCHANTED",1,"TEST_TIER_RAW",160);
+        route(c,"TEST_TIER_BLOCK",1,"TEST_TIER_ENCHANTED",160);
+        Book.Goal tierGoal=new Book.Goal("TEST_TIER_ENCHANTED");
+        Planner.Plan tierPlan=new Planner.Plan();tierPlan.demand.put("TEST_TIER_ENCHANTED",2L);
+        var tierHalf=MaterialProgress.rows(tierGoal,tierPlan,Map.of("TEST_TIER_RAW",80L),Map.of(),Map.of(),c).getFirst();
+        check(tierHalf.have()==0&&Math.abs(tierHalf.fraction()-.25)<1e-9,"80 raw units are 25% of two enchanted units");
+        check(tierHalf.count().contains("80 TEST_TIER_RAW"),"raw credit is visible in row text");
+        var tierMixed=MaterialProgress.rows(tierGoal,tierPlan,Map.of("TEST_TIER_ENCHANTED",1L,"TEST_TIER_RAW",80L),Map.of(),Map.of(),c).getFirst();
+        check(Math.abs(tierMixed.fraction()-.75)<1e-9,"crafted and partial raw credit combine");
+        var tierCrafted=MaterialProgress.rows(tierGoal,tierPlan,Map.of("TEST_TIER_ENCHANTED",1L),Map.of(),Map.of(),c).getFirst();
+        var tierRaw=MaterialProgress.rows(tierGoal,tierPlan,Map.of("TEST_TIER_RAW",160L),Map.of(),Map.of(),c).getFirst();
+        check(Math.abs(tierCrafted.fraction()-tierRaw.fraction())<1e-9,"crafting raw to enchanted does not reset progress");
+        Planner.Plan mixedTierPlan=new Planner.Plan();mixedTierPlan.demand.put("TEST_TIER_ENCHANTED",1L);mixedTierPlan.demand.put("TEST_TIER_RAW",80L);
+        var mixedTier=MaterialProgress.rows(tierGoal,mixedTierPlan,Map.of("TEST_TIER_RAW",160L),Map.of(),Map.of(),c);
+        check(Math.abs(mixedTier.getFirst().fraction()-.5)<1e-9 && mixedTier.get(1).have()==80L,"direct raw requirement is reserved before using leftover raw for enchanted tier");
+        Planner.Plan upperTier=new Planner.Plan();upperTier.demand.put("TEST_TIER_BLOCK",1L);
+        var upperPart=MaterialProgress.rows(new Book.Goal("TEST_TIER_BLOCK"),upperTier,Map.of("TEST_TIER_RAW",12800L),Map.of(),Map.of(),c).getFirst();
+        check(Math.abs(upperPart.fraction()-.5)<1e-9,"partial raw progress carries through multiple compression tiers");
+        check(Math.abs(MaterialProgress.rows(tierGoal,tierPlan,Map.of("TEST_TIER_RAW",80L),Map.of(),Map.of(),c).getFirst().fraction()-.25)<1e-9,"re-render must not accumulate phantom materials");
         Planner.Plan progressPlan=new Planner.Plan();progressPlan.demand.put("ENCHANTED_COBBLESTONE",32L);progressPlan.missing.put("ENCHANTED_COBBLESTONE",21L);
         var progress=MaterialProgress.rows(new Book.Goal("TEST"),progressPlan,Map.of("ENCHANTED_COBBLESTONE",11L),Map.of(),Map.of()).getFirst();
         check(progress.count().equals("11/32"),"HUD displays owned over fixed required total");check(!progress.done(),"partial material remains active");

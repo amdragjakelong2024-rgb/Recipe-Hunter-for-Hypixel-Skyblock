@@ -9,3 +9,5 @@
 
 Replace the old mod with `recipe-hunter-0.4.1+26.1.2.jar`.
 Storage and Forge counts refresh when their game menus are observed. Inventory progress refreshes four times per second. Visual/audio behavior still needs in-game verification.
+
+**HUD progress fix:** Normal (unenchanted) ingredients now contribute fractional progress to enchanted and other single-input compression tiers. Counts show the actual crafted quantity plus observed lower-tier stock. No item is credited twice across the visible material rows. Sack quantities remain last-observed snapshots until their in-game menus are opened again.
