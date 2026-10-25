@@ -45,7 +45,10 @@ public final class RecipeHunter implements ClientModInitializer {
         ClientPlayConnectionEvents.JOIN.register((handler,sender,client)->{ownership.clear();menus.clear();estimates.reset();celebration.reset();assistant.reset();draft=null;account="";});
         ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->{ownership.clear();menus.clear();estimates.reset();celebration.reset();assistant.reset();hudPlans.clear();});
         ClientReceiveMessageEvents.GAME.register((message,overlay)->{
-            if(catalog!=null&&onHypixel())celebration.message(this,message.getString());
+            if(catalog!=null&&onHypixel()){
+                celebration.message(this,message.getString());
+                menus.sackMessage(message.getString(),SackChatTracker.changes(message,catalog));
+            }
             String text=message.getString().toLowerCase(Locale.ROOT);
             if(text.contains("profile")&&(text.contains("switched")||text.contains("switching")||text.contains("joined"))){ownership.clear();menus.clear();estimates.reset();for(Book.Goal g:book.goals)g.owned.clear();for(var e:book.diary)e.active=false;persist();celebration.reset();assistant.reset();hudPlans.clear();}
         });

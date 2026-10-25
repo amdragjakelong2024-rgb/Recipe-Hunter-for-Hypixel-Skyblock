@@ -18,6 +18,8 @@ public final class MaterialProgress {
   public String percent(){
    double n=100*fraction();
    if(n==0)return "0%";
+   if(n<0.001)return "<0.001%";
+   if(n<0.1)return String.format(Locale.US,"%.3f%%",n);
    if(n<1)return String.format(Locale.US,"%.2f%%",n);
    if(n<10)return String.format(Locale.US,"%.1f%%",n);
    return String.format(Locale.US,"%.0f%%",n);

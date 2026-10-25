@@ -183,6 +183,14 @@ public final class PlannerTest {
         var upperPart=MaterialProgress.rows(new Book.Goal("TEST_TIER_BLOCK"),upperTier,Map.of("TEST_TIER_RAW",12800L),Map.of(),Map.of(),c).getFirst();
         check(Math.abs(upperPart.fraction()-.5)<1e-9,"partial raw progress carries through multiple compression tiers");
         check(Math.abs(MaterialProgress.rows(tierGoal,tierPlan,Map.of("TEST_TIER_RAW",80L),Map.of(),Map.of(),c).getFirst().fraction()-.25)<1e-9,"re-render must not accumulate phantom materials");
+        // The actual sacks message is an aggregate. Only its itemized hover is safe.
+        check(SackChanges.parse("[Sacks] +1,556 items. (Last 12s.)").isEmpty(),"aggregate sack notification is ambiguous");
+        var sackAdds=SackChanges.parse("Added items:\\n 1,556 Mithril (Mining Sack)\\n 20 Enchanted Mithril (Enchanted Mining Sack)\\n\\nThis message can be disabled in the settings.");
+        eq(sackAdds.get("Mithril"),1556,"parse regular Mithril from sack tooltip");
+        eq(sackAdds.get("Enchanted Mithril"),20,"parse enchanted Mithril from sack tooltip");
+        var sackRemoved=SackChanges.parse("Removed items:\\n 60 Mithril (Mining Sack)\\n 3 Enchanted Mithril (Enchanted Mining Sack)");
+        eq(sackRemoved.get("Mithril"),-60,"parse sack withdrawals");
+        eq(SackChanges.secondsBack("[Sacks] +1,556 items. (Last 12s.)"),12,"parse sack aggregation window");
         Planner.Plan progressPlan=new Planner.Plan();progressPlan.demand.put("ENCHANTED_COBBLESTONE",32L);progressPlan.missing.put("ENCHANTED_COBBLESTONE",21L);
         var progress=MaterialProgress.rows(new Book.Goal("TEST"),progressPlan,Map.of("ENCHANTED_COBBLESTONE",11L),Map.of(),Map.of()).getFirst();
         check(progress.count().equals("11/32"),"HUD displays owned over fixed required total");check(!progress.done(),"partial material remains active");

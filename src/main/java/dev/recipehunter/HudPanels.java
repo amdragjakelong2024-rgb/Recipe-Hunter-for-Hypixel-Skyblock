@@ -22,6 +22,8 @@ public final class HudPanels {
    g.text(app.mc.font,row.percent(),HudLayout.WIDTH-64,top+11,row.done()?0xff396920:Theme.INK,false);
    g.fill(26,top+23,HudLayout.WIDTH-8,top+25,0xffb5a477);g.fill(26,top+23,26+(int)((HudLayout.WIDTH-34)*row.fraction()),top+25,0xff72a32b);
   }
+  String sync=app.menus.sackSynced()?"Sacks scanned":app.menus.sackTracked()?"Sacks: session only":"Sacks: open to sync";
+  g.text(app.mc.font,app.trim(sync,HudLayout.WIDTH-52),7,HudLayout.HEIGHT-11,Theme.MUTED,false);
   g.text(app.mc.font,(page+1)+"/"+pages,HudLayout.WIDTH-30,HudLayout.HEIGHT-11,Theme.MUTED,false);g.pose().popMatrix();
   if(mx>=x&&mx<x+HudLayout.WIDTH*scale&&my>=y&&my<y+HudLayout.HEIGHT*scale)RecipePreview.render(app,g,goal.id,goal,mx,my);
  }

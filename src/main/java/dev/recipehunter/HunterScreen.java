@@ -31,18 +31,7 @@ public final class HunterScreen extends Screen {
     @Override public void onClose(){app.closeBook();}
     @Override public boolean isPauseScreen(){return false;}
     @Override public void tick(){super.tick();if(mode!=Mode.DETAIL)return;
-        if(++refreshTicks%5==0&&!counts.isEmpty()){
-            var stock=app.stock(goal);var forge=CraftDiary.pending(app.menus.forge);
-            Map<String,MaterialProgress.Row> materialRows=new HashMap<>();
-            for(var material:app.progress(goal))materialRows.put(material.id(),material);
-            for(var row:counts){
-                var progress=materialRows.getOrDefault(row.id,MaterialProgress.single(row.id,row.total,stock,app.catalog,goal.choices));
-                String text=app.catalog.item(row.id).name+" "+progress.have()+"/"+row.total+" ("+progress.percent()+")";
-                long n=forge.getOrDefault(row.id,0L);if(n>0)text+=" | Forge: "+n;
-                row.button.setMessage(Component.literal(app.trim(text,row.width-40)).withStyle(style->style.withColor(progress.done()?0x85d65c:app.catalog.item(row.id).color)));
-                row.button.setTooltip(Tooltip.create(Component.literal(progress.count())));
-            }
-        }
+        if(++refreshTicks%5==0&&!counts.isEmpty()){var stock=app.stock(goal);var forge=CraftDiary.pending(app.menus.forge);for(var row:counts){long have=Math.min(row.total,stock.getOrDefault(row.id,0L));String text=have+"/"+row.total+" "+app.catalog.item(row.id).name;long n=forge.getOrDefault(row.id,0L);if(n>0)text+=" | Forge: "+n;row.button.setMessage(Component.literal(app.trim(text,row.width-40)).withStyle(style->style.withColor(have>=row.total?0x85d65c:app.catalog.item(row.id).color)));}}
     }
     private Button button(String text,int x,int y,int w,Runnable action){return addRenderableWidget(new GlowButton(text,x,y,w,action));}
     private void label(String text,int x,int y,int color){labels.add(new Label(text,x,y,color));}
