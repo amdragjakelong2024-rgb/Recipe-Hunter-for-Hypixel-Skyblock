@@ -7,9 +7,9 @@ import net.minecraft.core.component.DataComponents;
 /** Strict own-storage menu allowlist. Never count displayed recipe/auction icons as stock. */
 public final class MenuTracker {
  public final StorageLedger ender=new StorageLedger();public final Map<String,Long> sacks=new HashMap<>();
- public final List<CraftDiary.Entry> forge=new ArrayList<>();public long observedAt,lastSackSnapshotAt,lastSackMessageAt;
+ public final List<CraftDiary.Entry> forge=new ArrayList<>();public long observedAt,lastSackSnapshotAt,lastSackMessageAt,lastSackNoticeAt;public int sackNoticeCount,sackParsedCount,sackUnparsedCount;
  private Object menu;private int ticks;
- public void clear(){ender.clear();sacks.clear();forge.clear();menu=null;ticks=0;lastSackSnapshotAt=0;lastSackMessageAt=0;}
+ public void clear(){ender.clear();sacks.clear();forge.clear();menu=null;ticks=0;lastSackSnapshotAt=0;lastSackMessageAt=0;lastSackNoticeAt=0;sackNoticeCount=0;sackParsedCount=0;sackUnparsedCount=0;}
  public static long stored(String lore){Matcher m=Pattern.compile("(?i)(?:Stored|Amount)\\s*:\\s*([0-9][0-9,]*)").matcher(lore);if(!m.find())return -1;try{return Long.parseLong(m.group(1).replace(",",""));}catch(NumberFormatException e){return -1;}}
  public void tick(RecipeHunter app){
   if(!(app.mc.screen instanceof AbstractContainerScreen<?> screen)){menu=null;ticks=0;return;}
@@ -37,7 +37,10 @@ public final class MenuTracker {
  }
  /** Apply only exact per-item chat deltas, never ambiguous aggregate notifications. */
  public void sackMessage(String header,Map<String,Long> delta){
-  if(delta.isEmpty())return;
+  if(header==null||!header.contains("[Sacks]"))return;
+  sackNoticeCount++;lastSackNoticeAt=System.currentTimeMillis();
+  if(delta.isEmpty()){sackUnparsedCount++;return;}
+  sackParsedCount++;
   long now=System.currentTimeMillis();
   if(lastSackSnapshotAt>0 && now-lastSackSnapshotAt<=SackChanges.secondsBack(header)*1000L){
    // A recent inventory snapshot already includes some/all of this batch.
@@ -49,6 +52,12 @@ public final class MenuTracker {
    sacks.put(e.getKey(),next);
   }
   lastSackMessageAt=now;
+ }
+ public String sackStatus(){
+  if(sackParsedCount>0)return "Sack chat live (updates batched)";
+  if(sackNoticeCount>0)return "Sack messages seen, item details unreadable";
+  if(lastSackSnapshotAt>0)return "Sacks: snapshot only (enable notifications)";
+  return "Sacks: enable notifications";
  }
  public boolean sackSynced(){return lastSackSnapshotAt>0;}
  public boolean sackTracked(){return lastSackMessageAt>0;}

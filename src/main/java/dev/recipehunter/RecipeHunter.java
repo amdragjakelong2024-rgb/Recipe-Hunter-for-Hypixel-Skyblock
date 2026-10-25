@@ -78,6 +78,7 @@ public final class RecipeHunter implements ClientModInitializer {
             case "ai"->open(new ToolsScreen(this,"AI"));
             case "gui"->open(new HudEditor(this));
             case "settings"->open(new HunterScreen(this,HunterScreen.Mode.SETTINGS,""));
+            case "sackstatus"->{say(menus.sackStatus()+" | notifications: "+menus.sackNoticeCount+" | parsed: "+menus.sackParsedCount+" | no details: "+menus.sackUnparsedCount+". Enable Hypixel SkyBlock Settings > Personal > Chat Feedback > Sack Notifications.");}
             case "assistant"->{book.assistant=!book.assistant;persist();openBook();}
             case "bigger"->resizeGui(0.1);
             case "smaller"->resizeGui(-0.1);

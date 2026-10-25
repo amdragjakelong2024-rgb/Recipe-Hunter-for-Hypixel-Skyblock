@@ -67,3 +67,8 @@ User mined raw Mithril while tracking Enchanted Mithril; HUD stayed `0/960 (0%)`
 ## Required final report
 
 Give the owner a concise summary of changed files, exact behavior verified, test results, screenshots if in-game verification exists, unresolved limitations, CI artifact link, and explicitly ask for authorization **before** publishing any public release.
+
+
+## 2026-10-25 live sack diagnostic patch (unreleased)
+
+A separate `update/live-sacks-20261025` branch improves plus/minus-prefixed `[Sacks]` hover parsing, checks ID mapping for Mithril and records incoming-notification counts. Run `/rh sackstatus` in-game while mining to distinguish notifications disabled, hover data unreadable, or successful parsing. This is **not** a fully instant packet-level sack feed: Hypixel batches its chat notifications; the user must enable Hypixel Chat Feedback → Sack Notifications, but should not need to open the sack for each refresh. Verify the messages truly reach `ClientReceiveMessageEvents.GAME` and check real in-game behavior before merging to `main` or publishing.

@@ -191,6 +191,16 @@ public final class PlannerTest {
         var sackRemoved=SackChanges.parse(String.join(String.valueOf((char)10),"Removed items:"," 60 Mithril (Mining Sack)"," 3 Enchanted Mithril (Enchanted Mining Sack)"));
         eq(sackRemoved.get("Mithril"),-60,"parse sack withdrawals");
         eq(SackChanges.secondsBack("[Sacks] +1,556 items. (Last 12s.)"),12,"parse sack aggregation window");
+        var plus=SackChanges.parse(String.join(String.valueOf((char)10),
+          "Added items:","  +1,556 Mithril (Mining Sack)","  +8 Enchanted Mithril (Large Enchanted Mining Sack)",""));
+        eq(plus.get("Mithril"),1556,"plus-prefixed sack quantity parsed");
+        eq(plus.get("Enchanted Mithril"),8,"plus-prefixed enchanted quantity parsed");
+        var negatives=SackChanges.parse(String.join(String.valueOf((char)10),
+          "Removed items:","  -45 Mithril (Mining Sack)"));
+        eq(negatives.get("Mithril"),-45,"minus-prefixed sack removal parsed");
+        check(SackChanges.parse("[Sacks] +1,556 items. (Last 20s.)").isEmpty(),"headline cannot be assigned to a material");
+        check(SackChatTracker.id("Mithril",c).equals("MITHRIL_ORE"),"Mithril sack resolves to raw SkyBlock ID");
+        check(SackChatTracker.id("Enchanted Mithril",c).equals("ENCHANTED_MITHRIL"),"enchanted mithril resolves to own ID");
         Planner.Plan progressPlan=new Planner.Plan();progressPlan.demand.put("ENCHANTED_COBBLESTONE",32L);progressPlan.missing.put("ENCHANTED_COBBLESTONE",21L);
         var progress=MaterialProgress.rows(new Book.Goal("TEST"),progressPlan,Map.of("ENCHANTED_COBBLESTONE",11L),Map.of(),Map.of()).getFirst();
         check(progress.count().equals("11/32"),"HUD displays owned over fixed required total");check(!progress.done(),"partial material remains active");
