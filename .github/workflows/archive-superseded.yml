@@ -1,0 +1,34 @@
+name: Archive superseded 0.4.2 and 0.4.3 releases
+on:
+  push:
+    branches: [update/archive-superseded-releases]
+permissions:
+  contents: write
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Back up exact release metadata and binaries
+        run: |
+          mkdir -p release-backup
+          for tag in 0.4.2 0.4.3; do
+            mkdir -p "release-backup/$tag"
+            gh api "repos/$GH_REPO/git/ref/tags/$tag" > "release-backup/$tag/tag.json"
+            gh api "repos/$GH_REPO/releases/tags/$tag" > "release-backup/$tag/release.json"
+            gh release download "$tag" --dir "release-backup/$tag"
+          done
+          find release-backup -type f -exec sha256sum {} \; > release-backup/SHA256SUMS.txt
+      - name: Preserve backup before removing public listings
+        uses: actions/upload-artifact@v4
+        with:
+          name: superseded-release-backup
+          path: release-backup/
+          retention-days: 90
+          if-no-files-found: error
+      - name: Remove only superseded release listings
+        run: |
+          gh release delete 0.4.2 --yes
+          gh release delete 0.4.3 --yes
