@@ -67,3 +67,32 @@ User mined raw Mithril while tracking Enchanted Mithril; HUD stayed `0/960 (0%)`
 ## Required final report
 
 Give the owner a concise summary of changed files, exact behavior verified, test results, screenshots if in-game verification exists, unresolved limitations, CI artifact link, and explicitly ask for authorization **before** publishing any public release.
+
+
+## Global live tracking requirement (25 October 2026)
+
+**BLOCKER / mandatory acceptance requirement:** The user wants a **universal, item-driven live material tracker covering all recipes, not just Mithril**. It must handle every supported catalogue ingredient that can be legitimately observed, across mining, farming, fishing, foraging, combat, slayer, events, dungeons, gemstone gathering, forge, mob drops and other acquisition paths. Do not ship or describe this as working for *all* items merely because a Mithril regression passes.
+
+### Architecture
+- Build one generic inventory/acquisition material ledger indexed by stable Hypixel SkyBlock item ID, not by hand-coded mining or Mithril special cases. Cross-reference the full `Catalog`, normalize known naming variants and aliases, and use exact metadata IDs whenever available.
+- Collect signals from itemized Sacks notifications (any sack category), live player inventory slots/stack NBT, and other client-visible evidence of item gain. Catch partial deposits, sacks-full inventory overflow, auto-compaction, enchanted upgrades, stack transfers, picked-up drops, chest withdrawals, forge output, and legitimate rare-drop chat where reliable IDs and quantities are available. Never rely on only one source.
+- **A message or scoreboard that says only "+N items" is not enough to infer which materials were gained.** Do not guess. Do not count mining powder, coins, collection XP or SkyBlock experience as physical craft items.
+- Avoid double counting when the same gain is reflected by both an inventory delta and a Sack/chat delta, or when crafting converts raw resources to enchanted form, stacking, withdrawing, depositing or reconnecting. Use explicitly modeled transitions and source-aware reconciliation.
+- Separate (a) absolute **currently owned** stock (known/unknown) from (b) **session-acquired** resource totals and from (c) **recipe progress equivalence**. A temporary spent resource may still represent historical collection, but it cannot simultaneously be counted as still owned. Clearly label each metric and never fake ownership.
+- The progress engine must traverse actual selected catalogue recipes: tier conversions (raw, enchanted, enchanted block), gemstones (rough through perfect), crafts with **multiple inputs**, forge ingredients, route alternatives, per-craft output multipliers, rounding, remaining ingredients, and checked steps. Selected display tier changes the representation only, never the underlying progress.
+- For source data not exposed to clients in real time, visibly mark it `unknown / untracked` or `last synced`, rather than displaying misleading 0%. The requested ideal is no manual Sack reopening. If Hypixel sends batched signals, update after each real notification and disclose the delay.
+- Event/rare items should use their actual unique item IDs and known quantities; no invented random drop counts or misleading assumptions of drop ownership.
+
+### Mandatory in-game and automated acceptance matrix
+- Mining: Mithril, Titanium, Coal, Diamond, Redstone, Gold, gemstone Rough/Fine, enchanted items and blocks.
+- Farming: wheat, carrot, potato, sugar cane, nether wart and common auto-compactor upgrades.
+- Fishing: raw fish/cod, salmon, ink sac, lily pads and fishing sack acquisitions.
+- Foraging: regular and enchanted logs.
+- Combat/mob drops: bones, rotten flesh, ender pearls, spider drops and loot entering inventory or corresponding sacks.
+- Forge, crystals, multi-input rare/event materials, recipe alternatives and stack-size conversions.
+- Enchanted diamond block target converted to enchanted diamond stacks; flawless ruby shown as fine stacks; perfect jade switch between fine/flawless/perfect while retaining crystal costs.
+- Inventory-only, Sacks-only, combined inventory+Sacks, bags full/overflowing, deposit/withdrawal, crafting, profile switching, disconnect/reconnect, and multiple goals sharing stock.
+- Maintain a fixture-driven matrix over **all catalogue item IDs and crafting graph routes**, reporting unmapped/ambiguous/unsupported cases. Test representative in-game captures from each resource category; synthetic unit tests alone do not prove universality.
+- Include diagnostics showing source / last successful update / item ID / quantity for debug. Report which source types were tested live and which remain unverified.
+
+**Publish gate:** Until this generic tracker and UI have passed the acceptance matrix, leave the public release frozen at 0.4.1. Existing branch `update/live-sacks-20261025` holds only a partial Sack parser/diagnostic change; it does NOT meet the universal acceptance requirement.
