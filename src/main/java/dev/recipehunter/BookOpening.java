@@ -13,6 +13,7 @@ public final class BookOpening extends Screen {
  private final RecipeHunter app;private BookModel model;private long started;private boolean finished;private final boolean closing;
  public BookOpening(RecipeHunter app){this(app,false);}
  public BookOpening(RecipeHunter app,boolean closing){super(Component.literal("Recipe Hunter"));this.app=app;this.closing=closing;}
+ @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
  @Override protected void init(){model=new BookModel(app.mc.getEntityModels().bakeLayer(ModelLayers.BOOK));if(started==0){started=System.nanoTime();if(closing)UiSounds.close(app);else UiSounds.open(app);}}
  static float opening(double elapsed){float t=(float)Math.clamp(elapsed/.8,0,1);return t*t*t*(t*(6*t-15)+10);}
  private void finish(){if(finished)return;finished=true;if(closing)app.mc.setScreen(null);else app.openHomeContent();}

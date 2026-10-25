@@ -28,7 +28,7 @@ public final class SackChanges {
     if(name.isBlank())continue;
     int direction=m.group(1).equals("-")?-1:m.group(1).equals("+")?1:section;
     changes.merge(name,Math.multiplyExact(direction,n),Math::addExact);
-   }catch(ArithmeticException ignored){}
+   }catch(ArithmeticException|NumberFormatException ignored){}
   }
   changes.values().removeIf(n->n==0);
   return changes;

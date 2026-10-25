@@ -6,12 +6,13 @@ import net.minecraft.client.gui.components.*;
 import net.minecraft.network.chat.Component;
 
 public final class ToolsScreen extends Screen {
- private final RecipeHunter app;private final String mode;private EditBox input,model,key,miningId,strength,drops,uptime,speed,fortune;private String result="";private int page;private float scale=1;private MultiLineEditBox journal;private String draftText="",editingKey="";
+ private final RecipeHunter app;private final String mode;private EditBox input,model,key,miningId,strength,drops,uptime,speed,fortune;private String result="";private int page;private float scale=1;private int offsetX,offsetY;private MultiLineEditBox journal;private String draftText="",editingKey="";
  public ToolsScreen(RecipeHunter a,String m){super(Component.literal(m));app=a;mode=m;}
  private void button(String s,int x,int y,int w,Runnable r){addRenderableWidget(new GlowButton(s,x,y,w,r));}
  private EditBox field(int x,int y,int w,String hint){EditBox e=addRenderableWidget(new EditBox(font,x,y,w,20,Component.literal(hint)));e.setMaxLength(1000);e.setHint(Component.literal(hint));return e;}
+ @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
  @Override protected void init(){
-  int aw=app.mc.getWindow().getGuiScaledWidth(),ah=app.mc.getWindow().getGuiScaledHeight();scale=(float)Math.min(1,Math.min(aw/520.0,ah/360.0));width=(int)(aw/scale);height=(int)(ah/scale);
+  int aw=app.mc.getWindow().getGuiScaledWidth(),ah=app.mc.getWindow().getGuiScaledHeight();scale=(float)(.88*Math.min(aw/620.0,ah/400.0));width=620;height=400;offsetX=(int)((aw-width*scale)/2);offsetY=(int)((ah-height*scale)/2);
   button("Home",8,27,60,app::openHome);button("Diary",72,27,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",136,27,60,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",200,27,45,()->app.open(new ToolsScreen(app,"AI")));
   if(mode.equals("Calculator")){input=field(8,60,width-16,"(320 * 160) / 64");button("Calculate",8,85,100,()->{try{result=Double.toString(Calculator.evaluate(input.getValue()));UiSounds.count(app);}catch(RuntimeException e){result="Invalid arithmetic expression.";}});
    miningId=field(8,151,width-16,"Material ID, e.g. MITHRIL (model excludes Pristine/RNG)");
@@ -61,15 +62,15 @@ public final class ToolsScreen extends Screen {
   for(var e:app.book.diary)s.append("User note (active=").append(e.active).append(", done=").append(e.done).append("): ").append(e.text).append('\n');
   for(var e:app.menus.forge)s.append("Forge: ").append(e.count).append("x ").append(e.id).append(" ").append(CraftDiary.remaining(e,System.currentTimeMillis())).append('\n');return s.toString();
  }
- private net.minecraft.client.input.MouseButtonEvent scaled(net.minecraft.client.input.MouseButtonEvent e){return new net.minecraft.client.input.MouseButtonEvent(e.x()/scale,e.y()/scale,e.buttonInfo());}
+ private net.minecraft.client.input.MouseButtonEvent scaled(net.minecraft.client.input.MouseButtonEvent e){return new net.minecraft.client.input.MouseButtonEvent((e.x()-offsetX)/scale,(e.y()-offsetY)/scale,e.buttonInfo());}
  @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent e,boolean twice){return super.mouseClicked(scaled(e),twice);}
  @Override public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent e){return super.mouseReleased(scaled(e));}
  @Override public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent e,double dx,double dy){return super.mouseDragged(scaled(e),dx/scale,dy/scale);}
  @Override public boolean isPauseScreen(){return false;}
- @Override public boolean mouseScrolled(double x,double y,double sx,double sy){if(journal!=null&&journal.isMouseOver(x/scale,y/scale))return journal.mouseScrolled(x/scale,y/scale,sx,sy);page=Math.max(0,page+(sy<0?1:-1));if(!mode.equals("AI"))rebuildWidgets();return true;}
+ @Override public boolean mouseScrolled(double x,double y,double sx,double sy){if(journal!=null&&journal.isMouseOver((x-offsetX)/scale,(y-offsetY)/scale))return journal.mouseScrolled((x-offsetX)/scale,(y-offsetY)/scale,sx,sy);page=Math.max(0,page+(sy<0?1:-1));if(!mode.equals("AI"))rebuildWidgets();return true;}
  @Override public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float dt){
-  g.pose().pushMatrix();g.pose().scale(scale,scale);try{
-  mx=(int)(mx/scale);my=(int)(my/scale);Theme.background(g,font,width,height,"RECIPE HUNTER / "+mode);super.extractRenderState(g,mx,my,dt);
+  g.pose().pushMatrix();g.pose().translate(offsetX,offsetY);g.pose().scale(scale,scale);try{
+  mx=(int)((mx-offsetX)/scale);my=(int)((my-offsetY)/scale);Theme.background(g,font,width,height,"RECIPE HUNTER / "+mode);super.extractRenderState(g,mx,my,dt);
   if(mode.equals("Calculator")){g.textWithWordWrap(font,Component.literal(result),8,112,width-16,Theme.INK);g.text(font,"Optional mining assumptions (not a measured rate):",8,137,Theme.INK,false);return;}
   if(mode.equals("AI")){
    g.textWithWordWrap(font,Component.literal("API chat • Uses your goals and diary • Provider billing applies"),8,138,width-16,Theme.INK);

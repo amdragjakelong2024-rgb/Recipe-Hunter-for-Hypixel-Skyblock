@@ -10,7 +10,8 @@ public final class MaterialLedger {
  public void snapshot(String source,Map<String,Long> stock,long at,Quality quality){
   Map<String,Balance> values=new LinkedHashMap<>();stock.forEach((id,n)->{if(n>=0)values.put(id,new Balance(n,at,quality));});sources.put(source,values);
  }
- public Balance get(String source,String id){return sources.getOrDefault(source,Map.of()).getOrDefault(id,new Balance(0,0,Quality.UNKNOWN));}
+ public void put(String source,String id,Balance balance){sources.computeIfAbsent(source,k->new LinkedHashMap<>()).put(id,balance);}
+ public Balance get(String source,String id){return sources.getOrDefault(source,Map.of()).getOrDefault(id,new Balance(0,0,source.equals("Inventory")&&sources.containsKey(source)?Quality.LIVE:Quality.UNKNOWN));}
  public Map<String,Long> known(){Map<String,Long> result=new LinkedHashMap<>();for(var values:sources.values())for(var e:values.entrySet())if(e.getValue().quality!=Quality.UNKNOWN)result.merge(e.getKey(),e.getValue().amount,Math::addExact);return result;}
  public List<String> diagnostics(String id){List<String> lines=new ArrayList<>();for(var source:sources.keySet()){Balance b=get(source,id);lines.add(source+": "+(b.quality==Quality.UNKNOWN?"Unknown":Catalog.qty(b.amount))+" | "+b.quality+" | updated "+(b.updatedAt==0?"never":(System.currentTimeMillis()-b.updatedAt)/1000+"s ago"));}return lines;}
 }

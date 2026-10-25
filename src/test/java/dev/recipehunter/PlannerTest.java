@@ -210,6 +210,14 @@ public final class PlannerTest {
         var edited=CraftDiary.edit(c,entry,"My edited note",2000);check(edited.key.equals(entry.key)&&edited.done&&edited.text.equals("My edited note"),"edit preserves diary identity and completion");
         var timed=CraftDiary.parse(c,"2 Refined Mithril forge 4h",1000);var wording=CraftDiary.edit(c,timed,"2 Refined Mithril forge 4h - mining next",2000);eq(wording.readyAt,timed.readyAt,"editing note does not restart unchanged Forge timer");
         b.diary.clear();b.diary.add(edited);b.write(temp);check(Book.read(temp).diary.getFirst().done,"diary completion persists");
+        MenuTracker tracking=new MenuTracker();
+        tracking.sackMessage("[Sacks] +64 items. (Last 10s.)",Map.of("WHEAT",64L,"RAW_FISH",5L,"ROTTEN_FLESH",2L));
+        eq(tracking.sacks.get("WHEAT"),64,"farming sack itemized updates");eq(tracking.sacks.get("RAW_FISH"),5,"fishing sack itemized updates");eq(tracking.sacks.get("ROTTEN_FLESH"),2,"combat sack itemized updates");
+        tracking.sackMessage("[Sacks] -4 items. (Last 10s.)",Map.of("WHEAT",-4L));eq(tracking.sacks.get("WHEAT"),60,"sack withdrawal removes owned balance");
+        tracking.sackSnapshots.put("WHEAT",System.currentTimeMillis());tracking.sacks.put("WHEAT",70L);
+        tracking.sackMessage("[Sacks] +12 items. (Last 10s.)",Map.of("WHEAT",10L,"RAW_FISH",2L));
+        check(tracking.uncertainSacks.contains("WHEAT"),"overlapping snapshot is marked uncertain, not double counted");eq(tracking.sacks.get("RAW_FISH"),7,"unrelated sack remains live during another category scan");
+        check(!tracking.stock().containsKey("WHEAT"),"uncertain overlap excluded from owned stock");tracking.clear();check(tracking.sacks.isEmpty()&&tracking.sackSnapshots.isEmpty()&&tracking.uncertainSacks.isEmpty(),"profile change clears all sack evidence");
         ProgressTest.run(new Catalog(Files.newInputStream(Path.of(args[0]))));
         AiTest.run();
         System.out.println("PASS: "+checks+" checks; "+c.items.size()+" catalogue items.");

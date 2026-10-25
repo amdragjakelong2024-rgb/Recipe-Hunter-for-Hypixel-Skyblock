@@ -17,7 +17,7 @@ public final class HudPanels {
   else for(int i=page*3;i<Math.min(page*3+3,rows.size());i++){
    var row=rows.get(i);int top=25+(i-page*3)*31;g.item(Icons.stack(app,row.id()),5,top);
    g.text(app.mc.font,app.trim(app.catalog.item(row.id()).name,HudLayout.WIDTH-31),26,top,row.done()?0xff396920:Theme.INK,false);
-   String extra=row.count();
+   String extra=String.format(Locale.US,"%,.2f / %,d equiv.",row.equivalent(),row.total());
    if(row.forge()>0)extra+=" | Forge: "+row.forge();
    else if(row.pending()>0)extra+=" | Planned: "+row.pending();
    g.text(app.mc.font,app.trim(extra,HudLayout.WIDTH-93),26,top+11,Theme.MUTED,false);

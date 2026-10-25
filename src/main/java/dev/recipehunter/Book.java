@@ -32,7 +32,7 @@ public final class Book {
             if(b.history==null)b.history=new HashSet<>();
             if(b.celebrated==null)b.celebrated=new HashSet<>();if(b.completed==null)b.completed=new HashSet<>();if(b.diary==null)b.diary=new ArrayList<>();
             b.guiScale=Math.clamp(b.guiScale,0.65,1.6);b.hudScale=Math.clamp(b.hudScale,0.65,1.6);
-            for(Goal g:b.goals){if(g.expanded==null)g.expanded=new HashSet<>();if(g.checked==null)g.checked=new HashSet<>();b.history.add(g.id);if(g.id==null||g.count<1)throw new IOException("Invalid goal");if(g.owned==null)g.owned=new HashMap<>();if(g.choices==null)g.choices=new HashMap<>();if(g.rates==null)g.rates=new HashMap<>();}
+            for(Goal g:b.goals){if(g.materialDisplay==null)g.materialDisplay="Compact";if(g.gemDisplay==null)g.gemDisplay="Fine";if(g.expanded==null)g.expanded=new HashSet<>();if(g.checked==null)g.checked=new HashSet<>();b.history.add(g.id);if(g.id==null||g.count<1)throw new IOException("Invalid goal");if(g.owned==null)g.owned=new HashMap<>();if(g.choices==null)g.choices=new HashMap<>();if(g.rates==null)g.rates=new HashMap<>();}
             return b;
         }catch(JsonParseException e){throw new IOException("Invalid book; original file preserved",e);}
     }

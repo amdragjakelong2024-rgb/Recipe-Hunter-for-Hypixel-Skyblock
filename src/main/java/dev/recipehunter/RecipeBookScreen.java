@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
 
 /** Two-page book over the live world. All coordinates are book-local. */
 public final class RecipeBookScreen extends Screen {
- private final RecipeHunter app;private boolean all;private String query="",selected="",category="All";
+ private final RecipeHunter app;private boolean all,treeMode;private String query="",selected="",category="All";
  private int page,materialPage,ticks;private float scale;private int left,top;private long turnedAt;
  private static final int W=720,H=430,L=28,R=382,COL=306;
  private EditBox search;private final List<Entry> entries=new ArrayList<>();private final List<Text> texts=new ArrayList<>();private final List<ItemIcon> icons=new ArrayList<>();
@@ -17,13 +17,14 @@ public final class RecipeBookScreen extends Screen {
  private record Entry(Book.Goal goal,int x,int y,int width){}
  private record ItemIcon(String id,int x,int y){}
  public RecipeBookScreen(RecipeHunter app,boolean all,String query,String selected){super(Component.literal(all?"All Recipes":"Recipe Book"));this.app=app;this.all=all;this.query=query;this.selected=selected;}
+ @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
  @Override public boolean isPauseScreen(){return false;}
  @Override public void onClose(){app.closeBook();}
  private void button(String label,int x,int y,int w,Runnable action){addRenderableWidget(new GlowButton(label,x,y,w,action));}
  private void text(String value,int x,int y,int width,int color){texts.add(new Text(value,x,y,width,color));}
  private void flip(){turnedAt=System.nanoTime();UiSounds.page(app);rebuildWidgets();}
  @Override protected void init(){
-  scale=(float)Math.min(Math.min(width/(double)W,height/(double)H)*.90,app.book.guiScale);left=(int)((width-W*scale)/2);top=(int)((height-H*scale)/2);
+  scale=(float)Math.min(width/(double)W,height/(double)H)*Math.min(.94,.88*app.book.guiScale);left=(int)((width-W*scale)/2);top=(int)((height-H*scale)/2);
   entries.clear();texts.clear();icons.clear();
   text(all?"ALL RECIPES":"RECIPE BOOK",L,36,COL,Theme.INK);
   if(!all)text("Your saved recipes show here",L,51,COL,Theme.MUTED);
@@ -76,16 +77,16 @@ public final class RecipeBookScreen extends Screen {
   button("Reset x1",R+180,63,72,()->quantity(goal,1));
   button("Back",R+259,63,47,()->{selected="";all=false;flip();});
   RecipeProgress engine=new RecipeProgress(app.catalog);RecipeProgress.Node tree=app.tree(goal);
-  text("Required Materials",R,94,COL,Theme.INK);
-  List<RecipeProgress.Node> materials=engine.displayed(tree,goal);int pages=Math.max(1,(materials.size()+2)/3);materialPage=Math.clamp(materialPage,0,pages-1);
+  text("Materials (known stock)",R,94,COL,Theme.INK);
+  List<RecipeProgress.Node> materials;if(treeMode){materials=new ArrayList<>();for(var child:tree.children)treeRows(child,goal,materials);}else materials=engine.displayed(tree,goal);int pages=Math.max(1,(materials.size()+2)/3);materialPage=Math.clamp(materialPage,0,pages-1);
   for(int i=materialPage*3;i<Math.min(materials.size(),materialPage*3+3);i++){
    var node=materials.get(i);int y=112+(i-materialPage*3)*44;icons.add(new ItemIcon(node.id,R,y));
-   button(app.trim(app.catalog.item(node.id).name,COL-27),R+24,y,COL-24,()->{goal.expanded.add(node.id);app.persist();flip();});
+   button((node.children.isEmpty()?"":goal.expanded.contains(node.id)?"- ":"+ ")+app.trim(app.catalog.item(node.id).name,COL-39),R+24,y,COL-24,()->{if(!goal.expanded.remove(node.id))goal.expanded.add(node.id);treeMode=true;app.persist();flip();});
    text(node.row().percent()+" | "+number(node.equivalent)+" / "+Catalog.qty(node.total),R+24,y+21,COL-24,Theme.MUTED);
-   String parent=node.parent.isEmpty()?selected:node.parent;text("Needed for: "+app.catalog.item(parent).name,R+24,y+32,COL-24,Theme.MUTED);
+   String parent=node.parent.isEmpty()?selected:node.parent;text((node.forge>0?"Forge: "+node.forge+" | ":node.reserved>0?"Reserved: "+number(node.reserved)+" | ":"")+"For: "+app.catalog.item(parent).name,R+24,y+32,COL-24,Theme.MUTED);
   }
   button("<",R,247,24,()->{materialPage=Math.max(0,materialPage-1);flip();});button(">",R+28,247,24,()->{materialPage=Math.min(pages-1,materialPage+1);flip();});
-  button("Recipe tree",R+60,247,104,()->app.open(new HunterScreen(app,HunterScreen.Mode.DETAIL,selected)));
+  button(treeMode?"Materials":"Recipe tree",R+60,247,104,()->{treeMode=!treeMode;materialPage=0;flip();});
   button("Reset branches",R+172,247,134,()->{goal.expanded.clear();app.persist();flip();});
   selector("Material Display",new ArrayList<>(engine.materialOptions(tree)),goal.materialDisplay,R,274,value->{goal.materialDisplay=value;app.persist();rebuildWidgets();});
   selector("Gemstone Display",new ArrayList<>(engine.gemOptions(tree)),goal.gemDisplay,R,306,value->{goal.gemDisplay=value;app.persist();rebuildWidgets();});
@@ -98,6 +99,7 @@ public final class RecipeBookScreen extends Screen {
   }else text("Acquired directly",R,351,COL,Theme.MUTED);
   button("Save as Goal",R+60,395,186,()->{app.save(goal);rebuildWidgets();});
  }
+ private void treeRows(RecipeProgress.Node node,Book.Goal goal,List<RecipeProgress.Node> rows){rows.add(node);if(goal.expanded.contains(node.id))for(var child:node.children)treeRows(child,goal,rows);}
  private void selector(String title,List<String> options,String current,int x,int y,java.util.function.Consumer<String> action){if(options.isEmpty())return;text(title,x,y,COL,Theme.MUTED);int w=COL/options.size();for(int i=0;i<options.size();i++){String option=options.get(i);button((option.equals(current)?"* ":"")+option,x+i*w,y+10,w-3,()->action.accept(option));}}
  private void quantity(Book.Goal goal,long n){if(n<1||n>1000000){app.say("Enter a whole quantity from 1 to 1000000.");return;}goal.count=n;app.persist();UiSounds.count(app);rebuildWidgets();}
  private static String number(double n){return n==Math.rint(n)?String.format(Locale.US,"%,.0f",n):String.format(Locale.US,"%,.3f",n);}

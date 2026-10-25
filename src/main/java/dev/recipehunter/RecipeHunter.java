@@ -85,6 +85,7 @@ public final class RecipeHunter implements ClientModInitializer {
             case "ai"->open(new ToolsScreen(this,"AI"));
             case "gui"->open(new HudEditor(this));
             case "settings"->open(new HunterScreen(this,HunterScreen.Mode.SETTINGS,""));
+            case "status"->{say("Use /rh status <SkyBlock item ID> for source counts and update times. Inventory is live; unseen storage is Unknown.");}
             case "sackstatus"->{say(menus.sackStatus()+" | notifications: "+menus.sackNoticeCount+" | parsed: "+menus.sackParsedCount+" | no details: "+menus.sackUnparsedCount+". Enable Hypixel SkyBlock Settings > Personal > Chat Feedback > Sack Notifications.");}
             case "assistant"->{book.assistant=!book.assistant;persist();openBook();}
             case "bigger"->resizeGui(0.1);
@@ -128,12 +129,14 @@ public final class RecipeHunter implements ClientModInitializer {
             ledger.snapshot("Ender Chest",menus.ender.totals(),menus.observedAt,MaterialLedger.Quality.LAST_SYNCED);
             ledger.snapshot("Island chests",ownership.storage.totals(),now,MaterialLedger.Quality.LAST_SYNCED);
             Map<String,Long> sackStock=new HashMap<>(menus.sacks);menus.uncertainSacks.forEach(sackStock::remove);
-            ledger.snapshot("Sacks",sackStock,Math.max(menus.lastSackMessageAt,menus.lastSackSnapshotAt),menus.sackSynced()?MaterialLedger.Quality.LAST_SYNCED:MaterialLedger.Quality.SESSION_ONLY);
+            ledger.snapshot("Sacks",Map.of(),now,MaterialLedger.Quality.UNKNOWN);
+            for(var e:menus.sacks.entrySet())ledger.put("Sacks",e.getKey(),new MaterialLedger.Balance(e.getValue(),Math.max(menus.lastSackMessageAt,menus.sackSnapshots.getOrDefault(e.getKey(),0L)),menus.uncertainSacks.contains(e.getKey())?MaterialLedger.Quality.UNKNOWN:menus.sackSnapshots.containsKey(e.getKey())?MaterialLedger.Quality.LAST_SYNCED:MaterialLedger.Quality.SESSION_ONLY));
             Map<String,Long> pool=new HashMap<>(onHypixel()?ownership.stock(mc):Map.of());if(onHypixel())menus.stock().forEach((id,n)->pool.merge(id,n,Long::sum));
             var pending=CraftDiary.mergeReservations(book.diary,menus.forge);var forge=CraftDiary.pending(menus.forge);var engine=new RecipeProgress(catalog);
             for(Book.Goal goal:book.goals)goal.owned.forEach((id,n)->pool.merge(id,n,Math::max));
+            Map<String,Long> plannedPool=new HashMap<>(pool);pending.forEach((id,n)->plannedPool.merge(id,n,Math::addExact));
             for(Book.Goal goal:book.goals)try{
-                var tree=engine.allocate(goal,pool,pending,forge);progressTrees.put(goal.id,tree);
+                var tree=engine.allocateReserved(goal,pool,plannedPool,pending,forge);progressTrees.put(goal.id,tree);
                 hudPlans.put(goal.id,plan(goal));hudProgress.put(goal.id,engine.displayed(tree,goal).stream().map(RecipeProgress.Node::row).toList());
             }catch(RuntimeException e){error="Progress unavailable: "+e.getMessage();}
         }

@@ -25,10 +25,11 @@ public final class HunterScreen extends Screen {
     private final List<CountRow> counts=new ArrayList<>();
     private record Hover(int x,int y,int w,String text,String id){}
     private record Icon(String id,int x,int y,long count){}private record Label(String text,int x,int y,int color){}
-    private float uiScale=1;private int actualWidth,actualHeight;
+    private int offsetX,offsetY;private float uiScale=1;private int actualWidth,actualHeight;
     private int bodyY=122,footerY,rowsPerPage;private List<String> notes=List.of();
     public HunterScreen(RecipeHunter app,Mode mode,String q){super(Component.literal("Recipe Hunter"));this.app=app;this.mode=mode;query=q;focus=q;}
-    @Override public void onClose(){app.closeBook();}
+    @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
+ @Override public void onClose(){app.closeBook();}
     @Override public boolean isPauseScreen(){return false;}
     @Override public void tick(){super.tick();if(mode!=Mode.DETAIL)return;
         if(++refreshTicks%5==0&&!counts.isEmpty()){var stock=app.stock(goal);var forge=CraftDiary.pending(app.menus.forge);for(var row:counts){long have=Math.min(row.total,stock.getOrDefault(row.id,0L));String text=have+"/"+row.total+" "+app.catalog.item(row.id).name;long n=forge.getOrDefault(row.id,0L);if(n>0)text+=" | Forge: "+n;row.button.setMessage(Component.literal(app.trim(text,row.width-40)).withStyle(style->style.withColor(have>=row.total?0x85d65c:app.catalog.item(row.id).color)));}}
@@ -37,8 +38,8 @@ public final class HunterScreen extends Screen {
     private void label(String text,int x,int y,int color){labels.add(new Label(text,x,y,color));}
     @Override protected void init(){
         actualWidth=app.mc.getWindow().getGuiScaledWidth();actualHeight=app.mc.getWindow().getGuiScaledHeight();
-        uiScale=(float)Math.min(app.book.guiScale,Math.min(actualWidth/520.0,actualHeight/360.0));
-        width=(int)(actualWidth/uiScale);height=(int)(actualHeight/uiScale);
+        uiScale=(float)Math.min(app.book.guiScale,.88*Math.min(actualWidth/620.0,actualHeight/400.0));
+        width=620;height=400;offsetX=(int)((actualWidth-width*uiScale)/2);offsetY=(int)((actualHeight-height*uiScale)/2);
         icons.clear();labels.clear();hovers.clear();counts.clear();footerY=height-58;rowsPerPage=Math.max(1,(footerY-bodyY-18)/23);
         int w=Math.max(140,width-24);search=addRenderableWidget(new EditBox(font,12,28,w-80,20,Component.literal("Search item")));search.setMaxLength(100);search.setValue(mode==Mode.SEARCH?query:"");search.setHint(Component.literal("Search item or pet rarity..."));
         button("Search",width-86,28,74,()->app.command(search.getValue()));
@@ -176,8 +177,8 @@ public final class HunterScreen extends Screen {
     private void sources(Catalog.Item item){
         List<String> lines=new ArrayList<>();lines.add(item.name);
         lines.add("Inventory: "+app.ownership.inventory(app.mc).getOrDefault(item.id,0L));
-        lines.add("Sacks: "+app.menus.sacks.getOrDefault(item.id,0L));
-        lines.add("Ender Chest: "+app.menus.ender.totals().getOrDefault(item.id,0L));
+        lines.add("Sacks: "+(app.menus.uncertainSacks.contains(item.id)||!app.menus.sacks.containsKey(item.id)?"Unknown":app.menus.sacks.get(item.id)+" (last observed)"));
+        lines.add("Ender Chest: "+(app.menus.ender.size()==0?"Unknown":app.menus.ender.totals().getOrDefault(item.id,0L)+" (last synced)"));
         lines.add("Forge: "+CraftDiary.pending(app.menus.forge).getOrDefault(item.id,0L));
         lines.add("Open storage to refresh");showNotes(lines);
     }
@@ -209,7 +210,7 @@ public final class HunterScreen extends Screen {
     private void pageButtons(int size,int capacity){int total=Math.max(1,(size+capacity-1)/capacity);page=Math.min(page,total-1);int y=footerY-17;
         button("<",width-108,y,24,()->{page=Math.max(0,page-1);UiSounds.page(app);refresh();});button(">",width-36,y,24,()->{page=Math.min(total-1,page+1);UiSounds.page(app);refresh();});label((page+1)+"/"+total,width-80,y+6,0xffa9bac8);}
     private ItemStack icon(String id){return Icons.stack(app,id);}
-    private MouseButtonEvent scaled(MouseButtonEvent e){return new MouseButtonEvent(e.x()/uiScale,e.y()/uiScale,e.buttonInfo());}
+    private MouseButtonEvent scaled(MouseButtonEvent e){return new MouseButtonEvent((e.x()-offsetX)/uiScale,(e.y()-offsetY)/uiScale,e.buttonInfo());}
     @Override public boolean mouseClicked(MouseButtonEvent e,boolean twice){
         MouseButtonEvent p=scaled(e);
         for(Icon i:icons)if(p.x()>=i.x&&p.x()<i.x+20&&p.y()>=i.y&&p.y()<i.y+20){app.gameRecipe(i.id);return true;}
@@ -217,10 +218,10 @@ public final class HunterScreen extends Screen {
     }
     @Override public boolean mouseReleased(MouseButtonEvent e){return super.mouseReleased(scaled(e));}
     @Override public boolean mouseDragged(MouseButtonEvent e,double dx,double dy){return super.mouseDragged(scaled(e),dx/uiScale,dy/uiScale);}
-    @Override public boolean mouseScrolled(double x,double y,double sx,double sy){return super.mouseScrolled(x/uiScale,y/uiScale,sx,sy);}
+    @Override public boolean mouseScrolled(double x,double y,double sx,double sy){return super.mouseScrolled((x-offsetX)/uiScale,(y-offsetY)/uiScale,sx,sy);}
     @Override public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float dt){
-        int physicalMx=mx,physicalMy=my;mx=(int)(mx/uiScale);my=(int)(my/uiScale);
-        g.pose().pushMatrix();g.pose().scale(uiScale,uiScale);
+        int physicalMx=mx,physicalMy=my;mx=(int)((mx-offsetX)/uiScale);my=(int)((my-offsetY)/uiScale);
+        g.pose().pushMatrix();g.pose().translate(offsetX,offsetY);g.pose().scale(uiScale,uiScale);
         Theme.background(g,font,width,height,"RECIPE HUNTER");
         for(Label l:labels)g.text(font,l.text,l.x,l.y,Theme.ink(l.color),false);
         super.extractRenderState(g,mx,my,dt);
