@@ -11,10 +11,10 @@ import com.google.common.collect.ImmutableMultimap;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 public final class Icons {
- private static final Map<String,ItemStack> CACHE=new HashMap<>();private static JsonObject definitions;private static Object resources;
+ private static final Map<String,ItemStack> CACHE=new HashMap<>();private static JsonObject definitions;private static Object resources;private static long refreshed;
  private static JsonObject definitions(){if(definitions==null){try(var in=Icons.class.getResourceAsStream("/assets/recipehunter/icons.json.gz")){definitions=JsonParser.parseReader(new java.io.InputStreamReader(new java.util.zip.GZIPInputStream(in),StandardCharsets.UTF_8)).getAsJsonObject();}catch(Exception e){definitions=new JsonObject();}}return definitions;}
  public static ItemStack stack(RecipeHunter app,String id){
-  if(resources!=app.mc.getResourceManager()){resources=app.mc.getResourceManager();CACHE.clear();}
+  if(resources!=app.mc.getResourceManager()||System.nanoTime()-refreshed>15_000_000_000L){resources=app.mc.getResourceManager();refreshed=System.nanoTime();CACHE.clear();}
   if(app.mc.player!=null)for(ItemStack s:app.mc.player.getInventory().getNonEquipmentItems())if(Ownership.id(s).equals(id))return s.copy();
   return CACHE.computeIfAbsent(id,k->build(app,k)).copy();
  }

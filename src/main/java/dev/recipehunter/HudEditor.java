@@ -14,8 +14,8 @@ public final class HudEditor extends Screen {
     private long page;
     public HudEditor(RecipeHunter app){super(Component.literal("Recipe Hunter HUD editor"));this.app=app;}
     @Override protected void init(){
-        addRenderableWidget(Button.builder(Component.literal("Settings"),b->app.open(new HunterScreen(app,HunterScreen.Mode.SETTINGS,""))).bounds(8,height-25,80,20).build());
-        addRenderableWidget(Button.builder(Component.literal("Done"),b->onClose()).bounds(width-88,height-25,80,20).build());
+        addRenderableWidget(new GlowButton("Settings",8,height-25,80,()->app.open(new HunterScreen(app,HunterScreen.Mode.SETTINGS,""))));
+        addRenderableWidget(new GlowButton("Done",width-88,height-25,80,this::onClose));
         for(Book.Goal goal:app.book.goals)if(goal.visible)app.hudPlans.put(goal.id,app.plan(goal));
     }
     private Book.Goal hit(double mx,double my){

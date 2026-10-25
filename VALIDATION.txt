@@ -3,7 +3,7 @@ Recipe Hunter 0.4.1 / Minecraft 26.1.2
 GitHub Actions build with JDK 25, Gradle 9.7.0, Loom 1.18.2,
 Fabric Loader 0.19.3 and Fabric API 0.155.3+26.1.2.
 
-Automated assertions cover 8848 catalogue items. See the matching Actions run for the final check count.
+Automated assertion suite: 157 checks passed against 8848 catalogue items.
 The suite is wired into Gradle check through plannerTest; it is not a JUnit suite.
 Coverage includes original recipe graph/rounding/ownership/persistence checks,
 compact enchanted blocks plus direct lower-tier ingredients, explicit expansion,
@@ -19,6 +19,8 @@ packet ordering, craft detection under server lag, and actual provider authentic
 No user API key was used and no paid AI request was made during validation.
 
 Additional coverage: queue ordering/hiding, reset quantity calculation, encrypted settings round trip, provider isolation, restart persistence, saved-key deletion and icon metadata.
+
+Provider transport tests use mocked replies: endpoints, bearer headers, token parameters, conversation context, connection checks, credential redaction, HTTP errors and malformed responses.
 
 API adapters are experimental. The default local planner and estimates do not need them.
 Time estimates remain estimates, with unknown-rate and approximate-model labels.

@@ -17,6 +17,7 @@ for item in catalog['items']:
  if base in variants:base=variants[base][min(damage,len(variants[base])-1)]
  elif base in ('wool','carpet','stained_glass','stained_glass_pane','stained_hardened_clay','banner'):base=colors[(15-damage if base=='banner' else damage)%16]+'_'+('terracotta' if base=='stained_hardened_clay' else base.replace('stained_','stained_'))
  elif base in ('log','log2','planks','sapling','leaves','leaves2','wooden_slab'):base=woods[(damage%4+4 if base.endswith('2') else damage%6) %6]+'_'+{'log2':'log','leaves2':'leaves','wooden_slab':'slab'}.get(base,base)
+ elif base=='spawn_egg':base={50:'creeper',51:'skeleton',52:'spider',54:'zombie',55:'slime',56:'ghast',57:'zombified_piglin',58:'enderman',59:'cave_spider',60:'silverfish',61:'blaze',62:'magma_cube',65:'bat',66:'witch',90:'pig',91:'sheep',92:'cow',93:'chicken',94:'squid',95:'wolf',96:'mooshroom',98:'ocelot',100:'horse',101:'rabbit',120:'villager'}.get(damage,'pig')+'_spawn_egg'
  elif base=='skull':base=['skeleton_skull','wither_skeleton_skull','zombie_head','player_head','creeper_head','dragon_head'][min(damage,5)]
  elif base.startswith('record_'):base=base.replace('record_','music_disc_')
  else:base=alias.get(base,base)

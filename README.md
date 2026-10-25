@@ -98,3 +98,5 @@ GitHub Actions builds the same targets and uploads the JAR and sources. The asse
 ## Data and licensing
 
 Code: MIT (`LICENSE`). Bundled recipe data: NEU (`NEU-DATA-LICENSE.txt`). Recipe previews preserve catalogue slot positions. Local book data is under `config/recipehunter/<Minecraft UUID>.json`; back it up before installing an update. Configuration, run files, builds and secrets are excluded from git.
+
+Icon metadata is generated with `scripts/build_icons.py` from NEU commit `bc21f3b10afe7fb11b15569128cea08be72a8241`, with removed catalogue entries recovered from the original recipe snapshot. The bundled compressed metadata contains 8842 item definitions; synthetic planning-only entries use fallback icons.
