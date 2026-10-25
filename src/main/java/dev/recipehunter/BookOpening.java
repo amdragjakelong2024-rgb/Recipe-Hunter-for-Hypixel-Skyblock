@@ -21,8 +21,8 @@ public final class BookOpening extends Screen {
  @Override public boolean isPauseScreen(){return false;}
  @Override public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float dt){
   double age=(System.nanoTime()-started)/1e9;float open=closing?1-opening(age):opening(age);
-  g.fill(0,0,width,height,0xff302619);
-  g.book(model,Identifier.fromNamespaceAndPath("minecraft","textures/entity/enchantment/enchanting_table_book.png"),Math.min(width,height)*.92f,open,(float)(closing?2.4-age*1.5:.2+age*2.1),0,0,width,height);
+
+  g.book(model,Identifier.fromNamespaceAndPath("minecraft","textures/entity/enchantment/enchanting_table_book.png"),Math.min(width,height)*.72f,open,(float)(closing?2.4-age*1.5:.2+age*2.1),0,0,width,height);
   String title="RECIPE HUNTER";int x=(width-font.width(title))/2;
   for(int i=0;i<title.length();i++){String c=title.substring(i,i+1);g.text(font,c,x,16,Theme.rainbow(i*.035),true);x+=font.width(c);}
   g.centeredText(font,"Click to skip",width/2,height-20,0xffc4b99d);

@@ -193,8 +193,8 @@ public final class HunterScreen extends Screen {
         rate=addRenderableWidget(new EditBox(font,104,y,85,20,Component.literal("Measured items per hour")));rate.setMaxLength(14);rate.setValue(Double.toString(goal.rates.getOrDefault(focus,0.0)));
         button("Apply",196,y,62,()->{try{long n=Long.parseLong(owned.getValue().replace(",",""));double r=Double.parseDouble(rate.getValue().replace(",","."));if(n<0||n>1_000_000_000_000L||!Double.isFinite(r)||r<0)throw new NumberFormatException();goal.owned.put(focus,n);goal.rates.put(focus,r);app.persist();refresh();}catch(NumberFormatException e){app.say("Enter non-negative numbers. Have is a total, not an extra amount.");}});
         button("Clear",264,y,55,()->{goal.owned.remove(focus);goal.rates.remove(focus);app.persist();refresh();});
-        button(goal.expanded.contains(focus)?"Collapse":"Expand inputs",325,y,105,()->{if(!goal.expanded.remove(focus))goal.expanded.add(focus);app.persist();tab=1;refresh();});
-        button(goal.compact?"Compact":"Full",435,y,70,()->{goal.compact=!goal.compact;app.persist();refresh();});
+        button("Recipe Book",325,y,105,()->app.open(new RecipeBookScreen(app,true,"",goal.id)));
+
     }
     private void inspect(String id){focus=id;tab=0;page=0;refresh();}
     private Button row(String id,String suffix,int y,int x,int w,Runnable action){

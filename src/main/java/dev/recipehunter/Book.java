@@ -7,6 +7,7 @@ import java.util.*;
 public final class Book {
     public static final class Goal {
         public String id; public boolean visible=true; public long count=1;
+        public int hudPage=0; public String materialDisplay="Compact",gemDisplay="Fine";
         public Set<String> checked=new HashSet<>();
         public boolean fineGems=false;
         public boolean compact=true,freshCraft=false; public long crafted=0; public Set<String> expanded=new HashSet<>();
@@ -18,7 +19,7 @@ public final class Book {
     }
     public Set<String> history=new HashSet<>(),completed=new HashSet<>(),celebrated=new HashSet<>();
     public List<CraftDiary.Entry> diary=new ArrayList<>();
-    public boolean uiSounds=true;
+    public boolean uiSounds=true,animations=true;
     public boolean assistant=false,celebrations=true,celebrationSound=true;
     public double guiScale=1.0,hudScale=1.0;
     public String assistantItem="";

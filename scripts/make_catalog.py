@@ -4,7 +4,7 @@ def clean(s): return re.sub(r'§.', '',s)
 def ing(s):
  if not s:return None
  a=s.rsplit(':',1)
- return {'id':a[0] if len(a)==2 and a[1].isdigit() else s,'count':int(a[1]) if len(a)==2 and a[1].isdigit() else 1}
+ return {'id':a[0] if len(a)==2 and bool(re.fullmatch(r'[0-9]+(?:\.0+)?',a[1])) else s,'count':int(float(a[1])) if len(a)==2 and bool(re.fullmatch(r'[0-9]+(?:\.0+)?',a[1])) else 1}
 for f in sorted((repo/'items').glob('*.json')):
  d=json.loads(f.read_text()); id=d.get('internalname',f.stem); name=clean(d.get('displayname',id)); rarity=''
  if '{LVL}' in name and ';' in id:

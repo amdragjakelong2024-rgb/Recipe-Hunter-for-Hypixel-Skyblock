@@ -100,3 +100,6 @@ Give the owner a concise summary of changed files, exact behavior verified, test
 ## Catalogue scope
 
 Recipe lookup and planning must use the bundled Hypixel SkyBlock (NEU) catalogue only. Do not import the Minecraft recipe registry. Vanilla render icons do not establish recipe availability. Keep shared SkyBlock materials such as Cobblestone and Diamond; exclude Netherite and Ancient Debris. CI runs `scripts/check_catalog_scope.py` to catch accidental vanilla imports.
+## 2026-10-25 live sack diagnostic patch (unreleased)
+
+A separate `update/live-sacks-20261025` branch improves plus/minus-prefixed `[Sacks]` hover parsing, checks ID mapping for Mithril and records incoming-notification counts. Run `/rh sackstatus` in-game while mining to distinguish notifications disabled, hover data unreadable, or successful parsing. This is **not** a fully instant packet-level sack feed: Hypixel batches its chat notifications; the user must enable Hypixel Chat Feedback → Sack Notifications, but should not need to open the sack for each refresh. Verify the messages truly reach `ClientReceiveMessageEvents.GAME` and check real in-game behavior before merging to `main` or publishing.

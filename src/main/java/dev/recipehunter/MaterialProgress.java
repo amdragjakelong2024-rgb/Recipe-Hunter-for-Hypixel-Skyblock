@@ -22,7 +22,7 @@ public final class MaterialProgress {
    if(n<0.1)return String.format(Locale.US,"%.3f%%",n);
    if(n<1)return String.format(Locale.US,"%.2f%%",n);
    if(n<10)return String.format(Locale.US,"%.1f%%",n);
-   return String.format(Locale.US,"%.0f%%",n);
+   return n<100?String.format(Locale.US,"%.1f%%",Math.floor(n*10)/10):"100%";
   }
  }
 

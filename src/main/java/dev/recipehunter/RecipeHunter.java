@@ -26,13 +26,19 @@ public final class RecipeHunter implements ClientModInitializer {
     public static RecipeHunter INSTANCE;
     public final Minecraft mc=Minecraft.getInstance();
     public final MenuTracker menus=new MenuTracker(); public final GrindEstimates estimates=new GrindEstimates(); public final AiClient ai=new AiClient();
+    public final MaterialLedger ledger=new MaterialLedger();
+    public final Map<String,RecipeProgress.Node> progressTrees=new HashMap<>();
     public Catalog catalog; public Planner planner;public Book book=new Book();public final Ownership ownership=new Ownership();
     public String error="",lastViewed="",account="";public Book.Goal draft;
     private Path bookPath;private boolean writable=true;private Screen nextScreen;
     private int ticks;public String context="";public final Assistant assistant=new Assistant();public final Celebration celebration=new Celebration();
     public final Map<String,Planner.Plan> hudPlans=new HashMap<>();
     public final Map<String,List<MaterialProgress.Row>> hudProgress=new HashMap<>();
-    public List<MaterialProgress.Row> progress(Book.Goal goal){var stock=stock(goal);var pending=CraftDiary.mergeReservations(book.diary,menus.forge);return MaterialProgress.rows(goal,planner.goal(goal,stock,pending),stock,pending,CraftDiary.pending(menus.forge),catalog);}
+    public RecipeProgress.Node tree(Book.Goal goal){
+        RecipeProgress.Node cached=progressTrees.get(goal.id);if(cached!=null&&book.find(goal.id)==goal)return cached;
+        return new RecipeProgress(catalog).evaluate(goal,stock(goal),CraftDiary.mergeReservations(book.diary,menus.forge),CraftDiary.pending(menus.forge));
+    }
+    public List<MaterialProgress.Row> progress(Book.Goal goal){return new RecipeProgress(catalog).displayed(tree(goal),goal).stream().map(RecipeProgress.Node::row).toList();}
     @Override public void onInitializeClient(){
         INSTANCE=this; ai.load(FabricLoader.getInstance().getConfigDir().resolve("recipehunter-private")); InventoryOverlay.register(this);
         try{catalog=new Catalog(getClass().getResourceAsStream("/assets/recipehunter/catalog.json"));planner=new Planner(catalog);}catch(Exception e){error=e.getMessage();}
@@ -42,15 +48,15 @@ public final class RecipeHunter implements ClientModInitializer {
         });
         UseBlockCallback.EVENT.register((player,world,hand,hit)->{if(world.isClientSide()&&onHypixel())ownership.clicked(mc,hit.getBlockPos(),context);return InteractionResult.PASS;});
         ClientTickEvents.END_CLIENT_TICK.register(client->tick());
-        ClientPlayConnectionEvents.JOIN.register((handler,sender,client)->{ownership.clear();menus.clear();estimates.reset();celebration.reset();assistant.reset();draft=null;account="";});
-        ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->{ownership.clear();menus.clear();estimates.reset();celebration.reset();assistant.reset();hudPlans.clear();});
+        ClientPlayConnectionEvents.JOIN.register((handler,sender,client)->{ownership.clear();menus.clear();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();celebration.reset();assistant.reset();draft=null;account="";});
+        ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->{ownership.clear();menus.clear();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();celebration.reset();assistant.reset();hudPlans.clear();});
         ClientReceiveMessageEvents.GAME.register((message,overlay)->{
             if(catalog!=null&&onHypixel()){
                 celebration.message(this,message.getString());
                 menus.sackMessage(message.getString(),SackChatTracker.changes(message,catalog));
             }
             String text=message.getString().toLowerCase(Locale.ROOT);
-            if(text.contains("profile")&&(text.contains("switched")||text.contains("switching")||text.contains("joined"))){ownership.clear();menus.clear();estimates.reset();for(Book.Goal g:book.goals)g.owned.clear();for(var e:book.diary)e.active=false;persist();celebration.reset();assistant.reset();hudPlans.clear();}
+            if(text.contains("profile")&&(text.contains("switched")||text.contains("switching")||text.contains("joined"))){ownership.clear();menus.clear();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();for(Book.Goal g:book.goals)g.owned.clear();for(var e:book.diary)e.active=false;persist();celebration.reset();assistant.reset();hudPlans.clear();}
         });
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("recipehunter","goals"),(g,dt)->hud(g));
     }
@@ -59,17 +65,18 @@ public final class RecipeHunter implements ClientModInitializer {
         bookPath=FabricLoader.getInstance().getConfigDir().resolve("recipehunter").resolve(id+".json");
         try{book=Book.read(bookPath);writable=true;for(Book.Goal g:book.goals)g.owned.clear();}catch(IOException e){book=new Book();writable=false;say("Book could not be loaded; original file preserved. "+e.getMessage());}
     }
-    public boolean persist(){ensureAccount();if(!writable){say("Cannot save: fix or back up the unreadable book file first.");return false;}try{book.write(bookPath);return true;}catch(IOException e){say("Save failed: "+e.getMessage());return false;}}
+    public boolean persist(){progressTrees.clear();hudProgress.clear();ensureAccount();if(!writable){say("Cannot save: fix or back up the unreadable book file first.");return false;}try{book.write(bookPath);return true;}catch(IOException e){say("Save failed: "+e.getMessage());return false;}}
     public void say(String s){if(mc.player!=null)mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+s));}
     public void open(Screen s){nextScreen=s;}
-    public void openHome(){ensureAccount();if(catalog==null){say(error);return;}open(new BookOpening(this));}
-    public void closeBook(){open(new BookOpening(this,true));}
-    public void openHomeContent(){open(new HunterScreen(this,HunterScreen.Mode.HOME,""));}
+    public void openHome(){ensureAccount();if(catalog==null){say(error);return;}if(book.animations)open(new BookOpening(this));else openHomeContent();}
+    public void closeBook(){if(book.animations)open(new BookOpening(this,true));else mc.setScreen(null);}
+    public void openHomeContent(){open(new RecipeBookScreen(this,false,"",""));}
     public void removeGoal(Book.Goal g){book.goals.remove(g);if(draft==g)draft=null;hudPlans.remove(g.id);book.last=book.goals.isEmpty()?"":book.goals.getFirst().id;persist();}
     public void gameRecipe(String id){if(!onHypixel()||mc.getConnection()==null){say("Join Hypixel SkyBlock to open server recipes.");return;}if(!id.matches("[A-Z0-9_;:-]+"))return;mc.setScreen(null);mc.getConnection().sendCommand("viewrecipe "+id);}
-    public void openBook(){ensureAccount();if(catalog==null){say(error);return;}open(new HunterScreen(this,HunterScreen.Mode.BOOK,""));}
+    public void openBook(){ensureAccount();if(catalog==null){say(error);return;}open(new RecipeBookScreen(this,false,"",""));}
     public void command(String query){
         ensureAccount();if(catalog==null){say(error);return;}String q=query.trim();
+        if(q.toLowerCase(Locale.ROOT).startsWith("status ")){String id=catalog.resolve(q.substring(7));if(id.isEmpty()){say("Unknown or ambiguous SkyBlock item. Use its exact ID.");return;}say(id);for(String line:ledger.diagnostics(id))say(line);say("Forge reserved: "+CraftDiary.pending(menus.forge).getOrDefault(id,0L)+" | session-acquired total: Unknown (transfers are not acquisitions)");return;}
         switch(q.toLowerCase(Locale.ROOT)){
             case ""->openHome();
             case "book"->openBook();
@@ -78,6 +85,7 @@ public final class RecipeHunter implements ClientModInitializer {
             case "ai"->open(new ToolsScreen(this,"AI"));
             case "gui"->open(new HudEditor(this));
             case "settings"->open(new HunterScreen(this,HunterScreen.Mode.SETTINGS,""));
+            case "sackstatus"->{say(menus.sackStatus()+" | notifications: "+menus.sackNoticeCount+" | parsed: "+menus.sackParsedCount+" | no details: "+menus.sackUnparsedCount+". Enable Hypixel SkyBlock Settings > Personal > Chat Feedback > Sack Notifications.");}
             case "assistant"->{book.assistant=!book.assistant;persist();openBook();}
             case "bigger"->resizeGui(0.1);
             case "smaller"->resizeGui(-0.1);
@@ -85,14 +93,14 @@ public final class RecipeHunter implements ClientModInitializer {
             case "hide","show"->{Book.Goal g=book.find(book.last);if(g==null)say("No saved goal yet.");else{g.visible=q.equalsIgnoreCase("show");persist();say((g.visible?"Shown: ":"Hidden: ")+catalog.item(g.id).name);}}
             default->{List<Catalog.Item> hits=catalog.search(q);if(hits.isEmpty()){say("No matching item: "+q);return;}
                 if(Catalog.score(Catalog.normal(q),Catalog.normal(hits.getFirst().name))==0)select(hits.getFirst().id,true);
-                else open(new HunterScreen(this,HunterScreen.Mode.SEARCH,q));}
+                else open(new RecipeBookScreen(this,true,q,""));}
         }
     }
     public Book.Goal goal(String id){Book.Goal g=book.find(id);if(g!=null)return g;if(draft==null||!draft.id.equals(id)){draft=new Book.Goal(id);draft.freshCraft=book.completed.contains(id);}return draft;}
     public void select(String id,boolean verifyPet){
         lastViewed=id;goal(id);
         if(verifyPet&&catalog.item(id).name.endsWith(" Pet")&&!ownership.petsVisited)say("Open /pet yourself and visit every page to verify your pets. Then reopen /rh book or this recipe.");
-        open(new HunterScreen(this,HunterScreen.Mode.DETAIL,id));
+        open(new RecipeBookScreen(this,true,"",id));
     }
     public void resizeGui(double amount){ensureAccount();book.guiScale=Math.clamp(book.guiScale+amount,0.65,1.6);persist();open(new HunterScreen(this,HunterScreen.Mode.SETTINGS,""));}
     public void toggleCheck(Book.Goal goal,String id){if(!goal.checked.remove(id))goal.checked.add(id);persist();hudPlans.clear();}
@@ -113,12 +121,27 @@ public final class RecipeHunter implements ClientModInitializer {
             ownership.scanPets(mc);ownership.scanChest(mc,context);menus.tick(this);estimates.tick(this);celebration.tick(this);assistant.tick(this,context);
         }
         if(nextScreen!=null){Screen s=nextScreen;nextScreen=null;mc.setScreen(s);}
-        if(ticks%5==0){hudPlans.clear();hudProgress.clear();Book.Goal active=book.active();if(active!=null){hudPlans.put(active.id,plan(active));try{hudProgress.put(active.id,progress(active));}catch(RuntimeException ignored){}}}
+        if(ticks%5==0){
+            hudPlans.clear();hudProgress.clear();progressTrees.clear();
+            long now=System.currentTimeMillis();
+            ledger.snapshot("Inventory",ownership.inventory(mc),now,MaterialLedger.Quality.LIVE);
+            ledger.snapshot("Ender Chest",menus.ender.totals(),menus.observedAt,MaterialLedger.Quality.LAST_SYNCED);
+            ledger.snapshot("Island chests",ownership.storage.totals(),now,MaterialLedger.Quality.LAST_SYNCED);
+            Map<String,Long> sackStock=new HashMap<>(menus.sacks);menus.uncertainSacks.forEach(sackStock::remove);
+            ledger.snapshot("Sacks",sackStock,Math.max(menus.lastSackMessageAt,menus.lastSackSnapshotAt),menus.sackSynced()?MaterialLedger.Quality.LAST_SYNCED:MaterialLedger.Quality.SESSION_ONLY);
+            Map<String,Long> pool=new HashMap<>(onHypixel()?ownership.stock(mc):Map.of());if(onHypixel())menus.stock().forEach((id,n)->pool.merge(id,n,Long::sum));
+            var pending=CraftDiary.mergeReservations(book.diary,menus.forge);var forge=CraftDiary.pending(menus.forge);var engine=new RecipeProgress(catalog);
+            for(Book.Goal goal:book.goals)goal.owned.forEach((id,n)->pool.merge(id,n,Math::max));
+            for(Book.Goal goal:book.goals)try{
+                var tree=engine.allocate(goal,pool,pending,forge);progressTrees.put(goal.id,tree);
+                hudPlans.put(goal.id,plan(goal));hudProgress.put(goal.id,engine.displayed(tree,goal).stream().map(RecipeProgress.Node::row).toList());
+            }catch(RuntimeException e){error="Progress unavailable: "+e.getMessage();}
+        }
     }
     void hud(GuiGraphicsExtractor g){
         if(catalog==null||mc.player==null||mc.options.hideGui||!onHypixel())return;
         if(mc.screen==null){
-            HudPanels.render(this,g,-1,-1,System.currentTimeMillis()/6000);
+            HudPanels.render(this,g,-1,-1,0);
             if(book.assistant&&!book.assistantItem.isEmpty()){
                 int y2=g.guiHeight()-48;g.fill(4,y2-4,g.guiWidth()-4,g.guiHeight()-3,0xeeeadbb5);g.text(mc.font,"ASSISTANT: "+trim(catalog.item(book.assistantItem).name,g.guiWidth()-95),10,y2,0xff426c20,true);
                 g.textWithWordWrap(mc.font,Component.literal(assistant.status),10,y2+13,g.guiWidth()-20,Theme.INK);

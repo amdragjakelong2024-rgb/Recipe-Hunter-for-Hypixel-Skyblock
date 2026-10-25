@@ -12,16 +12,36 @@ public final class Catalog {
     private static final class FileData { String date,commit; List<Item> items; }
     public final Map<String,Item> items=new LinkedHashMap<>();
     public final Map<String,List<String>> uses=new HashMap<>();
+    private final Map<String,Set<String>> names=new HashMap<>();
     public String date,commit;
     public Catalog(InputStream in)throws IOException {
         if(in==null)throw new IOException("Recipe catalogue missing");
         try(var reader=new InputStreamReader(in,StandardCharsets.UTF_8)){
             FileData data=new Gson().fromJson(reader,FileData.class);date=data.date;commit=data.commit;
-            for(Item i:data.items){i.name=i.name.replaceAll("[\\uE000-\\uF8FF]", "").trim();items.put(i.id,i);}
+            for(Item i:data.items){i.name=i.name.replaceAll("[\\uE000-\\uF8FF]", "").trim();items.put(i.id,i);names.computeIfAbsent(normal(i.name),k->new HashSet<>()).add(i.id);}
+        }
+        // Older NEU Forge entries encode integral quantities as decimal strings.
+        for(Item item:items.values())for(Route r:item.routes){
+            for(Ingredient ingredient:r.inputs)normalizeIngredient(ingredient);
+            for(Ingredient ingredient:r.slots)if(ingredient!=null)normalizeIngredient(ingredient);
         }
         for(Item item:items.values())for(Route r:item.routes)for(Ingredient in2:r.inputs) {
             List<String> list=uses.computeIfAbsent(in2.id,k->new ArrayList<>());if(!list.contains(item.id))list.add(item.id);
         }
+    }
+    private void normalizeIngredient(Ingredient ingredient){
+        if(items.containsKey(ingredient.id)||ingredient.id.equals("SKYBLOCK_COIN"))return;
+        int split=ingredient.id.lastIndexOf(':');if(split<1)return;
+        String base=ingredient.id.substring(0,split);
+        if(!items.containsKey(base)&&!base.equals("SKYBLOCK_COIN"))return;
+        try{long n=new java.math.BigDecimal(ingredient.id.substring(split+1)).longValueExact();
+            if(n>0){ingredient.count=Math.multiplyExact(ingredient.count,n);ingredient.id=base;}
+        }catch(ArithmeticException|NumberFormatException ignored){}
+    }
+    /** Resolve metadata first; labels must have exactly one catalogue match. */
+    public String resolve(String value){
+        if(value==null)return "";if(items.containsKey(value))return value;
+        var matches=names.get(normal(value));return matches!=null&&matches.size()==1?matches.iterator().next():"";
     }
     public Item item(String id){ Item i=items.get(id);if(i!=null)return i; i=new Item();i.id=id;i.name=id;i.icon="minecraft:paper";i.wiki="";i.requirement="";return i; }
     public static String normal(String s){return s.toLowerCase(Locale.ROOT).replaceAll("§.","").replaceAll("[^a-z0-9 ]"," ").replaceAll("\\s+"," ").trim();}

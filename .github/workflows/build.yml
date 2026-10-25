@@ -33,5 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: recipe-hunter-0.4.1-mc26.1.2
-          path: build/libs/
+          path: |
+            build/libs/
+            build/reports/catalogue-progress.txt
           if-no-files-found: error
