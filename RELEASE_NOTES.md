@@ -7,5 +7,5 @@
 
 **Minecraft 26.1.2 · Fabric · Java 25**
 
-Replace the old mod with `recipe-hunter-0.4.3+26.1.2.jar`.
+Replace the old mod with `recipe-hunter-0.4.1+26.1.2.jar`.
 Storage and Forge counts refresh when their game menus are observed. Inventory progress refreshes four times per second. Visual/audio behavior still needs in-game verification.

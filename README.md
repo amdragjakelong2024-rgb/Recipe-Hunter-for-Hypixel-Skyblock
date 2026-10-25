@@ -1,6 +1,6 @@
 # Recipe Hunter
 
-## 0.4.3 controls
+## 0.4.1 controls
 
 - `/rh`: opens the native animated Minecraft book, then **Locate any recipe**, search, hide/show, remove and reorder your queue using the arrow buttons.
 - `/rh book`: queued recipes and completed recipe collection. Only the first visible queue entry appears on the HUD.
@@ -35,7 +35,7 @@ Opening, page navigation, quantity confirmation and verified crafts use Minecraf
 ## Quick start
 
 1. Install Fabric for Minecraft **26.1.2**, Java **25**, and Fabric API **0.155.3+26.1.2** or a compatible release.
-2. Download `recipe-hunter-0.4.3+26.1.2.jar` from GitHub Releases and place it in `mods`. Do not install the `-sources.jar`.
+2. Download `recipe-hunter-0.4.1+26.1.2.jar` from GitHub Releases and place it in `mods`. Do not install the `-sources.jar`.
 3. Search using `/rh <item name>`, select a recipe, choose quantity, and Save.
 4. Open your inventory with `E` to access the book or move goal panels.
 5. Open the storage pages and Forge menu yourself to refresh the observations.

@@ -1,6 +1,7 @@
 # Changelog
 
-## 0.4.3
+## 0.4.1
+
 
 - Use vanilla parchment, layered book binding, ink text and experience-green accents.
 - Add a smooth native book-closing animation and distinct open/close sounds.
@@ -8,13 +9,11 @@
 - Show live owned/required material counts, item icons, progress bars and separate Forge totals.
 - Replace long screen explanations with concise storage counters.
 
-## 0.4.2
 
 - Open the recipe launcher through the native animated Minecraft 3D book.
 - Use Minecraft button textures and page, quantity and crafting sounds.
 - Keep Mithril Plate and other Forge intermediates compact until explicitly expanded.
 
-## 0.4.1
 
 - Add a recipe launcher with active-goal controls and a reorderable queue.
 - Display only the first visible queued goal; keep completed recipes in the book.
