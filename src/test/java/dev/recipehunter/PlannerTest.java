@@ -152,6 +152,7 @@ public final class PlannerTest {
         reopened.switchProvider();check(!reopened.configured(),"provider keys isolated");reopened.switchProvider();reopened.switchProvider();check(reopened.configured(),"provider key restored");reopened.clearKey();AiClient cleared=new AiClient();cleared.load(secretDir.resolve("ai"));check(!cleared.configured(),"key deletion persisted");
         try(var files=Files.walk(secretDir)){for(Path file:files.sorted(Comparator.reverseOrder()).toList())Files.delete(file);}
         try(var iconStream=PlannerTest.class.getResourceAsStream("/assets/recipehunter/icons.json.gz");var reader=new InputStreamReader(new java.util.zip.GZIPInputStream(iconStream))){var icons=com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();check(icons.size()>=8842,"icon catalogue coverage");check(icons.getAsJsonObject("DIVAN_HELMET").has("texture"),"custom head texture preserved");check(icons.getAsJsonObject("REFINED_MITHRIL").has("model"),"server item model preserved");}
+        AiTest.run();
         System.out.println("PASS: "+checks+" checks; "+c.items.size()+" catalogue items.");
         System.out.println("Legendary stone raw totals: "+stone.leaves);
         System.out.println("Epic -> Legendary totals: "+epicOwned.leaves);

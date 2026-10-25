@@ -19,7 +19,7 @@ The bundled NEU recipe catalogue is an offline snapshot. This update does not ch
 
 - **Compact materials:** keep Refined Mithril and enchanted blocks as ingredients instead of automatically expanding them into thousands of lower-tier items. Inspect an ingredient and select **Expand inputs**; **Full** restores the detailed collection-unit view.
 - **Recipe hover:** hover a recipe row or its icon to see the recorded crafting grid. Forge and Kat recipes show labelled inputs rather than an invented crafting grid.
-- **Quantity:** use `-`, `+`, or the quantity button (`+10`) to change the target. Counts and materials recalculate together.
+- **Quantity:** use `-`, `+`, **Reset x1**, or type a quantity and press **Set**. Counts and materials recalculate together.
 - **Inventory access:** open your normal inventory with `E`. Recipe Hunter and HUD size buttons are available there. Drag the **header** of the active goal panel, scroll anywhere over it to resize, and right-click to change its materials page. Normal inventory slots remain usable.
 - **Craft Diary:** `/rh diary` stores notes locally. An unambiguous entry such as `2 Refined Mithril forge 4h` becomes a pending reservation with a countdown. Ambiguous time ranges remain notes. Exclude or delete entries when cancelled or incorrect.
 - **Storage:** read your opened Ender Chest pages, own sack menus, island chests and Pets pages directly from game items/lore, without screenshots.
@@ -32,7 +32,7 @@ The bundled NEU recipe catalogue is an offline snapshot. This update does not ch
 ## Quick start
 
 1. Install Fabric for Minecraft **26.1.2**, Java **25**, and Fabric API **0.155.3+26.1.2** or a compatible release.
-2. Download the normal `recipe-hunter-0.4.1.jar` from the successful GitHub Actions run and place it in `mods`. Do not install the `-sources.jar`.
+2. Download `recipe-hunter-0.4.1+26.1.2.jar` from GitHub Releases and place it in `mods`. Do not install the `-sources.jar`.
 3. Search using `/rh <item name>`, select a recipe, choose quantity, and Save.
 4. Open your inventory with `E` to access the book or move goal panels.
 5. Open the storage pages and Forge menu yourself to refresh the observations.
@@ -48,7 +48,7 @@ The same item appearing in both the diary and Forge uses the **larger pending to
 
 A completed badge is separate from your checklist and from a saved recipe. Existing saved recipes are **not** migrated into completed achievements. Ingredient checkmarks are preserved on reconnect.
 
-Each goal is an independent calculation; it does not reserve inventory against other simultaneously displayed goals.
+Each goal is an independent calculation; it does not reserve inventory against other queued goals.
 
 ## Time estimates and AI
 

@@ -112,10 +112,9 @@ public final class HunterScreen extends Screen {
         button("-",width-202,101,24,()->{goal.count=Math.max(1,goal.count-1);app.persist();refresh();});
         button("+",width-174,101,24,()->{goal.count=Math.min(1000000,goal.count+1);app.persist();refresh();});
         EditBox quantity=addRenderableWidget(new EditBox(font,width-146,101,64,20,Component.literal("Target quantity")));
-        quantity.setMaxLength(7);quantity.setValue(Long.toString(goal.count));quantity.setFilter(s->s.matches("[0-9]{0,7}"));
-        quantity.setResponder(s->{try{long n=Long.parseLong(s);if(n>=1&&n<=1000000){goal.count=n;app.hudPlans.clear();app.persist();}}catch(NumberFormatException ignored){}});
+        quantity.setMaxLength(7);quantity.setValue(Long.toString(goal.count));
         button("Reset x1",width-276,101,70,()->{goal.count=1;app.persist();refresh();});
-        button("Set",width-72,101,60,this::refresh);
+        button("Set",width-72,101,60,()->{try{long n=Long.parseLong(quantity.getValue());if(n<1||n>1000000)throw new NumberFormatException();goal.count=n;app.hudPlans.clear();app.persist();refresh();}catch(NumberFormatException ex){app.say("Enter a whole quantity from 1 to 1000000.");}});
         if(tab==0)recipe(item);else if(tab==1)materials();else if(tab==2)steps();else if(tab==3)uses();else if(tab==5)grind();else sources(item);
         if(tab!=4&&tab!=5)stockControls(item);
     }

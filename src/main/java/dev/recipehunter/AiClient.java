@@ -14,6 +14,9 @@ public final class AiClient {
  public Provider provider=Provider.OPENAI;public String model="";private String key="";
  public volatile boolean busy;public volatile String answer="No request sent. Local recommendations are free.";
  private final HttpClient http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).followRedirects(HttpClient.Redirect.NEVER).build();
+ private final java.util.function.Function<HttpRequest,CompletableFuture<HttpResponse<String>>> transport;
+ public AiClient(){transport=request->http.sendAsync(request,HttpResponse.BodyHandlers.ofString());}
+ AiClient(java.util.function.Function<HttpRequest,CompletableFuture<HttpResponse<String>>> transport){this.transport=transport;}
  private PrivateSettings store;private final JsonObject saved=new JsonObject();
  private final java.util.List<JsonObject> conversation=new java.util.ArrayList<>();
  public volatile String status="Not connected";
@@ -40,7 +43,7 @@ public final class AiClient {
    for(JsonObject turn:conversation)messages.add(turn.deepCopy());JsonObject user=new JsonObject();user.addProperty("role","user");user.addProperty("content",safeQuestion.substring(0,Math.min(safeQuestion.length(),2000)));messages.add(user);
    body.addProperty(provider==Provider.OPENAI?"max_completion_tokens":"max_tokens",1200);
    HttpRequest request=HttpRequest.newBuilder(URI.create(provider.url)).timeout(Duration.ofSeconds(45)).header("Authorization","Bearer "+secret).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body.toString())).build();
-   http.sendAsync(request,HttpResponse.BodyHandlers.ofString()).orTimeout(50,TimeUnit.SECONDS).whenComplete((response,error)->{
+   transport.apply(request).orTimeout(50,TimeUnit.SECONDS).whenComplete((response,error)->{
     try{
      if(error!=null){answer="Connection failed or timed out. No automatic retry.";return;}
      if(response.statusCode()!=200){answer="Provider HTTP "+response.statusCode()+". Check model, key, quota and billing. No automatic retry.";return;}
@@ -56,7 +59,7 @@ public final class AiClient {
  public synchronized void testConnection(){
   if(busy)return;if(!configured()){status="Enter a model ID and key first";return;}busy=true;status="Testing connection...";
   try{String url=provider.url.replace("/chat/completions","/models");HttpRequest request=HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20)).header("Authorization","Bearer "+key).GET().build();
-   http.sendAsync(request,HttpResponse.BodyHandlers.ofString()).orTimeout(25,TimeUnit.SECONDS).whenComplete((response,error)->{try{if(error!=null){status="Connection failed or timed out";return;}if(response.statusCode()!=200){status="HTTP "+response.statusCode()+": check key, permissions and provider";return;}status="Connected. Model generation still depends on access and billing.";}finally{busy=false;}});
+   transport.apply(request).orTimeout(25,TimeUnit.SECONDS).whenComplete((response,error)->{try{if(error!=null){status="Connection failed or timed out";return;}if(response.statusCode()!=200){status="HTTP "+response.statusCode()+": check key, permissions and provider";return;}status="Connected. Model generation still depends on access and billing.";}finally{busy=false;}});
   }catch(RuntimeException e){busy=false;status="Invalid connection settings";}
  }
 
