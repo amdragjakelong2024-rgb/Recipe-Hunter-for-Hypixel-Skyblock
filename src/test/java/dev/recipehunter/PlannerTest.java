@@ -185,10 +185,10 @@ public final class PlannerTest {
         check(Math.abs(MaterialProgress.rows(tierGoal,tierPlan,Map.of("TEST_TIER_RAW",80L),Map.of(),Map.of(),c).getFirst().fraction()-.25)<1e-9,"re-render must not accumulate phantom materials");
         // The actual sacks message is an aggregate. Only its itemized hover is safe.
         check(SackChanges.parse("[Sacks] +1,556 items. (Last 12s.)").isEmpty(),"aggregate sack notification is ambiguous");
-        var sackAdds=SackChanges.parse("Added items:\\n 1,556 Mithril (Mining Sack)\\n 20 Enchanted Mithril (Enchanted Mining Sack)\\n\\nThis message can be disabled in the settings.");
+        var sackAdds=SackChanges.parse(String.join(String.valueOf((char)10),"Added items:"," 1,556 Mithril (Mining Sack)"," 20 Enchanted Mithril (Enchanted Mining Sack)","","This message can be disabled in the settings."));
         eq(sackAdds.get("Mithril"),1556,"parse regular Mithril from sack tooltip");
         eq(sackAdds.get("Enchanted Mithril"),20,"parse enchanted Mithril from sack tooltip");
-        var sackRemoved=SackChanges.parse("Removed items:\\n 60 Mithril (Mining Sack)\\n 3 Enchanted Mithril (Enchanted Mining Sack)");
+        var sackRemoved=SackChanges.parse(String.join(String.valueOf((char)10),"Removed items:"," 60 Mithril (Mining Sack)"," 3 Enchanted Mithril (Enchanted Mining Sack)"));
         eq(sackRemoved.get("Mithril"),-60,"parse sack withdrawals");
         eq(SackChanges.secondsBack("[Sacks] +1,556 items. (Last 12s.)"),12,"parse sack aggregation window");
         Planner.Plan progressPlan=new Planner.Plan();progressPlan.demand.put("ENCHANTED_COBBLESTONE",32L);progressPlan.missing.put("ENCHANTED_COBBLESTONE",21L);
