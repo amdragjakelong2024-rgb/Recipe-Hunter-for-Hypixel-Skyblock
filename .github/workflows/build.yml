@@ -1,4 +1,4 @@
-name: Build Recipe Hunter
+name: Build Recipe Hunter (no automatic release)
 
 on:
   push:
@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,23 +26,10 @@ jobs:
         run: /tmp/gradle-9.7.0/bin/gradle build plannerTest
       - name: Checksum artifacts
         run: sha256sum build/libs/*.jar > build/libs/SHA256SUMS.txt
+      # QA artifacts only. Never push to public Releases automatically.
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
           name: recipe-hunter-0.4.1-mc26.1.2
           path: build/libs/
           if-no-files-found: error
-      - name: Publish GitHub release
-        if: github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          cp build/libs/recipe-hunter-0.4.1.jar build/libs/recipe-hunter-0.4.1+26.1.2.jar
-          if gh release view 0.4.1 >/dev/null 2>&1; then
-            gh api --method PATCH "repos/$GH_REPO/git/refs/tags/0.4.1" -f sha="$GITHUB_SHA" -F force=true
-            gh release upload 0.4.1 build/libs/recipe-hunter-0.4.1+26.1.2.jar --clobber
-            gh release edit 0.4.1 --title 'recipe-hunter-0.4.1+26.1.2' --notes-file RELEASE_NOTES.md --latest
-          else
-            gh release create 0.4.1 build/libs/recipe-hunter-0.4.1+26.1.2.jar --target "$GITHUB_SHA" --title 'recipe-hunter-0.4.1+26.1.2' --notes-file RELEASE_NOTES.md --latest
-          fi

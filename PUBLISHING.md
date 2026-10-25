@@ -1,7 +1,11 @@
-# Releases
+# Publishing policy — Recipe Hunter
 
-Recipe Hunter 0.4.1 targets Minecraft 26.1.2, Fabric and Java 25.
-Successful main-branch builds publish `recipe-hunter-0.4.1+26.1.2` with the installable JAR after compilation and regression checks pass. GitHub also provides source archives.
+Public target version: **0.4.1** (Minecraft 26.1.2, Fabric, Java 25).
 
-No Modrinth or Hypixel approval is claimed. Project and NEU data licences remain in distributions.
-There is no background telemetry or automatic paid AI generation. User-triggered chat and analysis send goal context, observed stats and diary notes to the selected provider. Credentials stay in private local settings and are excluded from source and build output. API billing is separate from ChatGPT subscriptions.
+**Release freeze:** The GitHub Actions build workflow is build/test-only. It may upload temporary CI artifacts but MUST NOT publish or overwrite a GitHub Release, move a release tag, or publish to Modrinth on pushes to `main` or a Work branch. Do not restore the old automatic `gh release upload --clobber` step.
+
+Work on the Recipe Book UI and material-unit/progress corrections separately. Publishing is allowed only after the owner explicitly approves the tested final 0.4.1 build. Until then the public 0.4.1 release is an existing, potentially defective build and should not be described as verified.
+
+Release cleanup: GitHub has older tags/releases including 0.4.2 and 0.4.3, but 0.4.1 is intentionally designated Latest. The owner wishes to remove confusing/duplicate newer-numbered releases and consolidate work under 0.4.1. Clean up those historical releases only through an authorized release-management workflow, after verifying assets and retaining a recoverable source commit; do not delete development history.
+
+No Modrinth or Hypixel approval is claimed. Preserve project and NEU-data licences. ChatGPT Plus billing is separate from API charges. AI requests require consent and privately stored credentials; no telemetry or automatic paid generation.
