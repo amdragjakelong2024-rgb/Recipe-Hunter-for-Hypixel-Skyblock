@@ -1,4 +1,16 @@
-# Recipe Hunter 0.4.0
+# Recipe Hunter
+
+## 0.4.1 controls
+
+- `/rh`: **Locate any recipe**, search, hide/show, remove and reorder your queue using the arrow buttons.
+- `/rh book`: queued recipes and completed recipe collection. Only the first visible queue entry appears on the HUD.
+- Enter a target quantity directly or press **Reset x1**. Plus/minus still adjust by one.
+- Press **E**: use **- HUD / + HUD / Reset HUD**, scroll anywhere over the panel to resize, or drag its title to move it. Right-click cycles materials. Click the panel body to open its target recipe on the server.
+- Hover the active panel to see the complete target recipe. Click an item icon or the **In-game** button for `/viewrecipe`; server unlocks and recipe availability still apply.
+- AI: select a provider, enter a supported chat model ID and key, then **Save settings**. **Test connection** checks authentication without generating paid text. **Send** and **Analyze goals** make paid requests and include the current goal context. Conversation lasts for this game session.
+- Keys and provider settings survive restart in `config/recipehunter-private/`, encrypted with a local device key. Do not share this folder. Encryption does not protect against software that can read both files on your account. Keys are masked, never logged or bundled with the mod. Clear key removes the saved key for the selected provider.
+- Custom heads require Minecraft texture downloads; custom server models require the corresponding resource pack. Missing packs fall back to the recorded vanilla item. No third-party texture pack is bundled.
+
 
 Client-side Ironman recipe planner for **Minecraft 26.1.2 / Fabric / Java 25**.
 The bundled NEU recipe catalogue is an offline snapshot. This update does not change Minecraft versions.
@@ -8,19 +20,19 @@ The bundled NEU recipe catalogue is an offline snapshot. This update does not ch
 - **Compact materials:** keep Refined Mithril and enchanted blocks as ingredients instead of automatically expanding them into thousands of lower-tier items. Inspect an ingredient and select **Expand inputs**; **Full** restores the detailed collection-unit view.
 - **Recipe hover:** hover a recipe row or its icon to see the recorded crafting grid. Forge and Kat recipes show labelled inputs rather than an invented crafting grid.
 - **Quantity:** use `-`, `+`, or the quantity button (`+10`) to change the target. Counts and materials recalculate together.
-- **Inventory access:** open your normal inventory with `E`. RH Book and Diary buttons are available there. Drag the **header** of a visible goal panel, scroll over its header to resize, and right-click the header to change its materials page. Normal inventory slots remain usable.
-- **Craft Diary:** `/rh diary` stores notes locally. An unambiguous entry such as `2 Refined Mithril forge 4h` becomes a pending reservation with a countdown. Basic Czech quantities and Mithril inflections are accepted too. Ambiguous time ranges remain notes. Exclude or delete entries when cancelled or incorrect.
+- **Inventory access:** open your normal inventory with `E`. Recipe Hunter and HUD size buttons are available there. Drag the **header** of the active goal panel, scroll anywhere over it to resize, and right-click to change its materials page. Normal inventory slots remain usable.
+- **Craft Diary:** `/rh diary` stores notes locally. An unambiguous entry such as `2 Refined Mithril forge 4h` becomes a pending reservation with a countdown. Ambiguous time ranges remain notes. Exclude or delete entries when cancelled or incorrect.
 - **Storage:** read your opened Ender Chest pages, own sack menus, island chests and Pets pages directly from game items/lore, without screenshots.
 - **Forge:** observe jobs in The Forge menu and subtract their outputs from ingredient acquisition needs. Pending outputs remain distinct from actual owned stock. The clock expiring does **not** mean a job was collected.
 - **Repeatable goals:** first verified craft records a completion badge. Once the target batch is crafted it leaves the active book; search and save it again to repeat. Previously owned copies of a completed target do not satisfy a new repeat goal. `Finish` manually confirms the goal for recipes not recognised by automatic detection.
 - **Grind recommendations:** the Grind tab ranks easiest-to-hardest (a disclosed heuristic based on known rates and requirements) and shortest-to-longest (unknown rates last). Navigation particles have been removed.
 - **Calculator:** `/rh calc` supports arithmetic and an optional approximate Mining Speed/Fortune model with explicitly supplied block strength, base drops and uptime. No executable expressions.
-- **Experimental external AI:** `/rh ai` supports OpenAI, Gemini and Grok via their official HTTPS endpoints. Enter a model ID and its provider's API key; requests happen only when pressing the labelled paid Analyze button.
+- **Experimental external AI:** `/rh ai` supports OpenAI, Gemini and Grok via their official HTTPS endpoints. Enter a model ID and its provider's API key; requests happen only when pressing the labelled Send or Analyze button.
 
 ## Quick start
 
 1. Install Fabric for Minecraft **26.1.2**, Java **25**, and Fabric API **0.155.3+26.1.2** or a compatible release.
-2. Download the normal `recipe-hunter-0.4.0.jar` from the successful GitHub Actions run and place it in `mods`. Do not install the `-sources.jar`.
+2. Download the normal `recipe-hunter-0.4.1.jar` from the successful GitHub Actions run and place it in `mods`. Do not install the `-sources.jar`.
 3. Search using `/rh <item name>`, select a recipe, choose quantity, and Save.
 4. Open your inventory with `E` to access the book or move goal panels.
 5. Open the storage pages and Forge menu yourself to refresh the observations.
@@ -49,12 +61,12 @@ Forge time is shown separately as **serial base wait**, not active grind time; p
 ### API privacy and billing
 
 - **ChatGPT Plus is not API credit.** OpenAI API calls have separate billing; other providers have their own quotas/billing.
-- API key input is masked. Keys stay only in process memory for the game session and are never written to the book, source repository or logs. You must re-enter a key after restarting.
+- API key input is masked. Keys are saved in encrypted private local settings and are never written to the book, source repository or logs. The local device key must be kept private too.
 - Fixed provider endpoints only; no arbitrary URLs, HTTP redirects or automatic retry/background request loop.
 - A request sends goal summaries, observed stats and diary notes to the chosen provider. Do not put secrets in journal notes you intend to send.
 - Provider/model selection is explicit. No provider key is included with the mod. A compatible model ID and available API quota are required.
 - Requests have timeouts, a response-length check and a 1,200-token generation cap. The provider decides actual charges; the mod does not claim a price quote.
-- Masking and session-only storage do not protect against malicious software or another malicious mod running in the same process.
+- Masking and locally saved storage do not protect against malicious software or another malicious mod running in the same process.
 
 Provider references: [OpenAI Chat API](https://developers.openai.com/api/reference/resources/chat), [Gemini compatibility](https://ai.google.dev/gemini-api/docs/openai), [Grok Chat Completions](https://docs.x.ai/developers/model-capabilities/legacy/chat-completions).
 
@@ -62,7 +74,8 @@ Provider references: [OpenAI Chat API](https://developers.openai.com/api/referen
 
 | Command | Action |
 | --- | --- |
-| `/rh`, `/rh book` | Saved recipes |
+| `/rh` | Recipe launcher and active queue controls |
+| `/rh book` | Queue and completed recipes |
 | `/rh <name>` | Search catalogue |
 | `/rh gui` | Dedicated HUD editor |
 | `/rh diary` | Craft Diary |

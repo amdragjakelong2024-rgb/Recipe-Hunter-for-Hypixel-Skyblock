@@ -1,14 +1,14 @@
-Recipe Hunter 0.4.0 / Minecraft 26.1.2
+Recipe Hunter 0.4.1 / Minecraft 26.1.2
 
 GitHub Actions build with JDK 25, Gradle 9.7.0, Loom 1.18.2,
 Fabric Loader 0.19.3 and Fabric API 0.155.3+26.1.2.
 
-Automated assertion suite: 112 checks passed (8848 catalogue items).
+Automated assertions cover 8848 catalogue items. See the matching Actions run for the final check count.
 The suite is wired into Gradle check through plannerTest; it is not a JUnit suite.
 Coverage includes original recipe graph/rounding/ownership/persistence checks,
 compact enchanted blocks plus direct lower-tier ingredients, explicit expansion,
 repeat goals and crafted batch progress, pending target output, journal timer parsing,
-Czech quantities, ambiguous/negative notes, reservation deduplication, sack stored counts,
+ambiguous/negative notes, reservation deduplication, sack stored counts,
 calculator arithmetic, approximate fortune scaling, request payload and journal/badge persistence.
 
 Core calculation smoke test also passed locally against the bundled catalogue.
@@ -17,6 +17,8 @@ Not runtime-tested: visual layout/input behaviour in an interactive Minecraft cl
 live Hypixel menu titles/lore, storage freshness, profile-change messages, Forge claim
 packet ordering, craft detection under server lag, and actual provider authentication/billing.
 No user API key was used and no paid AI request was made during validation.
+
+Additional coverage: queue ordering/hiding, reset quantity calculation, encrypted settings round trip, provider isolation, restart persistence, saved-key deletion and icon metadata.
 
 API adapters are experimental. The default local planner and estimates do not need them.
 Time estimates remain estimates, with unknown-rate and approximate-model labels.

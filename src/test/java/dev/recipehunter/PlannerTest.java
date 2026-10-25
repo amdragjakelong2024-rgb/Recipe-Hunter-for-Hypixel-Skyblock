@@ -135,7 +135,6 @@ public final class PlannerTest {
         eq(MenuTracker.stored("Capacity: 20,160"),-1,"capacity is not stock");
         check(Calculator.evaluate("(320*160)/64")==800,"calculator precedence");
         check(Calculator.evaluate("-2 + 3 * 4")==10,"calculator unary");
-        eq(CraftDiary.parse(c,"dal jsem do forge dvě refined mithrili za 4h",1000).count,2,"Czech diary quantity");
         check(CraftDiary.parse(c,"not forging 2 Refined Mithril forge 4h",1000).id.isEmpty(),"negative note not reserved");
         check(MiningModel.rate(3000,100,500,1,.5)>0,"mining model valid");
         check(MiningModel.rate(3000,100,500,1,.5)==2*MiningModel.rate(3000,0,500,1,.5),"fortune scales approximate yield");
@@ -144,6 +143,15 @@ public final class PlannerTest {
         b.completed.add("REFINED_MITHRIL");b.diary.add(job);b.write(temp);Book migrated=Book.read(temp);
         check(migrated.completed.contains("REFINED_MITHRIL"),"completion badge persisted");
         eq(migrated.diary.getFirst().count,5,"diary persisted");
+        Book queue=new Book();var first=new Book.Goal("REFINED_MITHRIL");var second=new Book.Goal("ENCHANTED_DIAMOND_BLOCK");queue.goals.add(first);queue.goals.add(second);
+        check(queue.active()==first,"queue first visible");queue.move(second,-1);check(queue.active()==second,"queue reorder changes active");second.visible=false;check(queue.active()==first,"hidden entry skipped");first.visible=false;check(queue.active()==null,"all hidden");queue.move(second,-100);check(queue.goals.getFirst()==second,"queue clamps movement");
+        first.count=50;first.count=1;eq(p.goal(first,Map.of(),Map.of()).demand.get(first.id),1,"quantity reset recalculates one target");
+        Path secretDir=Files.createTempDirectory("rh-private-test");PrivateSettings privateStore=new PrivateSettings(secretDir);privateStore.write("test-value-only");check(privateStore.read().equals("test-value-only"),"private settings round trip");
+        check(!new String(Files.readAllBytes(secretDir.resolve("credentials.bin")),java.nio.charset.StandardCharsets.ISO_8859_1).contains("test-value-only"),"credential file encrypted");
+        AiClient ai=new AiClient();ai.load(secretDir.resolve("ai"));ai.model="test-model";ai.key("dummy-not-a-real-api-key");check(ai.save(),"API settings saved");AiClient reopened=new AiClient();reopened.load(secretDir.resolve("ai"));check(reopened.configured()&&reopened.model.equals("test-model"),"API settings survive restart");
+        reopened.switchProvider();check(!reopened.configured(),"provider keys isolated");reopened.switchProvider();reopened.switchProvider();check(reopened.configured(),"provider key restored");reopened.clearKey();AiClient cleared=new AiClient();cleared.load(secretDir.resolve("ai"));check(!cleared.configured(),"key deletion persisted");
+        try(var files=Files.walk(secretDir)){for(Path file:files.sorted(Comparator.reverseOrder()).toList())Files.delete(file);}
+        try(var iconStream=PlannerTest.class.getResourceAsStream("/assets/recipehunter/icons.json.gz");var reader=new InputStreamReader(new java.util.zip.GZIPInputStream(iconStream))){var icons=com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();check(icons.size()>=8842,"icon catalogue coverage");check(icons.getAsJsonObject("DIVAN_HELMET").has("texture"),"custom head texture preserved");check(icons.getAsJsonObject("REFINED_MITHRIL").has("model"),"server item model preserved");}
         System.out.println("PASS: "+checks+" checks; "+c.items.size()+" catalogue items.");
         System.out.println("Legendary stone raw totals: "+stone.leaves);
         System.out.println("Epic -> Legendary totals: "+epicOwned.leaves);

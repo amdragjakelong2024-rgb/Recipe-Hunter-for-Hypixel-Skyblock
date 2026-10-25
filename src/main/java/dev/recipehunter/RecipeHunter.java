@@ -32,10 +32,10 @@ public final class RecipeHunter implements ClientModInitializer {
     private int ticks;public String context="";public final Assistant assistant=new Assistant();public final Celebration celebration=new Celebration();
     public final Map<String,Planner.Plan> hudPlans=new HashMap<>();
     @Override public void onInitializeClient(){
-        INSTANCE=this; InventoryOverlay.register(this);
+        INSTANCE=this; ai.load(FabricLoader.getInstance().getConfigDir().resolve("recipehunter-private")); InventoryOverlay.register(this);
         try{catalog=new Catalog(getClass().getResourceAsStream("/assets/recipehunter/catalog.json"));planner=new Planner(catalog);}catch(Exception e){error=e.getMessage();}
         ClientCommandRegistrationCallback.EVENT.register((dispatcher,access)->{dispatcher.register(literal("rh")
-            .executes(ctx->{openBook();return 1;})
+            .executes(ctx->{openHome();return 1;})
             .then(argument("query",StringArgumentType.greedyString()).executes(ctx->{command(StringArgumentType.getString(ctx,"query"));return 1;})));
         });
         UseBlockCallback.EVENT.register((player,world,hand,hit)->{if(world.isClientSide()&&onHypixel())ownership.clicked(mc,hit.getBlockPos(),context);return InteractionResult.PASS;});
@@ -57,10 +57,14 @@ public final class RecipeHunter implements ClientModInitializer {
     public boolean persist(){ensureAccount();if(!writable){say("Cannot save: fix or back up the unreadable book file first.");return false;}try{book.write(bookPath);return true;}catch(IOException e){say("Save failed: "+e.getMessage());return false;}}
     public void say(String s){if(mc.player!=null)mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+s));}
     public void open(Screen s){nextScreen=s;}
+    public void openHome(){ensureAccount();if(catalog==null){say(error);return;}open(new HunterScreen(this,HunterScreen.Mode.HOME,""));}
+    public void removeGoal(Book.Goal g){book.goals.remove(g);if(draft==g)draft=null;hudPlans.remove(g.id);book.last=book.goals.isEmpty()?"":book.goals.getFirst().id;persist();}
+    public void gameRecipe(String id){if(!onHypixel()||mc.getConnection()==null){say("Join Hypixel SkyBlock to open server recipes.");return;}if(!id.matches("[A-Z0-9_;:-]+"))return;mc.setScreen(null);mc.getConnection().sendCommand("viewrecipe "+id);}
     public void openBook(){ensureAccount();if(catalog==null){say(error);return;}open(new HunterScreen(this,HunterScreen.Mode.BOOK,""));}
     public void command(String query){
         ensureAccount();if(catalog==null){say(error);return;}String q=query.trim();
         switch(q.toLowerCase(Locale.ROOT)){
+            case ""->openHome();
             case "book"->openBook();
             case "diary"->open(new ToolsScreen(this,"Craft Diary"));
             case "calc"->open(new ToolsScreen(this,"Calculator"));

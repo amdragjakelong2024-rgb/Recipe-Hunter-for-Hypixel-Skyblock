@@ -16,7 +16,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 
 
 public final class HunterScreen extends Screen {
-    public enum Mode { SEARCH,BOOK,DETAIL,SETTINGS }
+    public enum Mode { HOME,SEARCH,BOOK,DETAIL,SETTINGS }
     private final RecipeHunter app;private final Mode mode;private final String query;
     private String focus;private int tab=0,page=0,refreshTicks=0;private Book.Goal goal;private Planner.Plan plan;
     private EditBox search,owned,rate;private final List<Icon> icons=new ArrayList<>();private final List<Label> labels=new ArrayList<>();
@@ -28,7 +28,7 @@ public final class HunterScreen extends Screen {
     public HunterScreen(RecipeHunter app,Mode mode,String q){super(Component.literal("Recipe Hunter"));this.app=app;this.mode=mode;query=q;focus=q;}
     @Override public boolean isPauseScreen(){return false;}
     @Override public void tick(){super.tick();if(mode==Mode.DETAIL&&tab==5&&++refreshTicks%20==0)refresh();}
-    private Button button(String text,int x,int y,int w,Runnable action){return addRenderableWidget(Button.builder(Component.literal(text),b->action.run()).bounds(x,y,w,20).build());}
+    private Button button(String text,int x,int y,int w,Runnable action){return addRenderableWidget(new GlowButton(text,x,y,w,action));}
     private void label(String text,int x,int y,int color){labels.add(new Label(text,x,y,color));}
     @Override protected void init(){
         actualWidth=app.mc.getWindow().getGuiScaledWidth();actualHeight=app.mc.getWindow().getGuiScaledHeight();
@@ -37,11 +37,11 @@ public final class HunterScreen extends Screen {
         icons.clear();labels.clear();hovers.clear();footerY=height-58;rowsPerPage=Math.max(1,(footerY-bodyY-18)/23);
         int w=Math.max(140,width-24);search=addRenderableWidget(new EditBox(font,12,28,w-80,20,Component.literal("Search item")));search.setMaxLength(100);search.setValue(mode==Mode.SEARCH?query:"");search.setHint(Component.literal("Search item or pet rarity..."));
         button("Search",width-86,28,74,()->app.command(search.getValue()));
-        button("Book",12,53,58,app::openBook);
+        button(mode==Mode.BOOK?"Home":"Book",12,53,58,mode==Mode.BOOK?app::openHome:app::openBook);
         button("GUI",width-66,53,54,()->app.open(new HudEditor(app)));
         if(mode!=Mode.DETAIL){button("Diary",207,53,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",272,53,55,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",332,53,45,()->app.open(new ToolsScreen(app,"AI")));}
         if(mode!=Mode.DETAIL)button("Assistant: "+(app.book.assistant?"ON":"OFF"),76,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});
-        if(mode==Mode.SETTINGS)settings();else if(mode==Mode.BOOK)book();else if(mode==Mode.SEARCH)results();else detail();
+        if(mode==Mode.HOME)home();else if(mode==Mode.SETTINGS)settings();else if(mode==Mode.BOOK)book();else if(mode==Mode.SEARCH)results();else detail();
     }
     private void refresh(){rebuildWidgets();}
     private void settings(){
@@ -70,16 +70,31 @@ public final class HunterScreen extends Screen {
         }
         pages(items.size());
     }
+    private void home(){
+        label("Locate any recipe",12,88,0xffe9e4ff);
+        label("Active queue — first visible recipe is shown on your HUD",12,106,0xffa9bac8);
+        queue();
+    }
     private void book(){
-        label("Saved goals: "+app.book.goals.size()+"  |  Account: "+app.mc.getUser().getName(),12,88,0xffa9bac8);
+        label("Recipe book | Completed: "+app.book.completed.size()+" | Queue: "+app.book.goals.size(),12,88,0xffa9bac8);
+        button("Queue",12,99,80,()->{tab=0;page=0;refresh();});
+        button("Completed",98,99,95,()->{tab=1;page=0;refresh();});
+        if(tab==0){queue();return;}
+        List<String> done=new ArrayList<>(app.book.completed);Collections.sort(done);int start=page*rowsPerPage;
+        for(int i=start;i<Math.min(done.size(),start+rowsPerPage);i++){String id=done.get(i);row(id,"",bodyY+(i-start)*23,12,width-24,()->app.select(id,true));}
+        pages(done.size());
+    }
+    private void queue(){
         int start=page*rowsPerPage;
         for(int i=start;i<Math.min(app.book.goals.size(),start+rowsPerPage);i++){
             Book.Goal g=app.book.goals.get(i);int y=bodyY+(i-start)*23;
-            row(g.id,"",y,12,width-174,()->app.select(g.id,true));
-            button(g.visible?"Hide":"Show",width-156,y,66,()->{g.visible=!g.visible;app.persist();refresh();});
-            button("Remove",width-86,y,74,()->{app.book.history.add(g.id);app.book.goals.remove(g);if(app.book.last.equals(g.id))app.book.last=app.book.goals.isEmpty()?"":app.book.goals.getLast().id;app.persist();page=0;refresh();});
+            row(g.id,(g==app.book.active()?"> ":"")+"x"+g.count,y,12,width-248,()->app.select(g.id,true));
+            button("^",width-226,y,24,()->{app.book.move(g,-1);app.persist();refresh();});
+            button("v",width-198,y,24,()->{app.book.move(g,1);app.persist();refresh();});
+            button(g.visible?"Hide":"Show",width-168,y,64,()->{g.visible=!g.visible;app.persist();refresh();});
+            button("Remove",width-98,y,86,()->{app.removeGoal(g);page=0;refresh();});
         }
-        if(app.book.goals.isEmpty())label("Search for an item, then click Save or use /rh save.",12,bodyY,0xffd1dce5);
+        if(app.book.goals.isEmpty())label("Search for a recipe above, then save it to your queue.",12,bodyY+5,0xffd1dce5);
         pages(app.book.goals.size());
     }
     private void detail(){
@@ -87,17 +102,20 @@ public final class HunterScreen extends Screen {
         button(app.book.find(goal.id)==null?"Save":"Saved",75,53,62,()->{app.save(goal);refresh();});
         button("Finish",142,53,82,()->{app.completed(goal.id,goal.count);app.openBook();});
         if(!focus.equals(query))button("Main goal",229,53,83,()->{focus=query;page=0;tab=0;refresh();});
-        else button("Refresh",229,53,83,this::refresh);
+        else button("In-game",229,53,83,()->app.gameRecipe(focus));
         button("Assistant: "+(app.book.assistant?"ON":"OFF"),318,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});
         String[] tabs={"Recipe","Materials","All steps","Used for","Sources","Grind"};
         int tw=Math.min(88,(width-24)/tabs.length);
         for(int n=0;n<tabs.length;n++){final int ix=n;button((tab==n?"> ":"")+tabs[n],12+n*tw,78,tw-2,()->{tab=ix;page=0;refresh();});}
-        label(app.trim(item.name,width-160),12,105,0xff000000|item.color);
+        label(app.trim(item.name,width-300),12,105,0xff000000|item.color);
 
         button("-",width-202,101,24,()->{goal.count=Math.max(1,goal.count-1);app.persist();refresh();});
         button("+",width-174,101,24,()->{goal.count=Math.min(1000000,goal.count+1);app.persist();refresh();});
-        button("x"+goal.count,width-146,101,70,()->{goal.count=Math.min(1000000,goal.count+10);app.persist();refresh();});
-        button("Calc",width-72,101,60,()->app.open(new ToolsScreen(app,"Calculator")));
+        EditBox quantity=addRenderableWidget(new EditBox(font,width-146,101,64,20,Component.literal("Target quantity")));
+        quantity.setMaxLength(7);quantity.setValue(Long.toString(goal.count));quantity.setFilter(s->s.matches("[0-9]{0,7}"));
+        quantity.setResponder(s->{try{long n=Long.parseLong(s);if(n>=1&&n<=1000000){goal.count=n;app.hudPlans.clear();app.persist();}}catch(NumberFormatException ignored){}});
+        button("Reset x1",width-276,101,70,()->{goal.count=1;app.persist();refresh();});
+        button("Set",width-72,101,60,this::refresh);
         if(tab==0)recipe(item);else if(tab==1)materials();else if(tab==2)steps();else if(tab==3)uses();else if(tab==5)grind();else sources(item);
         if(tab!=4&&tab!=5)stockControls(item);
     }
@@ -202,16 +220,18 @@ public final class HunterScreen extends Screen {
         button("<",width-108,y,24,()->{page=Math.max(0,page-1);refresh();});button(">",width-36,y,24,()->{page=Math.min(total-1,page+1);refresh();});label((page+1)+"/"+total,width-80,y+6,0xffa9bac8);}
     private ItemStack icon(String id){return Icons.stack(app,id);}
     private MouseButtonEvent scaled(MouseButtonEvent e){return new MouseButtonEvent(e.x()/uiScale,e.y()/uiScale,e.buttonInfo());}
-    @Override public boolean mouseClicked(MouseButtonEvent e,boolean twice){return super.mouseClicked(scaled(e),twice);}
+    @Override public boolean mouseClicked(MouseButtonEvent e,boolean twice){
+        MouseButtonEvent p=scaled(e);
+        for(Icon i:icons)if(p.x()>=i.x&&p.x()<i.x+20&&p.y()>=i.y&&p.y()<i.y+20){app.gameRecipe(i.id);return true;}
+        return super.mouseClicked(p,twice);
+    }
     @Override public boolean mouseReleased(MouseButtonEvent e){return super.mouseReleased(scaled(e));}
     @Override public boolean mouseDragged(MouseButtonEvent e,double dx,double dy){return super.mouseDragged(scaled(e),dx/uiScale,dy/uiScale);}
     @Override public boolean mouseScrolled(double x,double y,double sx,double sy){return super.mouseScrolled(x/uiScale,y/uiScale,sx,sy);}
     @Override public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float dt){
         int physicalMx=mx,physicalMy=my;mx=(int)(mx/uiScale);my=(int)(my/uiScale);
         g.pose().pushMatrix();g.pose().scale(uiScale,uiScale);
-        g.blit(RenderPipelines.GUI_TEXTURED,Identifier.fromNamespaceAndPath("recipehunter","textures/background.png"),0,0,0f,0f,width,height,2047,1091,2047,1091);
-        g.fill(0,0,width,height,0xbc101923);g.fill(0,0,width,23,0xff24384a);
-        g.text(font,"RECIPE HUNTER  /  IRONMAN",12,8,0xffefc77d,true);
+        Theme.background(g,font,width,height,"RECIPE HUNTER");
         for(Label l:labels)g.text(font,l.text,l.x,l.y,l.color,false);
         super.extractRenderState(g,mx,my,dt);
         for(Icon i:icons){g.fill(i.x-1,i.y-1,i.x+19,i.y+19,0xff293846);g.item(icon(i.id),i.x,i.y);if(i.count>0)g.text(font,Long.toString(i.count),i.x+10,i.y+12,0xffffffff,true);

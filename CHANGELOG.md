@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1
+
+- Add a recipe launcher with active-goal controls and a reorderable queue.
+- Display only the first visible queued goal; keep completed recipes in the book.
+- Add direct quantity entry and Reset x1.
+- Add inventory HUD size buttons, full-panel wheel resizing and complete target previews.
+- Add in-game recipe links, animated controls and a moving rainbow title.
+- Restore custom head textures, legacy item variants, dyes and available server item models.
+- Persist provider-specific credentials privately on the device; add connection testing and conversational AI chat.
+
 ## 0.4.0
 
 - Keep refined/enchanted intermediates in compact material plans with explicit expansion.

@@ -38,5 +38,7 @@ public final class Book {
         Files.createDirectories(path.getParent());Path tmp=path.resolveSibling(path.getFileName()+".tmp");Files.writeString(tmp,GSON.toJson(this));
         try{Files.move(tmp,path,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}catch(AtomicMoveNotSupportedException e){Files.move(tmp,path,StandardCopyOption.REPLACE_EXISTING);}
     }
+    public Goal active(){return goals.stream().filter(g->g.visible).findFirst().orElse(null);}
+    public void move(Goal goal,int delta){int i=goals.indexOf(goal);if(i<0)return;int to=Math.clamp(i+delta,0,goals.size()-1);if(i!=to){goals.remove(i);goals.add(to,goal);}}
     public Goal find(String id){return goals.stream().filter(g->g.id.equals(id)).findFirst().orElse(null);}
 }

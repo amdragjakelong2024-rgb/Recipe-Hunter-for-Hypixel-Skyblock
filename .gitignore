@@ -29,3 +29,7 @@ run/
 config/
 *secrets*
 .env*
+
+recipehunter-private/
+*.key
+credentials.bin

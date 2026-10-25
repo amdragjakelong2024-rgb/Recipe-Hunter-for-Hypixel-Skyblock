@@ -20,7 +20,7 @@ public final class HudEditor extends Screen {
     }
     private Book.Goal hit(double mx,double my){
         Book.Goal result=null;int i=0;
-        for(Book.Goal goal:app.book.goals)if(goal.visible&&HudPanels.layout(app,goal,i++,width,height).contains(mx,my,width,height))result=goal;
+        for(Book.Goal goal:app.book.goals)if(goal==app.book.active()&&HudPanels.layout(app,goal,i++,width,height).contains(mx,my,width,height))result=goal;
         return result;
     }
     @Override public boolean mouseClicked(MouseButtonEvent e,boolean twice){

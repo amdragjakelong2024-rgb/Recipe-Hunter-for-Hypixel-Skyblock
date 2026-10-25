@@ -9,12 +9,13 @@ public final class HudPanels {
     }
     public static void render(RecipeHunter app,GuiGraphicsExtractor g,int mx,int my,long pageClock){
         String hover=null;Book.Goal hoverGoal=null;int index=0;
-        for(Book.Goal goal:app.book.goals){if(!goal.visible)continue;
+        for(Book.Goal goal:app.book.goals){if(goal!=app.book.active())continue;
             HudLayout l=layout(app,goal,index++,g.guiWidth(),g.guiHeight());float s=(float)l.scale(g.guiWidth(),g.guiHeight());
             int x=l.left(g.guiWidth(),g.guiHeight()),y=l.top(g.guiWidth(),g.guiHeight());
             g.pose().pushMatrix();g.pose().translate(x,y);g.pose().scale(s,s);
             g.fill(0,0,HudLayout.WIDTH,HudLayout.HEIGHT,0xdd101921);g.outline(0,0,HudLayout.WIDTH,HudLayout.HEIGHT,0xff526a77);
             g.text(app.mc.font,app.trim(app.catalog.item(goal.id).name,226),4,4,0xff000000|app.catalog.item(goal.id).color,true);
+            if(mx>=x&&mx<x+HudLayout.WIDTH*s&&my>=y&&my<y+18*s){hover=goal.id;hoverGoal=goal;}
             Planner.Plan p=app.hudPlans.get(goal.id);
             if(p==null)g.text(app.mc.font,"Checking materials...",4,20,0xffacbdca,true);
             else{
@@ -24,7 +25,7 @@ public final class HudPanels {
                     var e=leaves.get(i);int row=20+(i-page*3)*12;
                     g.text(app.mc.font,app.trim(Catalog.amount(e.getKey(),e.getValue())+" "+app.catalog.item(e.getKey()).name,226),4,row,0xffd4dbe1,true);
                     double lx=(mx-x)/s,ly=(my-y)/s;
-                    if(lx>=0&&lx<HudLayout.WIDTH&&ly>=row&&ly<row+12){hover=e.getKey();hoverGoal=goal;}
+                    if(lx>=0&&lx<HudLayout.WIDTH&&ly>=row&&ly<row+12){hover=goal.id;hoverGoal=goal;}
                 }
                 if(pages>1)g.text(app.mc.font,(page+1)+"/"+pages,205,55,0xff849bab,false);
             }
