@@ -12,10 +12,10 @@ public final class RecipeBookScreen extends Screen {
  private final RecipeHunter app;private boolean all,treeMode;private String query="",selected="",category="All";
  private int page,materialPage,ticks;private float scale;private int left,top;private long turnedAt;
  private static final int W=720,H=430,L=28,R=382,COL=306;
- private EditBox search;private final List<Entry> entries=new ArrayList<>();private final List<Text> texts=new ArrayList<>();private final List<ItemIcon> icons=new ArrayList<>();
+ private EditBox search;private final List<Entry> entries=new ArrayList<>();private final List<Text> texts=new ArrayList<>();private final List<ItemIcon> icons=new ArrayList<>();private final List<int[]> gridCells=new ArrayList<>();
  private record Text(String text,int x,int y,int width,int color){}
  private record Entry(Book.Goal goal,int x,int y,int width){}
- private record ItemIcon(String id,int x,int y){}
+ private record ItemIcon(String id,int x,int y,long count){ItemIcon(String id,int x,int y){this(id,x,y,0);}}
  public RecipeBookScreen(RecipeHunter app,boolean all,String query,String selected){super(Component.literal(all?"All Recipes":"Recipe Book"));this.app=app;this.all=all;this.query=query;this.selected=selected;}
  @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
  @Override public boolean isPauseScreen(){return false;}
@@ -24,8 +24,8 @@ public final class RecipeBookScreen extends Screen {
  private void text(String value,int x,int y,int width,int color){texts.add(new Text(value,x,y,width,color));}
  private void flip(){turnedAt=System.nanoTime();UiSounds.page(app);rebuildWidgets();}
  @Override protected void init(){
-  scale=(float)Math.min(width/(double)W,height/(double)H)*Math.min(.94,.88*app.book.guiScale);left=(int)((width-W*scale)/2);top=(int)((height-H*scale)/2);
-  entries.clear();texts.clear();icons.clear();
+  scale=(float)(Math.min(width/(double)W,height/(double)H)*Math.min(.94,.88*app.book.guiScale));left=(int)((width-W*scale)/2);top=(int)((height-H*scale)/2);
+  entries.clear();texts.clear();icons.clear();gridCells.clear();
   text(all?"ALL RECIPES":"RECIPE BOOK",L,36,COL,Theme.INK);
   if(!all)text("Your saved recipes show here",L,51,COL,Theme.MUTED);
   button(all?"Recipe Book":"All Recipes",L,68,108,()->{all=!all;page=0;flip();});
@@ -92,9 +92,9 @@ public final class RecipeBookScreen extends Screen {
   selector("Gemstone Display",new ArrayList<>(engine.gemOptions(tree)),goal.gemDisplay,R,306,value->{goal.gemDisplay=value;app.persist();rebuildWidgets();});
   if(!item.routes.isEmpty()){
    Catalog.Route route=item.routes.get(Math.floorMod(goal.choices.getOrDefault(item.id,0),item.routes.size()));
-   if(!route.slots.isEmpty())for(int i=0;i<route.slots.size()&&i<9;i++){var slot=route.slots.get(i);if(slot!=null){icons.add(new ItemIcon(slot.id,R+i%3*19,340+i/3*18));text(Long.toString(slot.count),R+11+i%3*19,350+i/3*18,20,Theme.MUTED);}}
+   if(!route.slots.isEmpty())for(int i=0;i<route.slots.size()&&i<9;i++){int sx=R+i%3*19,sy=340+i/3*18;gridCells.add(new int[]{sx,sy});var slot=route.slots.get(i);if(slot!=null)icons.add(new ItemIcon(slot.id,sx,sy,slot.count));}
    else {text(route.type.toUpperCase(Locale.ROOT),R,345,100,Theme.MUTED);text("Output: "+route.count,R,360,100,Theme.MUTED);}
-   icons.add(new ItemIcon(item.id,R+84,359));
+   text(">",R+66,365,16,Theme.INK);icons.add(new ItemIcon(item.id,R+84,359,route.count));
    if(item.routes.size()>1)button("Route "+(Math.floorMod(goal.choices.getOrDefault(item.id,0),item.routes.size())+1),R+127,354,90,()->{goal.choices.merge(item.id,1,Integer::sum);app.persist();flip();});
   }else text("Acquired directly",R,351,COL,Theme.MUTED);
   button("Save as Goal",R+60,395,186,()->{app.save(goal);rebuildWidgets();});
@@ -113,7 +113,8 @@ public final class RecipeBookScreen extends Screen {
   int lx=(int)((mx-left)/scale),ly=(int)((my-top)/scale);g.pose().pushMatrix();g.pose().translate(left,top);g.pose().scale(scale,scale);
   Theme.background(g,font,W,H,"");for(var t:texts)g.text(font,app.trim(t.text,t.width),t.x,t.y,t.color,false);
   super.extractRenderState(g,lx,ly,dt);
-  for(var icon:icons)g.item(Icons.stack(app,icon.id),icon.x,icon.y);
+  for(var cell:gridCells)g.outline(cell[0]-1,cell[1]-1,18,18,0xffb59c70);
+  for(var icon:icons){g.item(Icons.stack(app,icon.id),icon.x,icon.y);if(icon.count>1)g.text(font,Long.toString(icon.count),icon.x+8,icon.y+9,0xffffffff,true);}
   for(var entry:entries){var root=app.tree(entry.goal);double fraction=root.fraction();g.fill(entry.x,entry.y,entry.x+entry.width,entry.y+7,0xffb9a780);g.fill(entry.x,entry.y,entry.x+(int)(entry.width*fraction),entry.y+7,0xff528b25);g.text(font,root.row().percent(),entry.x,entry.y+9,Theme.INK,false);}
   // A page sweeps across the spine; the real world remains visible outside the book.
   double t=(System.nanoTime()-turnedAt)/1e9/.32;if(app.book.animations&&t>=0&&t<1){int w=(int)(Math.sin(t*Math.PI)*(W/2-15));int x=t<.5?W/2-w:W/2;g.fill(x,29,x+w,H-12,0xe8e9d6a9);g.fill(x,29,x+2,H-12,0xffa88751);}
