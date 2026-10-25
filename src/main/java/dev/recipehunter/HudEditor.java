@@ -36,7 +36,7 @@ public final class HudEditor extends Screen {
     }
     @Override public boolean mouseReleased(MouseButtonEvent e){if(dragging!=null){dragging=null;app.persist();return true;}return super.mouseReleased(e);}
     @Override public boolean mouseScrolled(double x,double y,double sx,double sy){Book.Goal goal=hit(x,y);if(goal==null)return super.mouseScrolled(x,y,sx,sy);goal.hud.zoom(sy*0.05,width,height);app.persist();return true;}
-    @Override public void onClose(){app.persist();super.onClose();}
+    @Override public void onClose(){app.persist();app.closeBook();}
     @Override public boolean isPauseScreen(){return false;}
     @Override public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float dt){
         g.fill(0,0,width,height,0x66101820);

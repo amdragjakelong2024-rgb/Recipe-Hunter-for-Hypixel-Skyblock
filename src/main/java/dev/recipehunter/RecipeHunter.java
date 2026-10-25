@@ -31,6 +31,8 @@ public final class RecipeHunter implements ClientModInitializer {
     private Path bookPath;private boolean writable=true;private Screen nextScreen;
     private int ticks;public String context="";public final Assistant assistant=new Assistant();public final Celebration celebration=new Celebration();
     public final Map<String,Planner.Plan> hudPlans=new HashMap<>();
+    public final Map<String,List<MaterialProgress.Row>> hudProgress=new HashMap<>();
+    public List<MaterialProgress.Row> progress(Book.Goal goal){var stock=stock(goal);var pending=CraftDiary.mergeReservations(book.diary,menus.forge);return MaterialProgress.rows(goal,planner.goal(goal,stock,pending),stock,pending,CraftDiary.pending(menus.forge));}
     @Override public void onInitializeClient(){
         INSTANCE=this; ai.load(FabricLoader.getInstance().getConfigDir().resolve("recipehunter-private")); InventoryOverlay.register(this);
         try{catalog=new Catalog(getClass().getResourceAsStream("/assets/recipehunter/catalog.json"));planner=new Planner(catalog);}catch(Exception e){error=e.getMessage();}
@@ -58,6 +60,7 @@ public final class RecipeHunter implements ClientModInitializer {
     public void say(String s){if(mc.player!=null)mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+s));}
     public void open(Screen s){nextScreen=s;}
     public void openHome(){ensureAccount();if(catalog==null){say(error);return;}open(new BookOpening(this));}
+    public void closeBook(){open(new BookOpening(this,true));}
     public void openHomeContent(){open(new HunterScreen(this,HunterScreen.Mode.HOME,""));}
     public void removeGoal(Book.Goal g){book.goals.remove(g);if(draft==g)draft=null;hudPlans.remove(g.id);book.last=book.goals.isEmpty()?"":book.goals.getFirst().id;persist();}
     public void gameRecipe(String id){if(!onHypixel()||mc.getConnection()==null){say("Join Hypixel SkyBlock to open server recipes.");return;}if(!id.matches("[A-Z0-9_;:-]+"))return;mc.setScreen(null);mc.getConnection().sendCommand("viewrecipe "+id);}
@@ -107,15 +110,15 @@ public final class RecipeHunter implements ClientModInitializer {
             ownership.scanPets(mc);ownership.scanChest(mc,context);menus.tick(this);estimates.tick(this);celebration.tick(this);assistant.tick(this,context);
         }
         if(nextScreen!=null){Screen s=nextScreen;nextScreen=null;mc.setScreen(s);}
-        if(ticks%20==0){hudPlans.clear();for(Book.Goal goal:book.goals)if(goal.visible)hudPlans.put(goal.id,plan(goal));}
+        if(ticks%5==0){hudPlans.clear();hudProgress.clear();Book.Goal active=book.active();if(active!=null){hudPlans.put(active.id,plan(active));try{hudProgress.put(active.id,progress(active));}catch(RuntimeException ignored){}}}
     }
     void hud(GuiGraphicsExtractor g){
         if(catalog==null||mc.player==null||mc.options.hideGui||!onHypixel())return;
         if(mc.screen==null){
             HudPanels.render(this,g,-1,-1,System.currentTimeMillis()/6000);
             if(book.assistant&&!book.assistantItem.isEmpty()){
-                int y2=g.guiHeight()-48;g.fill(4,y2-4,g.guiWidth()-4,g.guiHeight()-3,0xc510221a);g.text(mc.font,"ASSISTANT: "+trim(catalog.item(book.assistantItem).name,g.guiWidth()-95),10,y2,0xff78efad,true);
-                g.textWithWordWrap(mc.font,Component.literal(assistant.status),10,y2+13,g.guiWidth()-20,0xffe2f3e8);
+                int y2=g.guiHeight()-48;g.fill(4,y2-4,g.guiWidth()-4,g.guiHeight()-3,0xeeeadbb5);g.text(mc.font,"ASSISTANT: "+trim(catalog.item(book.assistantItem).name,g.guiWidth()-95),10,y2,0xff426c20,true);
+                g.textWithWordWrap(mc.font,Component.literal(assistant.status),10,y2+13,g.guiWidth()-20,Theme.INK);
             }
         }
         celebration.render(this,g);

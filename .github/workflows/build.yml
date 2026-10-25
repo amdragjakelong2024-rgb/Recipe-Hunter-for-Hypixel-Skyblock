@@ -29,7 +29,7 @@ jobs:
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
-          name: recipe-hunter-0.4.2-mc26.1.2
+          name: recipe-hunter-0.4.3-mc26.1.2
           path: build/libs/
           if-no-files-found: error
       - name: Publish GitHub release
@@ -38,9 +38,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          cp build/libs/recipe-hunter-0.4.2.jar build/libs/recipe-hunter-0.4.2+26.1.2.jar
-          if gh release view 0.4.2 >/dev/null 2>&1; then
-            echo 'Release 0.4.2 already exists; leaving published assets unchanged.'
+          cp build/libs/recipe-hunter-0.4.3.jar build/libs/recipe-hunter-0.4.3+26.1.2.jar
+          if gh release view 0.4.3 >/dev/null 2>&1; then
+            echo 'Release 0.4.3 already exists; leaving published assets unchanged.'
           else
-            gh release create 0.4.2 build/libs/recipe-hunter-0.4.2+26.1.2.jar --target "$GITHUB_SHA" --title 'recipe-hunter-0.4.2+26.1.2' --notes-file RELEASE_NOTES.md --latest
+            gh release create 0.4.3 build/libs/recipe-hunter-0.4.3+26.1.2.jar --target "$GITHUB_SHA" --title 'recipe-hunter-0.4.3+26.1.2' --notes-file RELEASE_NOTES.md --latest
           fi

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.3
+
+- Use vanilla parchment, layered book binding, ink text and experience-green accents.
+- Add a smooth native book-closing animation and distinct open/close sounds.
+- Add multiline diary entries, editing and persistent done checkboxes.
+- Show live owned/required material counts, item icons, progress bars and separate Forge totals.
+- Replace long screen explanations with concise storage counters.
+
 ## 0.4.2
 
 - Open the recipe launcher through the native animated Minecraft 3D book.

@@ -1,6 +1,6 @@
 # Recipe Hunter
 
-## 0.4.2 controls
+## 0.4.3 controls
 
 - `/rh`: opens the native animated Minecraft book, then **Locate any recipe**, search, hide/show, remove and reorder your queue using the arrow buttons.
 - `/rh book`: queued recipes and completed recipe collection. Only the first visible queue entry appears on the HUD.
@@ -35,7 +35,7 @@ Opening, page navigation, quantity confirmation and verified crafts use Minecraf
 ## Quick start
 
 1. Install Fabric for Minecraft **26.1.2**, Java **25**, and Fabric API **0.155.3+26.1.2** or a compatible release.
-2. Download `recipe-hunter-0.4.2+26.1.2.jar` from GitHub Releases and place it in `mods`. Do not install the `-sources.jar`.
+2. Download `recipe-hunter-0.4.3+26.1.2.jar` from GitHub Releases and place it in `mods`. Do not install the `-sources.jar`.
 3. Search using `/rh <item name>`, select a recipe, choose quantity, and Save.
 4. Open your inventory with `E` to access the book or move goal panels.
 5. Open the storage pages and Forge menu yourself to refresh the observations.
@@ -103,3 +103,9 @@ GitHub Actions builds the same targets and uploads the JAR and sources. The asse
 Code: MIT (`LICENSE`). Bundled recipe data: NEU (`NEU-DATA-LICENSE.txt`). Recipe previews preserve catalogue slot positions. Local book data is under `config/recipehunter/<Minecraft UUID>.json`; back it up before installing an update. Configuration, run files, builds and secrets are excluded from git.
 
 Icon metadata is generated with `scripts/build_icons.py` from NEU commit `bc21f3b10afe7fb11b15569128cea08be72a8241`, with removed catalogue entries recovered from the original recipe snapshot. The bundled compressed metadata contains 8842 item definitions; synthetic planning-only entries use fallback icons.
+
+## Book interface
+
+The interface uses vanilla parchment, ink text, leather binding and XP green/gold accents. Esc closes it with the native book animation. `/rh diary` supports multiline notes, Edit, Delete and done checkboxes. A done diary entry no longer reserves Forge output; it does not add unverified items to your inventory.
+
+The active HUD shows item icons and owned/required counters (for example `11/32`) with progress bars. Forge and manually planned quantities are shown separately. Inventory counters refresh every five client ticks. Storage is refreshed only while the relevant server menu is open. **Open in recipe** opens the server recipe.

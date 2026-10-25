@@ -160,6 +160,15 @@ public final class PlannerTest {
         reopened.switchProvider();check(!reopened.configured(),"provider keys isolated");reopened.switchProvider();reopened.switchProvider();check(reopened.configured(),"provider key restored");reopened.clearKey();AiClient cleared=new AiClient();cleared.load(secretDir.resolve("ai"));check(!cleared.configured(),"key deletion persisted");
         try(var files=Files.walk(secretDir)){for(Path file:files.sorted(Comparator.reverseOrder()).toList())Files.delete(file);}
         try(var iconStream=PlannerTest.class.getResourceAsStream("/assets/recipehunter/icons.json.gz");var reader=new InputStreamReader(new java.util.zip.GZIPInputStream(iconStream))){var icons=com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();check(icons.size()>=8842,"icon catalogue coverage");check(icons.getAsJsonObject("DIVAN_HELMET").has("texture"),"custom head texture preserved");check(icons.getAsJsonObject("REFINED_MITHRIL").has("model"),"server item model preserved");}
+        Planner.Plan progressPlan=new Planner.Plan();progressPlan.demand.put("ENCHANTED_COBBLESTONE",32L);progressPlan.missing.put("ENCHANTED_COBBLESTONE",21L);
+        var progress=MaterialProgress.rows(new Book.Goal("TEST"),progressPlan,Map.of("ENCHANTED_COBBLESTONE",11L),Map.of(),Map.of()).getFirst();
+        check(progress.count().equals("11/32"),"HUD displays owned over fixed required total");check(!progress.done(),"partial material remains active");
+        var fullProgress=MaterialProgress.rows(new Book.Goal("TEST"),progressPlan,Map.of("ENCHANTED_COBBLESTONE",32L),Map.of(),Map.of()).getFirst();check(fullProgress.done()&&fullProgress.count().equals("32/32"),"completed material remains visible");
+        var pendingProgress=MaterialProgress.rows(new Book.Goal("TEST"),progressPlan,Map.of(),Map.of("ENCHANTED_COBBLESTONE",5L),Map.of("ENCHANTED_COBBLESTONE",5L)).getFirst();eq(pendingProgress.have(),0,"Forge is not owned");eq(pendingProgress.forge(),5,"Forge quantity displayed separately");
+        var entry=CraftDiary.parse(c,"2 Refined Mithril forge 4h",1000);entry.done=true;check(CraftDiary.pending(List.of(entry)).isEmpty(),"checked diary entry stops reserving");
+        var edited=CraftDiary.edit(c,entry,"My edited note",2000);check(edited.key.equals(entry.key)&&edited.done&&edited.text.equals("My edited note"),"edit preserves diary identity and completion");
+        var timed=CraftDiary.parse(c,"2 Refined Mithril forge 4h",1000);var wording=CraftDiary.edit(c,timed,"2 Refined Mithril forge 4h - mining next",2000);eq(wording.readyAt,timed.readyAt,"editing note does not restart unchanged Forge timer");
+        b.diary.clear();b.diary.add(edited);b.write(temp);check(Book.read(temp).diary.getFirst().done,"diary completion persists");
         AiTest.run();
         System.out.println("PASS: "+checks+" checks; "+c.items.size()+" catalogue items.");
         System.out.println("Legendary stone raw totals: "+stone.leaves);

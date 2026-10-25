@@ -6,7 +6,7 @@ import java.util.regex.*;
 public final class CraftDiary {
  public static final class Entry {
   public String key=UUID.randomUUID().toString(),text="",id="",source="diary";
-  public long count,readyAt,createdAt=System.currentTimeMillis(); public boolean active=true;
+  public long count,readyAt,createdAt=System.currentTimeMillis(); public boolean active=true,done=false;
  }
  public static Entry parse(Catalog catalog,String text,long now){
   Entry e=new Entry();e.text=text;e.createdAt=now;
@@ -27,7 +27,12 @@ public final class CraftDiary {
   if(seconds<=0||seconds>31536000||text.matches(".*[0-9]\\s*[-–]\\s*[0-9].*"))return e;
   e.id=match.id;e.count=count;e.readyAt=now+(long)(seconds*1000);return e;
  }
- public static Map<String,Long> pending(List<Entry> entries){Map<String,Long> out=new HashMap<>();for(Entry e:entries)if(e.active&&!e.id.isEmpty()&&e.count>0)out.merge(e.id,e.count,Math::addExact);return out;}
+ public static Entry edit(Catalog catalog,Entry old,String text,long now){
+  Entry next=parse(catalog,text,now);next.key=old.key;next.createdAt=old.createdAt;next.active=old.active;next.done=old.done;
+  if(next.id.equals(old.id)&&next.count==old.count&&next.readyAt-now==old.readyAt-old.createdAt)next.readyAt=old.readyAt;
+  return next;
+ }
+ public static Map<String,Long> pending(List<Entry> entries){Map<String,Long> out=new HashMap<>();for(Entry e:entries)if(e.active&&!e.done&&!e.id.isEmpty()&&e.count>0)out.merge(e.id,e.count,Math::addExact);return out;}
  public static Map<String,Long> mergeReservations(List<Entry> diary,List<Entry> forge){
   Map<String,Long> out=pending(diary);pending(forge).forEach((id,n)->out.merge(id,n,Math::max));return out;
  }

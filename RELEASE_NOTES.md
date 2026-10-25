@@ -1,11 +1,11 @@
-- Added a full-screen opening animation using Minecraft's native 3D book model.
-- Added Minecraft page-turn, quantity confirmation and crafting sounds, plus an interface-sound toggle.
-- Restored native Minecraft button textures with animated hover accents.
-- Added compact Mithril Plate and other Forge intermediates with expandable ingredients.
-
-Includes the sortable queue, inventory HUD controls, custom quantities, item textures and persistent AI chat from 0.4.1.
+- Reworked the interface as a parchment recipe book with layered binding and experience-green accents.
+- Added smooth native book opening/closing and Minecraft sound effects.
+- Added multiline diary entries with editing and done checkboxes.
+- Added live owned/required counters, item icons, progress bars and separate Forge quantities.
+- Replaced long screen explanations with concise storage counters.
+- Renamed the recipe link to Open in recipe.
 
 **Minecraft 26.1.2 · Fabric · Java 25**
 
-Replace your old mod with `recipe-hunter-0.4.2+26.1.2.jar`.
-Forge, sacks and Ender Chest observations require opening the relevant game menus. Live animation/audio and server behavior still need in-game verification.
+Replace the old mod with `recipe-hunter-0.4.3+26.1.2.jar`.
+Storage and Forge counts refresh when their game menus are observed. Inventory progress refreshes four times per second. Visual/audio behavior still needs in-game verification.

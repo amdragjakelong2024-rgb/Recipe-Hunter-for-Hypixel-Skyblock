@@ -10,7 +10,7 @@ public final class GrindEstimates {
  private Map<String,Long> previous=Map.of();private final Map<String,Long> gained=new HashMap<>();
  private long since,last;private String context="";public boolean recording=false;
  public record Estimate(String id,long missing,double hours,double waitHours,String evidence,int difficulty) {
-  public String label(Catalog c){return c.item(id).name+": "+Catalog.qty(missing)+" | "+(Double.isFinite(hours)?String.format(Locale.US,"~%.2f h active",hours):"time unknown")+(waitHours>0?String.format(Locale.US," + %.2f h base Forge wait",waitHours):"")+" | "+evidence;}
+  public String label(Catalog c){return c.item(id).name+": "+Catalog.qty(missing)+" | "+(Double.isFinite(hours)?String.format(Locale.US,"~%.2f h active",hours):"time unknown")+(waitHours>0?String.format(Locale.US," + %.2f h base Forge wait",waitHours):"");}
  }
  public void reset(){previous=Map.of();gained.clear();liveRates.clear();modelRates.clear();stats.clear();since=last=0;recording=false;}
  public void start(){previous=Map.of();gained.clear();liveRates.clear();since=System.currentTimeMillis();last=0;recording=true;}
