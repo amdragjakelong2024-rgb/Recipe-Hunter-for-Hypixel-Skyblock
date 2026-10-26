@@ -27,7 +27,8 @@ public final class HudEditor extends Screen {
     @Override public boolean mouseClicked(MouseButtonEvent e,boolean twice){
         if(super.mouseClicked(e,twice))return true;
         Book.Goal goal=hit(e.x(),e.y());if(goal==null)return false;
-        if(e.button()==1){goal.hudPage++;app.persist();return true;}
+        if(e.button()==0&&HudPanels.pageClick(app,goal,e.x(),e.y(),width,height))return true;
+        if(e.button()==1){goal.hudPage=BookViewport.page(goal.hudPage,1,HudPanels.pages(app,goal));app.persist();return true;}
         if(e.button()!=0)return false;
         dragging=goal;offsetX=e.x()-goal.hud.left(width,height);offsetY=e.y()-goal.hud.top(width,height);return true;
     }

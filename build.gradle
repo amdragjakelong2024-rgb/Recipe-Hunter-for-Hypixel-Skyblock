@@ -22,3 +22,6 @@ tasks.processResources { from(projectDir) { include "LICENSE", "NEU-DATA-LICENSE
 // The regression suite is an executable assertion harness, not JUnit.
 tasks.named('test') { failOnNoDiscoveredTests = false }
 tasks.named('check') { dependsOn tasks.named('plannerTest') }
+
+// Isolated native-client layout/input verification, never enabled in normal play.
+loom { runs { client { if (project.hasProperty('uiSmoke')) vmArg '-Drecipehunter.uiSmoke=true' } } }

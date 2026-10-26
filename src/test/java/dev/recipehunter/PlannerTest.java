@@ -219,6 +219,7 @@ public final class PlannerTest {
         check(tracking.uncertainSacks.contains("WHEAT"),"overlapping snapshot is marked uncertain, not double counted");eq(tracking.sacks.get("RAW_FISH"),7,"unrelated sack remains live during another category scan");
         check(!tracking.stock().containsKey("WHEAT"),"uncertain overlap excluded from owned stock");tracking.clear();check(tracking.sacks.isEmpty()&&tracking.sackSnapshots.isEmpty()&&tracking.uncertainSacks.isEmpty(),"profile change clears all sack evidence");
         ProgressTest.run(new Catalog(Files.newInputStream(Path.of(args[0]))));
+        UiBehaviorTest.run();
         AiTest.run();
         System.out.println("PASS: "+checks+" checks; "+c.items.size()+" catalogue items.");
         System.out.println("Legendary stone raw totals: "+stone.leaves);

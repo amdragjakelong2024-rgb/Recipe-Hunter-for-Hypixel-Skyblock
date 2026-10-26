@@ -43,7 +43,7 @@ public final class HunterScreen extends Screen {
         icons.clear();labels.clear();hovers.clear();counts.clear();footerY=height-58;rowsPerPage=Math.max(1,(footerY-bodyY-18)/23);
         int w=Math.max(140,width-24);search=addRenderableWidget(new EditBox(font,12,28,w-80,20,Component.literal("Search item")));search.setMaxLength(100);search.setValue(mode==Mode.SEARCH?query:"");search.setHint(Component.literal("Search item or pet rarity..."));
         button("Search",width-86,28,74,()->app.command(search.getValue()));
-        button(mode==Mode.BOOK?"Home":"Book",12,53,58,mode==Mode.BOOK?app::openHome:app::openBook);
+        button("Back to all recipes",12,53,144,app::openHomeContent);
         button("GUI",width-66,53,54,()->app.open(new HudEditor(app)));
         if(mode!=Mode.DETAIL){button("Diary",207,53,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",272,53,55,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",332,53,45,()->app.open(new ToolsScreen(app,"AI")));}
         if(mode!=Mode.DETAIL)button("Assistant: "+(app.book.assistant?"ON":"OFF"),76,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});

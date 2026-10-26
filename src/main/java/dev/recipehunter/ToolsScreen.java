@@ -13,7 +13,7 @@ public final class ToolsScreen extends Screen {
  @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
  @Override protected void init(){
   int aw=app.mc.getWindow().getGuiScaledWidth(),ah=app.mc.getWindow().getGuiScaledHeight();scale=(float)(.88*Math.min(aw/620.0,ah/400.0));width=620;height=400;offsetX=(int)((aw-width*scale)/2);offsetY=(int)((ah-height*scale)/2);
-  button("Home",8,27,60,app::openHome);button("Diary",72,27,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",136,27,60,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",200,27,45,()->app.open(new ToolsScreen(app,"AI")));
+  button("Back",8,27,60,app::openHomeContent);button("Diary",72,27,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",136,27,60,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",200,27,45,()->app.open(new ToolsScreen(app,"AI")));
   if(mode.equals("Calculator")){input=field(8,60,width-16,"(320 * 160) / 64");button("Calculate",8,85,100,()->{try{result=Double.toString(Calculator.evaluate(input.getValue()));UiSounds.count(app);}catch(RuntimeException e){result="Invalid arithmetic expression.";}});
    miningId=field(8,151,width-16,"Material ID, e.g. MITHRIL (model excludes Pristine/RNG)");
    speed=field(8,177,100,"Mining speed");speed.setValue(Double.toString(app.estimates.stats.getOrDefault("mining speed",0.0)));

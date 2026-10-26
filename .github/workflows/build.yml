@@ -26,6 +26,22 @@ jobs:
         run: python3 scripts/check_catalog_scope.py
       - name: Build and test
         run: /tmp/gradle-9.7.0/bin/gradle build plannerTest
+      - name: Native Minecraft UI smoke test
+        if: github.ref == 'refs/heads/update/complete-041'
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          ALSOFT_DRIVERS: 'null'
+        run: |
+          timeout 300s xvfb-run -a /tmp/gradle-9.7.0/bin/gradle runClient -PuiSmoke --args='--width 1280 --height 800'
+          test -f run/ui-smoke/PASS.txt
+          test ! -f run/ui-smoke/FAIL.txt
+      - name: Upload native UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-ui-smoke
+          path: run/ui-smoke/
+          if-no-files-found: ignore
       - name: Checksum artifacts
         run: sha256sum build/libs/*.jar > build/libs/SHA256SUMS.txt
       # QA artifacts only. Never push to public Releases automatically.
