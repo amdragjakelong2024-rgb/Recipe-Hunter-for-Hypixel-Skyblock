@@ -64,7 +64,7 @@ public final class UiSmoke {
   });
  }
  private static MultiLineEditBox journal(RecipeHunter app){return (MultiLineEditBox)app.mc.screen.children().stream().filter(c->c instanceof MultiLineEditBox).findFirst().orElseThrow();}
- private static void click(RecipeHunter app,String label){var b=(Button)app.mc.screen.children().stream().filter(c->c instanceof Button b&&b.getMessage().getString().equals(label)).findFirst().orElseThrow();app.mc.screen.mouseClicked(new MouseButtonEvent(b.getX()+b.getWidth()/2.0,b.getY()+b.getHeight()/2.0,new MouseButtonInfo(0,0)),false);}
+ private static void click(RecipeHunter app,String label){var b=(Button)app.mc.screen.children().stream().filter(c->c instanceof Button candidate&&candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();app.mc.screen.mouseClicked(new MouseButtonEvent(b.getX()+b.getWidth()/2.0,b.getY()+b.getHeight()/2.0,new MouseButtonInfo(0,0)),false);}
  private static void verifyStacks(RecipeHunter app){
   var iron=new ItemStack(Items.IRON_INGOT,16);var mithril=new ItemStack(Items.PRISMARINE_CRYSTALS,160);mithril.set(DataComponents.CUSTOM_NAME,Component.literal("Mithril"));
   var modern=new ItemStack(Items.IRON_INGOT,8);var tag=new CompoundTag();tag.putString("id","IRON_INGOT");modern.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));

@@ -1,16 +1,16 @@
-- Reworked the interface as a parchment recipe book with layered binding and experience-green accents.
-- Added smooth native book opening/closing and Minecraft sound effects.
-- Added multiline diary entries with editing and done checkboxes.
-- Added live owned/required counters, item icons, progress bars and separate Forge quantities.
-- Replaced long screen explanations with concise storage counters.
-- Renamed the recipe link to Open in recipe.
+## Recipe Hunter 0.4.1
 
 **Minecraft 26.1.2 · Fabric · Java 25**
 
-Replace the old mod with `recipe-hunter-0.4.1+26.1.2.jar`.
-Storage and Forge counts refresh when their game menus are observed. Inventory progress refreshes four times per second. Visual/audio behavior still needs in-game verification.
+- Centered parchment recipe book with All Recipes, saved goals, search and immediate internal navigation.
+- Live material counters with raw/enchanted equivalence, itemized Sack updates and seven-row HUD pages with manual arrows.
+- Fixed additional crafts: old finished copies and checklist marks no longer fill a new goal. Other saved goals no longer reserve stock away from its counter.
+- Improved recognition of untagged materials and nested Sack notifications.
+- Repaired Craft Diary input, editing, checkboxes, draft persistence and countdown editing.
+- Removed the AI assistant, chat and provider configuration.
 
-**HUD progress fix:** Normal (unenchanted) ingredients now contribute fractional progress to enchanted and other single-input compression tiers. Counts show the actual crafted quantity plus observed lower-tier stock. No item is credited twice across the visible material rows. Sack quantities remain last-observed snapshots until their in-game menus are opened again.
+Replace the previous JAR; keep only one Recipe Hunter version in `mods`.
 
-- Live sack-change tracking now reads per-item additions and removals from Hypixel's [Sacks] message hover, if Sack Notifications are enabled. The aggregate message alone is never treated as Mithril. Open the Sack to synchronize its absolute count; chat-only changes before the first scan show session-observed stock, not historical totals. A notification overlapping a recent Sack scan is skipped to avoid double counting.
-- HUD indicates whether Sacks have been scanned or only session changes have been observed; tiny positive percentages are no longer rounded down to 0%.
+**Live tracking:** inventory refreshes every five client ticks. Enable Hypixel Sack Notifications for direct-to-Sack collection; updates arrive in server batches. Open storage/Forge menus for their baseline observations. Unopened storage and unreadable or ambiguous messages cannot provide exact totals. Progress bars represent material equivalence, not completed Forge jobs or server unlocks.
+
+Automated regression and offline Minecraft UI tests accompany this build. Live Hypixel session behaviour is not independently verified here. Use `/rh sackstatus` and `/rh status <ITEM_ID>` to inspect observations.
