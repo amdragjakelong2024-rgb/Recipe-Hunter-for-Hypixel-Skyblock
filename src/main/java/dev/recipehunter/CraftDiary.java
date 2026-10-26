@@ -29,7 +29,7 @@ public final class CraftDiary {
  }
  public static Entry edit(Catalog catalog,Entry old,String text,long now){
   Entry next=parse(catalog,text,now);next.key=old.key;next.createdAt=old.createdAt;next.active=old.active;next.done=old.done;
-  if(next.id.equals(old.id)&&next.count==old.count&&next.readyAt-now==old.readyAt-old.createdAt)next.readyAt=old.readyAt;
+  if(next.id.equals(old.id)&&next.count==old.count&&next.readyAt==parse(catalog,old.text,now).readyAt)next.readyAt=old.readyAt;
   return next;
  }
  public static Map<String,Long> pending(List<Entry> entries){Map<String,Long> out=new HashMap<>();for(Entry e:entries)if(e.active&&!e.done&&!e.id.isEmpty()&&e.count>0)out.merge(e.id,e.count,Math::addExact);return out;}

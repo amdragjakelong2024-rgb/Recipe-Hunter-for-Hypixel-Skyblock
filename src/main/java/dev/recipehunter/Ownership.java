@@ -30,14 +30,14 @@ public final class Ownership {
         if(state.getBlock() instanceof ChestBlock&&state.getValue(ChestBlock.TYPE)!=ChestType.SINGLE){var other=pos.relative(ChestBlock.getConnectedDirection(state));if(other.asLong()<pos.asLong())canonical=other;}
         pendingChest=canonical.toShortString();clickAt=System.currentTimeMillis();
     }
-    public void scanChest(Minecraft mc,String context){
+    public void scanChest(Minecraft mc,String context,Catalog catalog){
         if(!(mc.screen instanceof AbstractContainerScreen<?> screen)||!(screen.getMenu() instanceof ChestMenu)||!WorldContext.island(context)) {activeMenu=null;activeChest="";stableTicks=0;return;}
         if(activeMenu!=screen.getMenu()){
             activeMenu=screen.getMenu();activeChest=System.currentTimeMillis()-clickAt<4000?pendingChest:"";pendingChest="";stableTicks=0;
         }
         if(activeChest.isEmpty()||++stableTicks<5)return;
         Map<String,Long> content=new HashMap<>();
-        for(var slot:screen.getMenu().slots)if(slot.container!=mc.player.getInventory()){String id=id(slot.getItem());if(!id.isEmpty())content.merge(id,(long)slot.getItem().getCount(),Long::sum);}
+        for(var slot:screen.getMenu().slots)if(slot.container!=mc.player.getInventory()){String id=resolvedId(slot.getItem(),catalog);if(!id.isEmpty())content.merge(id,(long)slot.getItem().getCount(),Long::sum);}
         storage.replace(activeChest,content);
     }
 
@@ -45,7 +45,8 @@ public final class Ownership {
     public void clear(){petPages.clear();storage.clear();pendingChest="";activeChest="";activeMenu=null;petsVisited=false;}
     public static CompoundTag tag(ItemStack s){
         CompoundTag t=s.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag();
-        return t.contains("id")||t.contains("petInfo")?t:t.getCompoundOrEmpty("ExtraAttributes");
+        CompoundTag nested=t.getCompoundOrEmpty("ExtraAttributes");
+        return nested.contains("id")||nested.contains("petInfo")?nested:t;
     }
     public static String petId(ItemStack s){
         return petJson(tag(s).getStringOr("petInfo",""));
@@ -57,6 +58,23 @@ public final class Ownership {
     public static String id(ItemStack s){
         if(s.isEmpty())return "";String pet=petId(s);if(!pet.isEmpty())return pet;
         String id=tag(s).getStringOr("id","");return id;
+    }
+    /** Metadata wins. Only exact catalogue names/vanilla IDs may identify an untagged stack. */
+    public static String resolvedId(ItemStack stack,Catalog catalog){
+        if(stack.isEmpty())return "";
+        String metadata=id(stack);
+        if(!metadata.isEmpty()){
+            String resolved=catalog.resolve(metadata);if(!resolved.isEmpty())return resolved;
+            return metadata; // Preserve unknown server IDs for diagnostics; never rename them by icon.
+        }
+        var customName=stack.get(DataComponents.CUSTOM_NAME);
+        if(customName!=null){String resolved=catalog.resolve(customName.getString());return resolved;}
+        var base=BuiltInRegistries.ITEM.getKey(stack.getItem());String candidate=base.getPath().toUpperCase(Locale.ROOT);
+        var item=catalog.items.get(candidate);
+        return item!=null&&base.toString().equals(item.icon)?candidate:"";
+    }
+    public static Map<String,Long> countStacks(Iterable<ItemStack> stacks,Catalog catalog){
+        Map<String,Long> counts=new HashMap<>();for(var stack:stacks){String id=resolvedId(stack,catalog);if(!id.isEmpty())counts.merge(id,(long)stack.getCount(),Long::sum);}return counts;
     }
     public void scanPets(Minecraft mc){
         if(!(mc.screen instanceof AbstractContainerScreen<?> screen)||mc.player==null)return;
@@ -75,16 +93,16 @@ public final class Ownership {
     }
     public void clearPets(){petPages.clear();petsVisited=false;}
     public int petPageCount(){return petPages.size();}
-    public Map<String,Long> stock(Minecraft mc){
-        Map<String,Long> result=inventory(mc);storage.totals().forEach((id,n)->result.merge(id,n,Long::sum));
+    public Map<String,Long> stock(Minecraft mc,Catalog catalog){
+        Map<String,Long> result=inventory(mc,catalog);storage.totals().forEach((id,n)->result.merge(id,n,Long::sum));
         Map<String,String> pets=new HashMap<>();for(var page:petPages.values())pets.putAll(page);for(String id:pets.values())result.merge(id,1L,Math::max);return result;
     }
-    public Map<String,Long> inventory(Minecraft mc){
+    public Map<String,Long> inventory(Minecraft mc,Catalog catalog){
         Map<String,Long> result=new HashMap<>();if(mc.player==null)return result;
         for(ItemStack s:mc.player.getInventory().getNonEquipmentItems()) {
-            String id=id(s);if(!id.isEmpty())result.merge(id,(long)s.getCount(),Long::sum);
+            String id=resolvedId(s,catalog);if(!id.isEmpty())result.merge(id,(long)s.getCount(),Long::sum);
         }
-        for(EquipmentSlot slot:List.of(EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET,EquipmentSlot.OFFHAND)){ItemStack s=mc.player.getItemBySlot(slot);String id=id(s);if(!id.isEmpty())result.merge(id,(long)s.getCount(),Long::sum);}
+        for(EquipmentSlot slot:List.of(EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET,EquipmentSlot.OFFHAND)){ItemStack s=mc.player.getItemBySlot(slot);String id=resolvedId(s,catalog);if(!id.isEmpty())result.merge(id,(long)s.getCount(),Long::sum);}
 
         return result;
     }

@@ -80,7 +80,6 @@ public final class RecipeBookScreen extends Screen {
   button("Recipe Planner  >",R,221,COL,()->{all=true;page=0;rebuildWidgets();});
   button("Diary  >",R,254,COL,()->app.open(new ToolsScreen(app,"Craft Diary")));
   button("Calculator  >",R,287,COL,()->app.open(new ToolsScreen(app,"Calculator")));
-  text("AI / API",R,347,COL,Theme.MUTED);button("Assistant settings & chat",R,365,COL,()->app.open(new ToolsScreen(app,"AI")));
  }
  private void detail(){
   if(selected.isEmpty()){text("Select a recipe",R,45,COL,Theme.MUTED);return;}

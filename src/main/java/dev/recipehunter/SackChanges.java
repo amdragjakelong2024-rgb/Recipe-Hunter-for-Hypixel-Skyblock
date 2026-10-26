@@ -7,7 +7,7 @@ import java.util.regex.*;
 public final class SackChanges {
  private SackChanges(){}
  private static final Pattern ITEM=Pattern.compile(
-  "^\\s*([+-]?)\\s*([0-9][0-9,]*)(?:\\s*[x×])?\\s+(.+?)\\s*\\(([^)]*\\bSacks?\\b[^)]*)\\)\\s*$",
+  "^\\s*([+-]?)\\s*([0-9][0-9,]*)(?:\\s*[x×])?\\s+(.+?)(?:\\s*\\(([^)]*\\bSacks?\\b[^)]*)\\))?\\s*$",
   Pattern.CASE_INSENSITIVE);
  private static final Pattern WINDOW=Pattern.compile("(?i)\\(Last\\s+([0-9]+)s\\.\\)");
  public static Map<String,Long> parse(String tooltip){

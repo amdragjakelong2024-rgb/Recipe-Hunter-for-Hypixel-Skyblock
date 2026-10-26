@@ -79,9 +79,9 @@ public final class PlannerTest {
         eq(required.leaves.get("FINE_JADE_GEM"),40,"mixtures retain required Fine jade");
         check(!required.leaves.containsKey("ROUGH_JADE_GEM"),"no unwanted Rough jade");
         boots.fineGems=true;eq(p.goal(boots,Map.of()).leaves.get("FINE_RUBY_GEM"),80,"boots can expand Flawless to Fine");
-        boots.checked.add("SLUDGE_JUICE");check(!p.goal(boots,Map.of()).leaves.containsKey("SLUDGE_JUICE"),"check removes sludge");
+        boots.checked.add("SLUDGE_JUICE");check(p.goal(boots,Map.of()).leaves.containsKey("SLUDGE_JUICE"),"checklist is not ownership");
         boots.checked.remove("SLUDGE_JUICE");eq(p.goal(boots,Map.of()).leaves.get("SLUDGE_JUICE"),3200,"undo restores sludge");
-        boots.checked.add("GEMSTONE_MIXTURE");check(!p.goal(boots,Map.of()).leaves.containsKey("SLUDGE_JUICE"),"parent check removes descendants");
+        boots.checked.add("GEMSTONE_MIXTURE");check(p.goal(boots,Map.of()).leaves.containsKey("SLUDGE_JUICE"),"parent checklist cannot invent descendant stock");
         boots.checked.clear();
         StorageLedger ledger=new StorageLedger();ledger.replace("chest A",Map.of("SLUDGE_JUICE",2000L));ledger.replace("chest B",Map.of("SLUDGE_JUICE",1200L));
         eq(ledger.totals().get("SLUDGE_JUICE"),3200,"sum separate chests");
@@ -93,12 +93,10 @@ public final class PlannerTest {
         var walk=WalkingPath.find(start,end,v->v.y()==0&&v.z()==0&&v.x()>=0&&v.x()<=3,100);
         eq(walk.size(),4,"shortest simple walk path");
         check(WalkingPath.find(start,end,v->v.y()==0&&v.z()==0&&v.x()!=1,100).isEmpty(),"blocked path not invented");
-        check(!Assistant.guide(c,"YOUNG_DRAGON_LEGGINGS").stream().anyMatch(v->v.contains("Auction")||v.contains("Bazaar")),"Ironman guide");
-        check(Assistant.guide(c,"YOUNG_DRAGON_LEGGINGS").stream().anyMatch(v->v.contains("random")),"dragon type not guaranteed");
         check(Celebration.craftMenu("Craft Item"),"craft context accepted");
         check(!Celebration.craftMenu("Chest"),"chest is not a craft");
-        Path temp=Files.createTempDirectory("recipehunter-test").resolve("book.json");Book b=new Book();var g=new Book.Goal("GRIFFIN;4");g.visible=false;g.checked.add("SLUDGE_JUICE");g.fineGems=true;b.history.add("DIVAN_BOOTS");b.assistant=true;g.rates.put("SOUL_STRING",120.0);b.goals.add(g);b.last=g.id;b.write(temp);Book copy=Book.read(temp);check(!copy.find(g.id).visible,"persist visibility");check(copy.find(g.id).rates.get("SOUL_STRING")==120.0,"persist rate");
-        check(copy.find(g.id).checked.contains("SLUDGE_JUICE"),"checkmark persists");check(copy.find(g.id).fineGems,"gem preference persists");check(copy.history.contains("DIVAN_BOOTS"),"past goal persists");check(copy.assistant,"assistant toggle persists");
+        Path temp=Files.createTempDirectory("recipehunter-test").resolve("book.json");Book b=new Book();var g=new Book.Goal("GRIFFIN;4");g.visible=false;g.checked.add("SLUDGE_JUICE");g.fineGems=true;b.history.add("DIVAN_BOOTS");g.rates.put("SOUL_STRING",120.0);b.goals.add(g);b.last=g.id;b.write(temp);Book copy=Book.read(temp);check(!copy.find(g.id).visible,"persist visibility");check(copy.find(g.id).rates.get("SOUL_STRING")==120.0,"persist rate");
+        check(copy.find(g.id).checked.contains("SLUDGE_JUICE"),"checkmark persists");check(copy.find(g.id).fineGems,"gem preference persists");check(copy.history.contains("DIVAN_BOOTS"),"past goal persists");
         HudLayout layout=new HudLayout();layout.move(100,80,800,600);
         eq(layout.left(800,600),100,"HUD drag X");eq(layout.top(800,600),80,"HUD drag Y");
         layout.zoom(.5,800,600);eq(layout.left(800,600),100,"zoom keeps anchor X");eq(layout.top(800,600),80,"zoom keeps anchor Y");
@@ -147,18 +145,12 @@ public final class PlannerTest {
         check(MiningModel.rate(3000,100,500,1,.5)>0,"mining model valid");
         check(MiningModel.rate(3000,100,500,1,.5)==2*MiningModel.rate(3000,0,500,1,.5),"fortune scales approximate yield");
         try{Calculator.evaluate("1/0");throw new AssertionError("infinite result");}catch(IllegalArgumentException expected){}
-        check(!AiClient.payload("test-model","goals").toString().contains("Bearer"),"credentials absent from model payload");
         b.completed.add("REFINED_MITHRIL");b.diary.add(job);b.write(temp);Book migrated=Book.read(temp);
         check(migrated.completed.contains("REFINED_MITHRIL"),"completion badge persisted");
         eq(migrated.diary.getFirst().count,5,"diary persisted");
         Book queue=new Book();var first=new Book.Goal("REFINED_MITHRIL");var second=new Book.Goal("ENCHANTED_DIAMOND_BLOCK");queue.goals.add(first);queue.goals.add(second);
         check(queue.active()==first,"queue first visible");queue.move(second,-1);check(queue.active()==second,"queue reorder changes active");second.visible=false;check(queue.active()==first,"hidden entry skipped");first.visible=false;check(queue.active()==null,"all hidden");queue.move(second,-100);check(queue.goals.getFirst()==second,"queue clamps movement");
         first.count=50;first.count=1;eq(p.goal(first,Map.of(),Map.of()).demand.get(first.id),1,"quantity reset recalculates one target");
-        Path secretDir=Files.createTempDirectory("rh-private-test");PrivateSettings privateStore=new PrivateSettings(secretDir);privateStore.write("test-value-only");check(privateStore.read().equals("test-value-only"),"private settings round trip");
-        check(!new String(Files.readAllBytes(secretDir.resolve("credentials.bin")),java.nio.charset.StandardCharsets.ISO_8859_1).contains("test-value-only"),"credential file encrypted");
-        AiClient ai=new AiClient();ai.load(secretDir.resolve("ai"));ai.model="test-model";ai.key("dummy-not-a-real-api-key");check(ai.save(),"API settings saved");AiClient reopened=new AiClient();reopened.load(secretDir.resolve("ai"));check(reopened.configured()&&reopened.model.equals("test-model"),"API settings survive restart");
-        reopened.switchProvider();check(!reopened.configured(),"provider keys isolated");reopened.switchProvider();reopened.switchProvider();check(reopened.configured(),"provider key restored");reopened.clearKey();AiClient cleared=new AiClient();cleared.load(secretDir.resolve("ai"));check(!cleared.configured(),"key deletion persisted");
-        try(var files=Files.walk(secretDir)){for(Path file:files.sorted(Comparator.reverseOrder()).toList())Files.delete(file);}
         try(var iconStream=PlannerTest.class.getResourceAsStream("/assets/recipehunter/icons.json.gz");var reader=new InputStreamReader(new java.util.zip.GZIPInputStream(iconStream))){var icons=com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();check(icons.size()>=8842,"icon catalogue coverage");check(icons.getAsJsonObject("DIVAN_HELMET").has("texture"),"custom head texture preserved");check(icons.getAsJsonObject("REFINED_MITHRIL").has("model"),"server item model preserved");}
         // A tier label must not hide progress accumulated as uncrafted raw items.
         for(String id:List.of("TEST_TIER_RAW","TEST_TIER_ENCHANTED","TEST_TIER_BLOCK")) {
@@ -220,7 +212,8 @@ public final class PlannerTest {
         check(!tracking.stock().containsKey("WHEAT"),"uncertain overlap excluded from owned stock");tracking.clear();check(tracking.sacks.isEmpty()&&tracking.sackSnapshots.isEmpty()&&tracking.uncertainSacks.isEmpty(),"profile change clears all sack evidence");
         ProgressTest.run(new Catalog(Files.newInputStream(Path.of(args[0]))));
         UiBehaviorTest.run();
-        AiTest.run();
+        LiveTrackingTest.run(c);
+        DiaryTest.run(c);
         System.out.println("PASS: "+checks+" checks; "+c.items.size()+" catalogue items.");
         System.out.println("Legendary stone raw totals: "+stone.leaves);
         System.out.println("Epic -> Legendary totals: "+epicOwned.leaves);

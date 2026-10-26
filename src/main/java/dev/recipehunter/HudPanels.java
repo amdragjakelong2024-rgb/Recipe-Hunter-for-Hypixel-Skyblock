@@ -16,7 +16,7 @@ public final class HudPanels {
   g.item(Icons.stack(app,goal.id),3,2);g.text(app.mc.font,app.trim(app.catalog.item(goal.id).name,HudLayout.WIDTH-25),23,6,0xffd4ed85,true);
   List<MaterialProgress.Row> rows=app.hudProgress.get(goal.id);int pages=rows==null?1:Math.max(1,(rows.size()+PER_PAGE-1)/PER_PAGE),page=Math.clamp(goal.hudPage,0,pages-1);
   if(rows==null)g.text(app.mc.font,"Loading...",7,28,Theme.INK,false);
-  else if(rows.isEmpty())g.text(app.mc.font,"Ready",7,28,0xff406820,false);
+  else if(rows.isEmpty())g.text(app.mc.font,"No materials to display",7,28,0xff406820,false);
   else for(int i=page*PER_PAGE;i<Math.min(page*PER_PAGE+PER_PAGE,rows.size());i++){
    var row=rows.get(i);int top=25+(i-page*PER_PAGE)*26;g.item(Icons.stack(app,row.id()),5,top);
    g.text(app.mc.font,app.trim(app.catalog.item(row.id()).name,HudLayout.WIDTH-31),26,top,row.done()?0xff396920:Theme.INK,false);

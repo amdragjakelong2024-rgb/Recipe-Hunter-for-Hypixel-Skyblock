@@ -31,8 +31,8 @@ public final class RecipeProgress {
   if(++visited>20000)throw new IllegalArgumentException("Recipe graph exceeds safe node limit");
   boolean checked=goal.checked.contains(id);creditCompressed(id,total-covered,goal,pool);long available=Math.max(0,pool.getOrDefault(id,0L));
   if(parent.isEmpty()&&(goal.freshCraft||goal.crafted>0))available=0;
-  long used=checked?0:Math.min(Math.max(0,total-covered),available);if(used>0)pool.put(id,available-used);
-  long have=checked?total:Math.min(total,covered+used);
+  long used=Math.min(Math.max(0,total-covered),available);if(used>0)pool.put(id,available-used);
+  long have=Math.min(total,covered+used);
   Node node=new Node(id,parent,total,have,Math.max(0,pending.getOrDefault(id,0L)),Math.max(0,forge.getOrDefault(id,0L)),checked);
   Catalog.Item item=catalog.items.get(id);
   if(total==0||item==null||item.raw||item.routes.isEmpty()||path.contains(id)||path.size()>=32)return node;

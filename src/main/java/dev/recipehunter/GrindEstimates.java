@@ -26,7 +26,7 @@ public final class GrindEstimates {
   if(!recording)return;
   // Any menu or location transition invalidates the sample: chest transfers/crafts are not grinding.
   if(app.mc.screen!=null||!context.equals(app.context)){previous=Map.of();context=app.context;since=now;gained.clear();return;}
-  Map<String,Long> current=app.ownership.inventory(app.mc);
+  Map<String,Long> current=app.ownership.inventory(app.mc,app.catalog);
   if(!previous.isEmpty())for(var e:current.entrySet()){long delta=e.getValue()-previous.getOrDefault(e.getKey(),0L);if(delta>0)gained.merge(e.getKey(),delta,Long::sum);}
   previous=current;if(now-since<30000)return;
   gained.forEach((id,n)->liveRates.put(id,n*3600000.0/(now-since)));

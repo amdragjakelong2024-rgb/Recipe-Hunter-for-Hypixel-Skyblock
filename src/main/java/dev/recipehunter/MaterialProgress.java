@@ -12,7 +12,7 @@ public final class MaterialProgress {
   public Row(String id,long have,long total,long pending,long forge,boolean checked){
    this(id,have,total,pending,forge,checked,have,"");
   }
-  public boolean done(){return checked||equivalent>=total-1e-9;}
+  public boolean done(){return equivalent>=total-1e-9;}
   public double fraction(){return total<=0?1:Math.clamp(equivalent/total,0.0,1.0);}
   public String count(){return have+"/"+total+(conversion.isEmpty()?"":" (+"+conversion+")");}
   public String percent(){

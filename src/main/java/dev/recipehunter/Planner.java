@@ -21,7 +21,7 @@ public final class Planner {
         if(g.crafted>=g.count)return new Plan();
         Map<String,Long> available=new HashMap<>(stock);if(g.freshCraft||g.crafted>0)available.remove(g.id);
         pending.forEach((id,n)->available.merge(id,n,Math::addExact));
-        return calculate(g.id,g.count-g.crafted,available,g.choices,true,g.fineGems,g.checked,g.expanded,g.compact);
+        return calculate(g.id,g.count-g.crafted,available,g.choices,true,g.fineGems,Set.of(),g.expanded,g.compact);
     }
     private Plan calculate(String root,long quantity,Map<String,Long> stock,Map<String,Integer> choices,boolean practical,boolean fineGems,Set<String> checked,Set<String> expanded,boolean compact){
         if(quantity<1||quantity>1_000_000)throw new IllegalArgumentException("Quantity must be 1..1,000,000");

@@ -13,7 +13,10 @@ public final class SackChatTracker {
  public static Map<String,Long> changes(Component message,Catalog catalog){
   if(catalog==null||!isNotice(message))return Map.of();
   Set<String> hovers=new LinkedHashSet<>();
-  collect(message,hovers,0);
+  message.visit((style,text)->{
+   if(style.getHoverEvent() instanceof HoverEvent.ShowText show)hovers.add(show.value().getString());
+   return Optional.empty();
+  },net.minecraft.network.chat.Style.EMPTY);
   Map<String,Long> result=new LinkedHashMap<>();
   for(String tooltip:hovers){
    SackChanges.parse(tooltip).forEach((name,n)->{
@@ -22,12 +25,6 @@ public final class SackChatTracker {
    });
   }
   return result;
- }
- private static void collect(Component component,Set<String> tooltips,int depth){
-  if(depth>24)return;
-  HoverEvent hover=component.getStyle().getHoverEvent();
-  if(hover instanceof HoverEvent.ShowText show)tooltips.add(show.value().getString());
-  for(Component sibling:component.getSiblings())collect(sibling,tooltips,depth+1);
  }
  public static String id(String label,Catalog catalog){
   return catalog.resolve(label);

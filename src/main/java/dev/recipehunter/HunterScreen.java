@@ -19,7 +19,7 @@ public final class HunterScreen extends Screen {
     public enum Mode { HOME,SEARCH,BOOK,DETAIL,SETTINGS }
     private final RecipeHunter app;private final Mode mode;private final String query;
     private String focus;private int tab=0,page=0,refreshTicks=0;private Book.Goal goal;private Planner.Plan plan;
-    private EditBox search,owned,rate;private final List<Icon> icons=new ArrayList<>();private final List<Label> labels=new ArrayList<>();
+    private EditBox search,rate;private final List<Icon> icons=new ArrayList<>();private final List<Label> labels=new ArrayList<>();
     private final List<Hover> hovers=new ArrayList<>();
     private record CountRow(String id,long total,Button button,int width){}
     private final List<CountRow> counts=new ArrayList<>();
@@ -45,13 +45,12 @@ public final class HunterScreen extends Screen {
         button("Search",width-86,28,74,()->app.command(search.getValue()));
         button("Back to all recipes",12,53,144,app::openHomeContent);
         button("GUI",width-66,53,54,()->app.open(new HudEditor(app)));
-        if(mode!=Mode.DETAIL){button("Diary",293,53,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",358,53,55,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",418,53,45,()->app.open(new ToolsScreen(app,"AI")));}
-        if(mode!=Mode.DETAIL)button("Assistant: "+(app.book.assistant?"ON":"OFF"),162,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});
+        if(mode!=Mode.DETAIL){button("Diary",293,53,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",358,53,55,()->app.open(new ToolsScreen(app,"Calculator")));}
         if(mode==Mode.HOME)home();else if(mode==Mode.SETTINGS)settings();else if(mode==Mode.BOOK)book();else if(mode==Mode.SEARCH)results();else detail();
     }
     private void refresh(){rebuildWidgets();}
     private void settings(){
-        label("Appearance & assistance",12,90,0xffefc77d);
+        label("Appearance",12,90,0xffefc77d);
         button("GUI smaller",12,116,125,()->app.resizeGui(-0.1));button("GUI larger",144,116,125,()->app.resizeGui(0.1));
         label(String.format(java.util.Locale.US,"GUI %.0f%% (fits screen)",app.book.guiScale*100),284,122,0xffd1dce5);
         button("HUD smaller",12,144,125,()->{app.book.hudScale=Math.max(.65,app.book.hudScale-.1);app.persist();refresh();});
@@ -110,7 +109,6 @@ public final class HunterScreen extends Screen {
         button("Finish",142,53,82,()->{app.completed(goal.id,goal.count);app.openBook();});
         if(!focus.equals(query))button("Main goal",229,53,83,()->{focus=query;page=0;tab=0;refresh();});
         else button("Open in recipe",229,53,108,()->app.gameRecipe(focus));
-        button("Assistant: "+(app.book.assistant?"ON":"OFF"),343,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});
         String[] tabs={"Recipe","Materials","All steps","Used for","Storage","Grind"};
         int tw=Math.min(88,(width-24)/tabs.length);
         for(int n=0;n<tabs.length;n++){final int ix=n;button((tab==n?"> ":"")+tabs[n],12+n*tw,78,tw-2,()->{tab=ix;page=0;UiSounds.page(app);refresh();});}
@@ -157,12 +155,12 @@ public final class HunterScreen extends Screen {
         lines.add("LOWEST TIME -> HIGHEST TIME");for(var e:app.estimates.rank(app,goal,false))lines.add(e.label(app.catalog));
         lines.add("Observed stats: "+app.estimates.stats);
         for(var e:app.menus.forge)lines.add("Forge: "+e.count+"x "+app.catalog.item(e.id).name+" | "+CraftDiary.remaining(e,System.currentTimeMillis()));
-        showNotes(lines);button(app.estimates.recording?"Stop sample":"Record sample",12,height-30,120,()->{if(app.estimates.recording)app.estimates.recording=false;else app.estimates.start();refresh();});button("Refresh",138,height-30,70,this::refresh);button("AI chat",214,height-30,100,()->app.open(new ToolsScreen(app,"AI")));
+        showNotes(lines);button(app.estimates.recording?"Stop sample":"Record sample",12,height-30,120,()->{if(app.estimates.recording)app.estimates.recording=false;else app.estimates.start();refresh();});button("Refresh",138,height-30,70,this::refresh);
     }
     private void materials(){
         List<MaterialProgress.Row> rows=app.progress(goal);int start=page*rowsPerPage;
         for(int i=start;i<Math.min(rows.size(),start+rowsPerPage);i++){var r=rows.get(i);Button b=checkedRow(r.id(),r.count()+(r.forge()>0?" | Forge: "+r.forge():r.pending()>0?" | Planned: "+r.pending():""),bodyY+(i-start)*23,12,width-24);counts.add(new CountRow(r.id(),r.total(),b,width-56));}
-        if(rows.isEmpty())label("Ready",12,bodyY,0xff51842b);pages(rows.size());
+        if(rows.isEmpty())label("No materials to display",12,bodyY,0xff51842b);pages(rows.size());
     }
     private void steps(){
         List<Map.Entry<String,Long>> entries=new ArrayList<>(plan.demand.entrySet());int start=page*rowsPerPage;
@@ -176,7 +174,7 @@ public final class HunterScreen extends Screen {
         if(uses.isEmpty())label("No uses indexed in this snapshot.",12,bodyY,0xffa9bac8);pages(uses.size());}
     private void sources(Catalog.Item item){
         List<String> lines=new ArrayList<>();lines.add(item.name);
-        lines.add("Inventory: "+app.ownership.inventory(app.mc).getOrDefault(item.id,0L));
+        lines.add("Inventory: "+app.ownership.inventory(app.mc,app.catalog).getOrDefault(item.id,0L));
         lines.add("Sacks: "+(app.menus.uncertainSacks.contains(item.id)||!app.menus.sacks.containsKey(item.id)?"Unknown":app.menus.sacks.get(item.id)+" (last observed)"));
         lines.add("Ender Chest: "+(app.menus.ender.size()==0?"Unknown":app.menus.ender.totals().getOrDefault(item.id,0L)+" (last synced)"));
         lines.add("Forge: "+CraftDiary.pending(app.menus.forge).getOrDefault(item.id,0L));
@@ -189,11 +187,10 @@ public final class HunterScreen extends Screen {
         pageButtons(lines.size(),capacity);
     }
     private void stockControls(Catalog.Item item){
-        int y=height-35;label("Have:",12,y-10,0xffa9bac8);label("Items/hour:",104,y-10,0xffa9bac8);
-        owned=addRenderableWidget(new EditBox(font,12,y,85,20,Component.literal("Known total owned for "+item.name)));owned.setMaxLength(14);owned.setValue(Long.toString(app.stock(goal).getOrDefault(focus,0L)));
+        int y=height-35;label("Observed: "+app.stock(goal).getOrDefault(focus,0L),12,y+5,0xffa9bac8);label("Items/hour:",104,y-10,0xffa9bac8);
         rate=addRenderableWidget(new EditBox(font,104,y,85,20,Component.literal("Measured items per hour")));rate.setMaxLength(14);rate.setValue(Double.toString(goal.rates.getOrDefault(focus,0.0)));
-        button("Apply",196,y,62,()->{try{long n=Long.parseLong(owned.getValue().replace(",",""));double r=Double.parseDouble(rate.getValue().replace(",","."));if(n<0||n>1_000_000_000_000L||!Double.isFinite(r)||r<0)throw new NumberFormatException();goal.owned.put(focus,n);goal.rates.put(focus,r);app.persist();refresh();}catch(NumberFormatException e){app.say("Enter non-negative numbers. Have is a total, not an extra amount.");}});
-        button("Clear",264,y,55,()->{goal.owned.remove(focus);goal.rates.remove(focus);app.persist();refresh();});
+        button("Apply",196,y,62,()->{try{double r=Double.parseDouble(rate.getValue().replace(",","."));if(!Double.isFinite(r)||r<0)throw new NumberFormatException();goal.rates.put(focus,r);app.persist();refresh();}catch(NumberFormatException e){app.say("Enter a non-negative collection rate.");}});
+        button("Clear",264,y,55,()->{goal.rates.remove(focus);app.persist();refresh();});
         button("Recipe Book",325,y,105,()->app.open(new RecipeBookScreen(app,true,"",goal.id)));
 
     }

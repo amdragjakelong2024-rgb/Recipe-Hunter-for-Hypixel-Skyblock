@@ -18,7 +18,7 @@ public final class MenuTracker {
   String title=screen.getTitle().getString().replaceAll("§.","").trim();
   boolean ec=title.matches("(?i)Ender Chest(?: \\([0-9]+/[0-9]+\\)| Page [0-9]+)?"),sack=title.matches("(?i)(?:Small |Medium |Large )?(?:Enchanted )?[A-Za-z ]+ Sack"),fg=title.equalsIgnoreCase("The Forge");
   if(!ec&&!sack&&!fg)return;Map<String,Long> contents=new HashMap<>();List<CraftDiary.Entry> jobs=new ArrayList<>();
-  for(var slot:screen.getMenu().slots){if(slot.container==app.mc.player.getInventory())continue;var stack=slot.getItem();String id=Ownership.id(stack);var lore=stack.get(DataComponents.LORE);String text=lore==null?"":String.join("\n",lore.lines().stream().map(l->l.getString().replaceAll("§.","")).toList());
+  for(var slot:screen.getMenu().slots){if(slot.container==app.mc.player.getInventory())continue;var stack=slot.getItem();String id=Ownership.resolvedId(stack,app.catalog);var lore=stack.get(DataComponents.LORE);String text=lore==null?"":String.join("\n",lore.lines().stream().map(l->l.getString().replaceAll("§.","")).toList());
    if(ec&&!id.isEmpty()&&!text.toLowerCase(Locale.ROOT).contains("click to view"))contents.merge(id,(long)stack.getCount(),Long::sum);
    if(sack){long n=stored(text);if(n>=0){
     if(id.isEmpty()){String name=Catalog.normal(stack.getHoverName().getString());id=app.catalog.resolve(name);}

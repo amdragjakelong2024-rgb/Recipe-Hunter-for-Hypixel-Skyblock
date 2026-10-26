@@ -20,9 +20,9 @@ public final class Book {
     public Set<String> history=new HashSet<>(),completed=new HashSet<>(),celebrated=new HashSet<>();
     public List<CraftDiary.Entry> diary=new ArrayList<>();
     public boolean uiSounds=true,animations=true;
-    public boolean assistant=false,celebrations=true,celebrationSound=true;
+    public boolean celebrations=true,celebrationSound=true;
     public double guiScale=1.0,hudScale=1.0;
-    public String assistantItem="";
+    public String diaryDraft="",diaryEditingKey="";
     public List<Goal> goals=new ArrayList<>(); public String last="";
     private static final Gson GSON=new GsonBuilder().setPrettyPrinting().create();
     public static Book read(Path path)throws IOException {
@@ -31,8 +31,9 @@ public final class Book {
             Book b=GSON.fromJson(r,Book.class);if(b==null||b.goals==null)throw new IOException("Invalid book");
             if(b.history==null)b.history=new HashSet<>();
             if(b.celebrated==null)b.celebrated=new HashSet<>();if(b.completed==null)b.completed=new HashSet<>();if(b.diary==null)b.diary=new ArrayList<>();
+            if(b.diaryDraft==null)b.diaryDraft="";if(b.diaryEditingKey==null)b.diaryEditingKey="";
             b.guiScale=Math.clamp(b.guiScale,0.65,1.6);b.hudScale=Math.clamp(b.hudScale,0.65,1.6);
-            for(Goal g:b.goals){if(g.materialDisplay==null)g.materialDisplay="Compact";if(g.gemDisplay==null)g.gemDisplay="Fine";if(g.expanded==null)g.expanded=new HashSet<>();if(g.checked==null)g.checked=new HashSet<>();b.history.add(g.id);if(g.id==null||g.count<1)throw new IOException("Invalid goal");if(g.owned==null)g.owned=new HashMap<>();if(g.choices==null)g.choices=new HashMap<>();if(g.rates==null)g.rates=new HashMap<>();}
+            for(Goal g:b.goals){g.freshCraft=true;if(g.materialDisplay==null)g.materialDisplay="Compact";if(g.gemDisplay==null)g.gemDisplay="Fine";if(g.expanded==null)g.expanded=new HashSet<>();if(g.checked==null)g.checked=new HashSet<>();b.history.add(g.id);if(g.id==null||g.count<1)throw new IOException("Invalid goal");if(g.owned==null)g.owned=new HashMap<>();if(g.choices==null)g.choices=new HashMap<>();if(g.rates==null)g.rates=new HashMap<>();}
             return b;
         }catch(JsonParseException e){throw new IOException("Invalid book; original file preserved",e);}
     }
