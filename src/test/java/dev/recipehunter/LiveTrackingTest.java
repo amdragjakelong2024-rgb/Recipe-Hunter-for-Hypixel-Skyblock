@@ -31,6 +31,7 @@ final class LiveTrackingTest {
   ProgressTest.eq(LiveProgress.refresh(c,repeatBook,Map.of("ENCHANTED_MITHRIL",10L,"MITHRIL_ORE",160L),List.of()).trees().get(repeat.id).equivalent,1,"newly gathered materials count toward repeat craft");
   var hidden=new Book.Goal("ENCHANTED_MITHRIL");hidden.count=960;hidden.visible=false;Book queue=new Book();queue.goals.add(hidden);queue.goals.add(new Book.Goal("REFINED_MITHRIL"));
   PlannerTest.check(LiveProgress.refresh(c,queue,Map.of("MITHRIL_ORE",160L),List.of()).trees().get("REFINED_MITHRIL").equivalent>0,"hidden goal cannot consume visible goal progress");
+  hidden.visible=true;PlannerTest.check(LiveProgress.refresh(c,queue,Map.of("MITHRIL_ORE",160L),List.of()).trees().get("REFINED_MITHRIL").equivalent>0,"another visible goal cannot freeze this goal counter");
   var translated=Component.translatable("chat.type.text",Component.literal("Server"),Component.literal("[Sacks] +16 items.").withStyle(s->s.withHoverEvent(new HoverEvent.ShowText(Component.literal("Added items:\n16 Mithril")))));
   PlannerTest.eq(SackChatTracker.changes(translated,c).getOrDefault("MITHRIL_ORE",0L),16,"nested translated Sack hover without category suffix");
   System.out.println("PASS: live inventory, itemized Sack chat, transfers, compaction and HUD recomputation fixtures across 13 material families");
