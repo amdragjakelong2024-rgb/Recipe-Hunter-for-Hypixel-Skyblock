@@ -45,8 +45,8 @@ public final class HunterScreen extends Screen {
         button("Search",width-86,28,74,()->app.command(search.getValue()));
         button("Back to all recipes",12,53,144,app::openHomeContent);
         button("GUI",width-66,53,54,()->app.open(new HudEditor(app)));
-        if(mode!=Mode.DETAIL){button("Diary",207,53,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",272,53,55,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",332,53,45,()->app.open(new ToolsScreen(app,"AI")));}
-        if(mode!=Mode.DETAIL)button("Assistant: "+(app.book.assistant?"ON":"OFF"),76,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});
+        if(mode!=Mode.DETAIL){button("Diary",293,53,60,()->app.open(new ToolsScreen(app,"Craft Diary")));button("Calc",358,53,55,()->app.open(new ToolsScreen(app,"Calculator")));button("AI",418,53,45,()->app.open(new ToolsScreen(app,"AI")));}
+        if(mode!=Mode.DETAIL)button("Assistant: "+(app.book.assistant?"ON":"OFF"),162,53,125,()->{app.book.assistant=!app.book.assistant;app.persist();refresh();});
         if(mode==Mode.HOME)home();else if(mode==Mode.SETTINGS)settings();else if(mode==Mode.BOOK)book();else if(mode==Mode.SEARCH)results();else detail();
     }
     private void refresh(){rebuildWidgets();}

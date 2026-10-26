@@ -3,7 +3,8 @@ import java.nio.file.*;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.client.input.*;
 
 /** Explicit CI-only opt-in. No server connection and no writes to a user's saved book. */
@@ -16,6 +17,7 @@ public final class UiSmoke {
    ticks++;
    try{
     if(stage==0&&ticks>100&&mc.screen!=null&&mc.getOverlay()==null){
+     BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(VanillaRegistries.createLookup()).forEach(p->p.apply());
      app.book=new Book();app.book.animations=false;
      for(String id:new String[]{"MITHRIL_PLATE","ENCHANTED_DIAMOND_BLOCK","PERFECT_JADE_GEM","ENCHANTED_MITHRIL"})if(app.catalog.items.containsKey(id))app.book.goals.add(new Book.Goal(id));
      mc.setScreen(new RecipeBookScreen(app,true,"","MITHRIL_PLATE"));stage=1;ticks=0;
