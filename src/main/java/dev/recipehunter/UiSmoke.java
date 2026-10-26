@@ -15,7 +15,7 @@ public final class UiSmoke {
    if(mc.player!=null)return;
    ticks++;
    try{
-    if(stage==0&&ticks>100&&mc.screen instanceof TitleScreen){
+    if(stage==0&&ticks>100&&mc.screen!=null&&mc.getOverlay()==null){
      app.book=new Book();app.book.animations=false;
      for(String id:new String[]{"MITHRIL_PLATE","ENCHANTED_DIAMOND_BLOCK","PERFECT_JADE_GEM","ENCHANTED_MITHRIL"})if(app.catalog.items.containsKey(id))app.book.goals.add(new Book.Goal(id));
      mc.setScreen(new RecipeBookScreen(app,true,"","MITHRIL_PLATE"));stage=1;ticks=0;
@@ -33,7 +33,7 @@ public final class UiSmoke {
      capture(app,"search-focused.png");stage=4;ticks=0;
     }else if(stage==4&&ticks>20&&!pending){mc.setScreen(new RecipeBookScreen(app,false,"",""));stage=5;ticks=0;}
     else if(stage==5&&ticks>30&&!pending){capture(app,"recipe-book.png");stage=6;ticks=0;}
-    else if(stage==6&&ticks>20&&!pending){Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click, text entry and focus retention passed. No Hypixel connection.\n");mc.stop();stage=7;}
+    else if(stage==6&&ticks>20&&!pending){if(!failure.isEmpty())throw new IllegalStateException(failure);Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click, text entry and focus retention passed. No Hypixel connection.\n");mc.stop();stage=7;}
     if(ticks>1200&&stage<7)throw new IllegalStateException("UI smoke timed out at stage "+stage);
    }catch(Throwable e){failure=e.toString();try{Files.createDirectories(Path.of("ui-smoke"));Files.writeString(Path.of("ui-smoke/FAIL.txt"),failure);}catch(Exception ignored){}e.printStackTrace();mc.stop();stage=7;}
   });
