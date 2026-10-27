@@ -1,0 +1,82 @@
+name: "Bug Report"
+description: "Report a bug, incorrect recipe, broken progress counter, crash, or UI issue."
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Recipe Hunter!
+        Please check existing issues before submitting. Do not include account tokens, passwords, or other private information.
+  - type: input
+    id: mod-version
+    attributes:
+      label: Recipe Hunter version
+      description: "The exact version you installed."
+      placeholder: "0.4.1"
+    validations:
+      required: true
+  - type: input
+    id: game-version
+    attributes:
+      label: Minecraft / Fabric version
+      placeholder: "Minecraft 26.1.2, Fabric Loader ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Affected feature
+      options:
+        - "Live progress / Sacks"
+        - "Recipe calculations / materials"
+        - "Recipe Book / search"
+        - "HUD / display"
+        - "Craft Diary / Forge"
+        - "Installation / crash"
+        - "Other"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: "Explain exactly how someone can reproduce the problem."
+      placeholder: |
+        1. Open /rh...
+        2. Select the recipe...
+        3. Collect or craft...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: "What should Recipe Hunter do?"
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: "What happened instead? Include item IDs and amounts if relevant."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, logs, and diagnostics
+      description: |
+        Drag screenshots or logs here. For Sack issues, enable SkyBlock Sack Notifications
+        and include /rh sackstatus and /rh status <ITEM_ID> output when available.
+        Remove access tokens and private information from logs.
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before submitting
+      options:
+        - label: "I checked for an existing issue about this problem."
+          required: true
