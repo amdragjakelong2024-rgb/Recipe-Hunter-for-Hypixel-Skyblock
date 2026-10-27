@@ -101,7 +101,7 @@ public final class RecipeHunter implements ClientModInitializer {
                 else open(new RecipeBookScreen(this,true,q,""));}
         }
     }
-    public Book.Goal goal(String id){Book.Goal g=book.find(id);if(g!=null)return g;if(draft==null||!draft.id.equals(id)){draft=new Book.Goal(id);draft.freshCraft=true;}return draft;}
+    public Book.Goal goal(String id){Book.Goal g=book.find(id);if(g!=null)return g;if(draft==null||!draft.id.equals(id)){draft=new Book.Goal(id);draft.freshCraft=true;draft.targetBaseline=physicalStock().getOrDefault(id,0L);}return draft;}
     public void select(String id,boolean verifyPet){
         lastViewed=id;goal(id);
         if(verifyPet&&catalog.item(id).name.endsWith(" Pet")&&!ownership.petsVisited)say("Open /pet yourself and visit every page to verify your pets. Then reopen /rh book or this recipe.");
@@ -114,10 +114,12 @@ public final class RecipeHunter implements ClientModInitializer {
     public Map<String,Long> physicalStock(){Map<String,Long> out=onHypixel()?ownership.stock(mc,catalog):new HashMap<>();if(onHypixel())menus.stock().forEach((id,n)->out.merge(id,n,Long::sum));return out;}
     public Map<String,Long> stock(Book.Goal g){Map<String,Long> stock=onHypixel()?ownership.stock(mc,catalog):new HashMap<>();if(onHypixel())menus.stock().forEach((id,n)->stock.merge(id,n,Math::addExact));return stock;}
     public Planner.Plan plan(Book.Goal g){try{return planner.goal(g,stock(g),CraftDiary.mergeReservations(book.diary,menus.forge));}catch(RuntimeException e){Planner.Plan p=new Planner.Plan();p.warnings.add("Cannot calculate this route: "+e.getMessage());return p;}}
-    public void save(Book.Goal g){ensureAccount();if(!writable){say("Book file is unreadable; saving is disabled to protect it.");return;}if(book.find(g.id)==null)book.goals.add(g);book.last=g.id;book.history.add(g.id);g.visible=true;if(persist())say("Saved: "+catalog.item(g.id).name);}
+    public void save(Book.Goal g){ensureAccount();if(!writable){say("Book file is unreadable; saving is disabled to protect it.");return;}if(g.finished){book.restart(g,physicalStock());}else if(book.find(g.id)==null){g.targetBaseline=physicalStock().getOrDefault(g.id,0L);book.goals.add(g);}book.last=g.id;book.history.add(g.id);g.visible=true;if(persist())say("Saved: "+catalog.item(g.id).name);}
+    public void restartGoal(Book.Goal g){book.restart(g,physicalStock());persist();say("Restarted: "+catalog.item(g.id).name);}
+    public void finishGoal(Book.Goal g){book.finish(g);persist();}
     public void completed(String id,long count){
-        Book.Goal g=book.find(id);if(g==null)return;UiSounds.craft(this);book.completed.add(id);g.crafted=Math.min(g.count,g.crafted+count);
-        if(g.crafted>=g.count){book.completed.add(id);book.goals.remove(g);if(draft==g)draft=null;hudPlans.remove(id);say("Completed: "+catalog.item(id).name+". You can start this recipe again.");}persist();
+        Book.Goal g=book.find(id);if(g==null||g.finished)return;UiSounds.craft(this);book.completed.add(id);g.crafted=Math.min(g.count,g.crafted+count);
+        if(g.crafted>=g.count){book.completed.add(id);book.finish(g);hudPlans.remove(id);say("Completed: "+catalog.item(id).name+". You can start this recipe again.");}persist();
     }
     void tick(){
         if(catalog==null||mc.player==null)return;ensureAccount();ticks++;
@@ -135,6 +137,7 @@ public final class RecipeHunter implements ClientModInitializer {
             ledger.snapshot("Sacks",Map.of(),now,MaterialLedger.Quality.UNKNOWN);
             for(var e:menus.sacks.entrySet())ledger.put("Sacks",e.getKey(),new MaterialLedger.Balance(e.getValue(),Math.max(menus.lastSackMessageAt,menus.sackSnapshots.getOrDefault(e.getKey(),0L)),menus.uncertainSacks.contains(e.getKey())?MaterialLedger.Quality.UNKNOWN:menus.sackSnapshots.containsKey(e.getKey())?MaterialLedger.Quality.LAST_SYNCED:MaterialLedger.Quality.SESSION_ONLY));
             Map<String,Long> pool=new HashMap<>(onHypixel()?ownership.stock(mc,catalog):Map.of());if(onHypixel())menus.stock().forEach((id,n)->pool.merge(id,n,Long::sum));
+            for(var goal:book.goals)if(goal.freshCraft&&goal.targetBaseline<0)goal.targetBaseline=pool.getOrDefault(goal.id,0L);
             try{
                 var fresh=LiveProgress.refresh(catalog,book,pool,menus.forge);
                 progressTrees.putAll(fresh.trees());hudProgress.putAll(fresh.rows());

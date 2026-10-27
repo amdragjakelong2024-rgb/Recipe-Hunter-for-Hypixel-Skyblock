@@ -49,6 +49,9 @@ public final class MenuTracker {
     // A batched message overlapping a snapshot cannot be split reliably.
     uncertainSacks.add(e.getKey());continue;
    }
+   // Once the overlap window ends, resume from a conservative observed lower bound.
+   // The old snapshot is ambiguous; keeping its uncertainty forever froze mining HUDs.
+   if(uncertainSacks.remove(e.getKey())){sacks.remove(e.getKey());sackSnapshots.remove(e.getKey());}
    long before=sacks.getOrDefault(e.getKey(),0L);
    long next=e.getValue()>0?(before>Long.MAX_VALUE-e.getValue()?Long.MAX_VALUE:before+e.getValue()):Math.max(0,before+e.getValue());
    sacks.put(e.getKey(),next);

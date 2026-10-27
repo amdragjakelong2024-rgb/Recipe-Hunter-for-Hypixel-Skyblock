@@ -35,8 +35,8 @@ public final class RecipeBookScreen extends Screen {
   control(all?"Recipe Book":"Back to all recipes",L,66,all?88:151,18,false,()->{all=!all;selected="";emptyDetail=false;page=0;rebuildWidgets();});
   control("Hide completed",L+(all?92:155),66,all?112:151,18,false,()->{filter=filter==CompletionFilter.Mode.HIDE_COMPLETED?CompletionFilter.Mode.ALL:CompletionFilter.Mode.HIDE_COMPLETED;page=0;rebuildWidgets();}).selected(filter==CompletionFilter.Mode.HIDE_COMPLETED);
   if(all)control("Owned only",L+208,66,98,18,false,()->{filter=filter==CompletionFilter.Mode.OWNED_ONLY?CompletionFilter.Mode.ALL:CompletionFilter.Mode.OWNED_ONLY;page=0;rebuildWidgets();}).selected(filter==CompletionFilter.Mode.OWNED_ONLY);
-  search=addRenderableWidget(new EditBox(font,viewport.x(L+8),viewport.y(93),viewport.size(COL-53),Math.max(14,viewport.size(20)),Component.literal("Search recipe or item")));
-  search.setMaxLength(100);search.setValue(query);search.setTextColor(Theme.INK);search.setBordered(false);
+  search=addRenderableWidget(new SearchBox(font,viewport.x(L+8),viewport.y(93),viewport.size(COL-53),Math.max(14,viewport.size(20)),Component.literal("Search recipe or item")));
+  search.setMaxLength(100);search.setValue(query);search.setTextColor(Theme.INK);search.setBordered(false);search.setHint(Component.literal("Search recipe or item..."));
   search.setResponder(value->{query=value;page=0;refreshSearch=true;});
   control("Go",L+COL-38,90,38,22,false,()->{refreshSearch=false;rebuildWidgets();setFocused(search);});
   if(all){List<String> categories=List.of("All","Crafting","Forge","Pets","Other");int x=L;for(String c:categories){control(c,x,117,60,18,false,()->{category=c;page=0;rebuildWidgets();}).selected(category.equals(c));x+=62;}}
@@ -109,7 +109,12 @@ public final class RecipeBookScreen extends Screen {
    text(">",R+66,365,16,Theme.INK);icons.add(new ItemIcon(item.id,R+84,359,route.count));
    if(item.routes.size()>1)button("Route "+(Math.floorMod(goal.choices.getOrDefault(item.id,0),item.routes.size())+1),R+127,354,90,()->{goal.choices.merge(item.id,1,Integer::sum);app.persist();flip();});
   }else text("Acquired directly",R,351,COL,Theme.MUTED);
-  button("Save as Goal",R+60,395,186,()->{app.save(goal);rebuildWidgets();});
+  if(app.book.find(goal.id)==null)button("Save as Goal",R+60,395,186,()->{app.save(goal);rebuildWidgets();});
+  else {
+   button(goal.finished?"Finished":"Finish",R,395,94,()->{app.finishGoal(goal);rebuildWidgets();}).active=!goal.finished;
+   button("Reset recipe",R+102,395,108,()->{app.restartGoal(goal);rebuildWidgets();});
+   button("Save",R+218,395,88,()->{app.save(goal);rebuildWidgets();});
+  }
  }
  private void treeRows(RecipeProgress.Node node,Book.Goal goal,List<RecipeProgress.Node> rows){rows.add(node);if(goal.expanded.contains(node.id))for(var child:node.children)treeRows(child,goal,rows);}
  private void selector(String title,List<String> options,String current,int x,int y,java.util.function.Consumer<String> action){if(options.isEmpty())return;text(title,x,y,COL,Theme.MUTED);int w=COL/options.size();for(int i=0;i<options.size();i++){String option=options.get(i);button((option.equals(current)?"* ":"")+option,x+i*w,y+10,w-3,()->action.accept(option));}}
@@ -135,7 +140,7 @@ public final class RecipeBookScreen extends Screen {
   Theme.background(g,font,W,H,"");heading(g,all?"ALL RECIPES":"RECIPE BOOK",L+5,29,1.8f);
   if(!all&&selected.isEmpty())heading(g,"GUI SETTINGS",R,31,1.5f);
   g.fill(L,89,L+COL-41,112,0x557e6340);g.outline(L,89,COL-41,23,0xff9a7950);
-  if(query.isEmpty()&&!search.isFocused())g.text(font,"Search recipe or item...",L+8,97,Theme.MUTED,false);
+
   for(var card:cards){g.fill(card[0],card[1],card[0]+card[2],card[1]+card[3],card[4]==1?0x557c4e20:0x15774c24);g.outline(card[0],card[1],card[2],card[3],card[4]==1?0xfff2dfb2:0x487c5b32);g.fill(card[0]+3,card[1]+3,card[0]+25,card[1]+33,0x33795a30);}
   for(var t:texts)g.text(font,app.trim(t.text,t.width),t.x,t.y,t.color,false);
   if(!selected.isEmpty()){
@@ -154,6 +159,13 @@ public final class RecipeBookScreen extends Screen {
   for(var cell:gridCells)g.outline(cell[0]-1,cell[1]-1,18,18,0xffb59c70);
   for(var icon:icons){g.item(Icons.stack(app,icon.id),icon.x,icon.y);if(icon.count>1)g.text(font,Long.toString(icon.count),icon.x+8,icon.y+9,0xffffffff,true);}
   for(var entry:entries){var root=app.tree(entry.goal);double fraction=root.fraction();g.fill(entry.x,entry.y,entry.x+entry.width,entry.y+7,0xffac9c7f);g.outline(entry.x,entry.y,entry.width,7,0xff74674f);g.fill(entry.x+1,entry.y+1,entry.x+1+(int)((entry.width-2)*fraction),entry.y+6,0xff4b9a24);g.text(font,root.row().percent(),entry.x+entry.width+4,entry.y,0xff35681c,false);}
+  g.pose().popMatrix();
+  // Stable position with a travelling gold highlight; no navigation downtime.
+  String brand="RECIPE HUNTER";float brandScale=Math.max(.65f,scale*1.05f);
+  int brandY=Math.max(2,top-Math.round(11*brandScale));
+  g.pose().pushMatrix();g.pose().translate((width-font.width(brand)*brandScale)/2,brandY);g.pose().scale(brandScale,brandScale);
+  double phase=(ticks+dt)/12.0;int bx=0;
+  for(int i=0;i<brand.length();i++){String letter=brand.substring(i,i+1);double glow=(Math.sin(phase-i*.55)+1)/2;int color=0xff000000|((int)(205+50*glow)<<16)|((int)(146+95*glow)<<8)|(int)(57+125*glow);g.text(font,letter,bx,0,color,true);bx+=font.width(letter);}
   g.pose().popMatrix();
   super.extractRenderState(g,mx,my,dt);
   for(var icon:icons)if(lx>=icon.x&&lx<icon.x+18&&ly>=icon.y&&ly<icon.y+18)RecipePreview.render(app,g,icon.id,selected.isEmpty()?null:app.goal(selected),mx,my);

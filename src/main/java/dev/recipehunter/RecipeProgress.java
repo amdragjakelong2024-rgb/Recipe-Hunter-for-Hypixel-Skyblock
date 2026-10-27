@@ -24,13 +24,14 @@ public final class RecipeProgress {
  /** Pass one mutable stock pool for ordered goals to avoid promising the same item twice. */
  public Node allocate(Book.Goal goal,Map<String,Long> pool,Map<String,Long> pending,Map<String,Long> forge){
   visited=0;Long existing=(goal.freshCraft||goal.crafted>0)?pool.remove(goal.id):null;
+  if(existing!=null&&goal.targetBaseline>=0)pool.put(goal.id,Math.max(0,existing-goal.targetBaseline-goal.crafted));
   try{return build(goal.id,"",Math.max(0,goal.count-goal.crafted),0,goal,pool,pending,forge,new HashSet<>());}
-  finally{if(existing!=null)pool.merge(goal.id,existing,Math::addExact);}
+  finally{if(existing!=null)pool.put(goal.id,existing);}
  }
  private Node build(String id,String parent,long total,long covered,Book.Goal goal,Map<String,Long> pool,Map<String,Long> pending,Map<String,Long> forge,Set<String> path){
   if(++visited>20000)throw new IllegalArgumentException("Recipe graph exceeds safe node limit");
   boolean checked=goal.checked.contains(id);creditCompressed(id,total-covered,goal,pool);long available=Math.max(0,pool.getOrDefault(id,0L));
-  if(parent.isEmpty()&&(goal.freshCraft||goal.crafted>0))available=0;
+  if(parent.isEmpty()&&(goal.freshCraft||goal.crafted>0)&&goal.targetBaseline<0)available=0;
   long used=Math.min(Math.max(0,total-covered),available);if(used>0)pool.put(id,available-used);
   long have=Math.min(total,covered+used);
   Node node=new Node(id,parent,total,have,Math.max(0,pending.getOrDefault(id,0L)),Math.max(0,forge.getOrDefault(id,0L)),checked);

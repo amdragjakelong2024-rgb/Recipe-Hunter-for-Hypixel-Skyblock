@@ -5,7 +5,7 @@ import net.minecraft.network.chat.HoverEvent;
 
 /** Drives the production chat parser, sack balances and HUD refresh path without a server. */
 final class LiveTrackingTest {
- static void run(Catalog c){
+ static void run(Catalog c)throws Exception{
   for(String target:List.of("ENCHANTED_MITHRIL","ENCHANTED_COBBLESTONE","ENCHANTED_WHEAT","ENCHANTED_CARROT","ENCHANTED_POTATO","ENCHANTED_SUGAR","ENCHANTED_NETHER_STALK","ENCHANTED_RAW_FISH","ENCHANTED_RAW_SALMON","ENCHANTED_BONE","ENCHANTED_ROTTEN_FLESH","ENCHANTED_ENDER_PEARL","ENCHANTED_OAK_LOG")){
    var route=c.item(target).routes.getFirst();PlannerTest.check(route.inputs.size()==1,"single material live fixture "+target);var in=route.inputs.getFirst();
    Book book=new Book();var goal=new Book.Goal(target);goal.count=100;book.goals.add(goal);MenuTracker menus=new MenuTracker();
@@ -34,6 +34,32 @@ final class LiveTrackingTest {
   hidden.visible=true;PlannerTest.check(LiveProgress.refresh(c,queue,Map.of("MITHRIL_ORE",160L),List.of()).trees().get("REFINED_MITHRIL").equivalent>0,"another visible goal cannot freeze this goal counter");
   var translated=Component.translatable("chat.type.text",Component.literal("Server"),Component.literal("[Sacks] +16 items.").withStyle(s->s.withHoverEvent(new HoverEvent.ShowText(Component.literal("Added items:\n16 Mithril")))));
   PlannerTest.eq(SackChatTracker.changes(translated,c).getOrDefault("MITHRIL_ORE",0L),16,"nested translated Sack hover without category suffix");
+  // Snapshot/message overlap must not permanently freeze all later mining gains.
+  MenuTracker overlap=new MenuTracker();overlap.sacks.put("MITHRIL_ORE",1000L);
+  overlap.sackSnapshots.put("MITHRIL_ORE",System.currentTimeMillis());
+  overlap.sackMessage("[Sacks] +160 items. (Last 10s.)",Map.of("MITHRIL_ORE",160L));
+  PlannerTest.check(!overlap.stock().containsKey("MITHRIL_ORE"),"overlap does not invent a total");
+  overlap.sackSnapshots.put("MITHRIL_ORE",System.currentTimeMillis()-20000);
+  overlap.sackMessage("[Sacks] +160 items. (Last 10s.)",Map.of("MITHRIL_ORE",160L));
+  PlannerTest.eq(overlap.stock().getOrDefault("MITHRIL_ORE",0L),160,"next unambiguous batch resumes mining progress");
+  overlap.sackMessage("[Sacks] +160 items. (Last 10s.)",Map.of("MITHRIL_ORE",160L));
+  PlannerTest.eq(overlap.stock().getOrDefault("MITHRIL_ORE",0L),320,"subsequent mining batch increases progress again");
+  PlannerTest.check(!overlap.sackSnapshots.containsKey("MITHRIL_ORE"),"recovery does not claim a synced absolute total");
+  // The initial output is excluded, but newly compacted output must remain counted.
+  Book cycles=new Book();Book.Goal cycle=new Book.Goal("ENCHANTED_MITHRIL");cycle.count=10;
+  cycles.restart(cycle,Map.of(cycle.id,10L));
+  var raw=LiveProgress.refresh(c,cycles,Map.of(cycle.id,10L,"MITHRIL_ORE",160L),List.of());
+  var compacted=LiveProgress.refresh(c,cycles,Map.of(cycle.id,11L),List.of());
+  ProgressTest.eq(raw.trees().get(cycle.id).equivalent,1,"repeat mines raw above old finished output");
+  ProgressTest.eq(compacted.trees().get(cycle.id).equivalent,1,"repeat preserves new auto-compacted target output");
+  ProgressTest.eq(new Planner(c).goal(cycle,Map.of(cycle.id,11L)).leaves.getOrDefault("MITHRIL_ORE",0L),1440,"planner uses same target baseline");
+  cycles.finish(cycle);PlannerTest.check(cycles.find(cycle.id)==cycle&&cycle.finished&&!cycle.visible,"finish retains goal for reset");
+  cycles.restart(cycle,Map.of(cycle.id,20L));
+  PlannerTest.check(!cycle.finished&&cycle.visible&&cycle.crafted==0&&cycle.count==10&&!cycles.completed.contains(cycle.id),"reset keeps quantity and clears completion");
+  ProgressTest.eq(LiveProgress.refresh(c,cycles,Map.of(cycle.id,20L),List.of()).trees().get(cycle.id).equivalent,0,"reset does not reuse finished copies");
+  ProgressTest.eq(LiveProgress.refresh(c,cycles,Map.of(cycle.id,20L,"MITHRIL_ORE",160L),List.of()).trees().get(cycle.id).equivalent,1,"mining resumes after reset");
+  var saved=java.nio.file.Files.createTempDirectory("rh-reset").resolve("book.json");cycles.write(saved);var loaded=Book.read(saved);
+  PlannerTest.eq(loaded.find(cycle.id).targetBaseline,20,"restart baseline survives restart");
   System.out.println("PASS: live inventory, itemized Sack chat, transfers, compaction and HUD recomputation fixtures across 13 material families");
  }
 }

@@ -42,7 +42,11 @@ public final class UiSmoke {
      if(!field.getValue().equals("mithril")||!field.isFocused())throw new IllegalStateException("Search focus/text lost on refresh");
      capture(app,"search-focused.png");stage=4;ticks=0;
     }else if(stage==4&&ticks>20&&!pending){mc.setScreen(new RecipeBookScreen(app,false,"",""));stage=5;ticks=0;}
-    else if(stage==5&&ticks>30&&!pending){capture(app,"recipe-book.png");stage=6;ticks=0;}
+    else if(stage==5&&ticks>30&&!pending){capture(app,"recipe-book.png");
+     mc.setScreen(new RecipeBookScreen(app,false,"","MITHRIL_PLATE"));
+     click(app,"Finish");if(!app.book.find("MITHRIL_PLATE").finished)throw new IllegalStateException("Finish failed");
+     click(app,"Reset recipe");var reset=app.book.find("MITHRIL_PLATE");if(reset.finished||!reset.visible||reset.crafted!=0)throw new IllegalStateException("Recipe reset failed");
+     stage=6;ticks=0;}
     else if(stage==6&&ticks>20&&!pending){mc.setScreen(new ToolsScreen(app,"Craft Diary"));stage=7;ticks=0;}
     else if(stage==7&&ticks>20&&!pending){
      var field=journal(app);mc.screen.mouseClicked(new MouseButtonEvent(field.getX()+4,field.getY()+4,new MouseButtonInfo(0,0)),false);
@@ -57,7 +61,7 @@ public final class UiSmoke {
      if(!journal(app).getValue().equals("Unfinished diary draft"))throw new IllegalStateException("Diary draft lost on navigation");stage=9;ticks=0;
     }else if(stage==9&&ticks>20&&!pending){
      click(app,"Delete");if(!app.book.diary.isEmpty())throw new IllegalStateException("Diary delete failed");
-     if(!failure.isEmpty())throw new IllegalStateException(failure);Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click/type/focus; diary click/type/save/edit/check/delete/draft retention; raw/modern/legacy item identity and live counter checks passed. No Hypixel connection.\n");mc.stop();stage=10;
+     if(!failure.isEmpty())throw new IllegalStateException(failure);Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click/type/focus; Finish/Reset recipe; diary click/type/save/edit/check/delete/draft retention; raw/modern/legacy item identity and live counter checks passed. No Hypixel connection.\n");mc.stop();stage=10;
     }
     if(ticks>1200&&stage<10)throw new IllegalStateException("UI smoke timed out at stage "+stage);
    }catch(Throwable e){failure=e.toString();try{Files.createDirectories(Path.of("ui-smoke"));Files.writeString(Path.of("ui-smoke/FAIL.txt"),failure);}catch(Exception ignored){}e.printStackTrace();mc.stop();stage=10;}

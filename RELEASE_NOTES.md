@@ -5,6 +5,9 @@
 - Centered parchment recipe book with All Recipes, saved goals, search and immediate internal navigation.
 - Live material counters with raw/enchanted equivalence, itemized Sack updates and seven-row HUD pages with manual arrows.
 - Fixed additional crafts: old finished copies and checklist marks no longer fill a new goal. Other saved goals no longer reserve stock away from its counter.
+- Finish and reset saved recipes for another craft without losing quantity or display settings.
+- Auto-compacted target items now count above the initial owned baseline; Sack tracking recovers after overlapping snapshots.
+- Larger search text and an animated gold RECIPE HUNTER title.
 - Improved recognition of untagged materials and nested Sack notifications.
 - Repaired Craft Diary input, editing, checkboxes, draft persistence and countdown editing.
 - Removed the AI assistant, chat and provider configuration.

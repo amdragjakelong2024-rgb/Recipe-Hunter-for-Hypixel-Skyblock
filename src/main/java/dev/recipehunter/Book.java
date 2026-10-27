@@ -10,7 +10,7 @@ public final class Book {
         public int hudPage=0; public String materialDisplay="Compact",gemDisplay="Fine";
         public Set<String> checked=new HashSet<>();
         public boolean fineGems=false;
-        public boolean compact=true,freshCraft=false; public long crafted=0; public Set<String> expanded=new HashSet<>();
+        public boolean compact=true,freshCraft=false,finished=false; public long crafted=0,targetBaseline=-1; public Set<String> expanded=new HashSet<>();
         public HudLayout hud;
         public Map<String,Long> owned=new HashMap<>();
         public Map<String,Integer> choices=new HashMap<>();
@@ -41,6 +41,14 @@ public final class Book {
         Files.createDirectories(path.getParent());Path tmp=path.resolveSibling(path.getFileName()+".tmp");Files.writeString(tmp,GSON.toJson(this));
         try{Files.move(tmp,path,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}catch(AtomicMoveNotSupportedException e){Files.move(tmp,path,StandardCopyOption.REPLACE_EXISTING);}
     }
+    /** Start another craft without changing display, quantity or actual material stock. */
+    public void restart(Goal g,Map<String,Long> observed){
+        g.crafted=0;g.finished=false;g.freshCraft=true;g.targetBaseline=observed.getOrDefault(g.id,0L);
+        g.checked.clear();g.owned.clear();g.hudPage=0;g.visible=true;
+        completed.remove(g.id);celebrated.remove(g.id);last=g.id;
+        if(find(g.id)==null)goals.add(g);
+    }
+    public void finish(Goal g){g.crafted=g.count;g.finished=true;g.visible=false;completed.add(g.id);}
     public Goal active(){return goals.stream().filter(g->g.visible).findFirst().orElse(null);}
     public void move(Goal goal,int delta){int i=goals.indexOf(goal);if(i<0)return;int to=Math.clamp(i+delta,0,goals.size()-1);if(i!=to){goals.remove(i);goals.add(to,goal);}}
     public Goal find(String id){return goals.stream().filter(g->g.id.equals(id)).findFirst().orElse(null);}

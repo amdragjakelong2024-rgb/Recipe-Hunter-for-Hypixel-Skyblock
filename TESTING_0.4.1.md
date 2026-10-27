@@ -22,11 +22,10 @@ This branch is a test build, not the public release. Automatic publishing remain
 - No authenticated Minecraft/Hypixel client is available in this development environment. Visual layout, animation, menu recognition and real message formats remain unverified in game.
 - All-catalogue graph/ID tests are synthetic coverage, not proof that every acquisition source sends observable client data.
 - Unopened storage has no known absolute balance. Itemized Sack messages provide observed changes, not the historical Sack total. Batched messages update only when Hypixel delivers them.
-- Overlapping Sack snapshot/batch windows cannot be split exactly without server timestamps. Such items remain Unknown until the next absolute scan; later deltas do not erase that uncertainty.
+- Overlapping Sack snapshot/batch windows cannot be split exactly without server timestamps. The absolute total remains Unknown; after the overlap window, later itemized deltas resume a conservative observed lower bound. Reopen the Sack to restore the exact total.
 - Session-acquired totals are reported Unknown: inventory gains can be withdrawals, gifts or crafting outputs. The mod does not invent a grind total from them.
 - Ender Chest/island storage and Forge are last-observed snapshots, not remote server polling. Reopen them after unseen external changes. Forge inventory claims require in-game validation.
 - The animation uses Minecraft's book model plus a page transition. Skin-specific first-person hands are not implemented.
-- Provider requests were tested with mocks, not a user's paid API key. ChatGPT subscriptions do not include API credit.
 - Automatic source aliases are intentionally not guessed for ambiguous catalogue names. Exact metadata IDs still work.
 
 ## In-game acceptance
@@ -40,9 +39,12 @@ Use a separate instance/profile configuration and replace the prior mod JAR; nev
 5. A 35 Enchanted Diamond Block goal must show 5,600 Enchanted Diamonds (87 stacks + 32). Switch units repeatedly; target quantity and progress stay unchanged.
 6. Flawless Ruby must show its real Fine recipe quantity. Perfect Jade must keep its crystal cost in Fine/Flawless/Perfect views. Try a recipe with an alternative route and a multi-output recipe.
 7. Put five Refined Mithril in Forge. Scan Forge and confirm separate reservations. Claim the outputs and check inventory/pending quantities do not overlap. Test a matching diary reservation too.
-8. Save two goals sharing a resource. Queue order allocates the stock; it must not complete both from one copy. Hide/show, reorder, drag and resize each HUD independently. Right-click changes just that panel's page. Leave it open while mining: no timed page switching.
+8. Save two goals sharing a resource. Each goal independently compares current stock; the counters are not reservations for simultaneous crafts. Hide/show, reorder, drag and resize each HUD independently. Use the panel arrows with the inventory/chat cursor to change its page. Leave it open while mining: no timed page switching.
 9. Restart and reconnect; saved goals/layout/unit selections remain, session storage evidence resets. Switch SkyBlock profile and confirm previous profile stock is not credited.
-10. Type and edit a diary entry, toggle done, save it, restart. Set an API provider/model/key, restart, test connection and send a short request if you accept provider billing. Never include the key in screenshots or diagnostic reports.
+10. Type and edit a diary entry, toggle done, save it, restart. Confirm that no AI/provider settings remain.
+
+11. Press Finish on a saved goal, then Reset recipe. Quantity and layout remain, completion clears, old output is excluded. Mine another 160 Mithril and allow compaction; the new enchanted piece must preserve progress. Restart the game and confirm reset state persists.
+12. Check the larger Search text, click at both ends, type a long query, select and replace it. RECIPE HUNTER should shimmer above the book without delaying navigation.
 
 Record expected/observed counts and screenshots for failures. Public release stays blocked until live acceptance and explicit approval.
 

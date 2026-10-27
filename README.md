@@ -73,3 +73,6 @@ gradle build plannerTest
 CI checks the catalogue, recipe calculations, inventory/Sack event sequences, compaction, repeat goals, diary persistence, and native Minecraft screen input. Synthetic events and offline client tests do not constitute a Hypixel server session. `/rh sackstatus` and `/rh status` help identify server-format or synchronisation problems.
 
 Code: MIT (`LICENSE`). Catalogue: NEU (`NEU-DATA-LICENSE.txt`). Existing source history is retained. Routine CI creates test artifacts and does not publish releases automatically.
+
+### Restarting a recipe
+Use **Finish** to mark the saved goal done, then **Reset recipe** to start another craft with the same quantity and display settings. The initial owned output is excluded; newly collected or compacted output counts. Existing ingredient stock is kept. The search field uses larger text and the book has an animated RECIPE HUNTER title.
