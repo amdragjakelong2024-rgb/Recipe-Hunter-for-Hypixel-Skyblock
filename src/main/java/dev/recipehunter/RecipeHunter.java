@@ -127,6 +127,7 @@ public final class RecipeHunter implements ClientModInitializer {
         if(catalog==null||mc.player==null)return;ensureAccount();ticks++;
         if(onHypixel()){
             if(ticks%10==0)context=WorldContext.text(mc);
+            if(ticks%5==0)menus.tabForge(this);
             ownership.scanPets(mc);ownership.scanChest(mc,context,catalog);menus.tick(this);estimates.tick(this);celebration.tick(this);
         }
         if(nextScreen!=null){Screen s=nextScreen;nextScreen=null;mc.setScreen(s);}

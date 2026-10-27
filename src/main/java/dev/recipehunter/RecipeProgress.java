@@ -5,21 +5,28 @@ import java.util.*;
 public final class RecipeProgress {
  public static final class Node {
   public final String id,parent;public final long total,owned,pending,forge;public final boolean checked;
-  public long covered,physical;public double equivalent,reserved;public boolean combined;public final List<Node> children=new ArrayList<>();
+  public Node acquisition;public long covered,physical;public double equivalent,reserved;public boolean combined;public final List<Node> children=new ArrayList<>();
   Node(String id,String parent,long total,long owned,long pending,long forge,boolean checked){this.id=id;this.parent=parent;this.total=total;this.owned=owned;this.pending=pending;this.forge=forge;this.checked=checked;physical=owned;equivalent=owned;}
   public double remaining(){return Math.max(0,total-equivalent-reserved);}
   public double fraction(){return total==0?1:Math.clamp(equivalent/total,0,1);}
-  public MaterialProgress.Row row(){return new MaterialProgress.Row(id,Math.min(total,physical),total,pending,forge,checked,equivalent,"");}
+  public MaterialProgress.Row row(){return new MaterialProgress.Row(id,Math.min(total,physical),total,pending,forge,checked,equivalent,"",reserved);}
  }
- private final Catalog catalog;private int visited;private Map<String,Long> physicalPool;
+ private final Catalog catalog;private int visited;private Map<String,Long> physicalPool;private Map<String,Long> queuedPool=Map.of();
  public RecipeProgress(Catalog catalog){this.catalog=catalog;}
  public Node evaluate(Book.Goal goal,Map<String,Long> stock,Map<String,Long> pending,Map<String,Long> forge){
   Map<String,Long> planned=new HashMap<>(stock);pending.forEach((id,n)->planned.merge(id,n,Math::addExact));
   return allocateReserved(goal,new HashMap<>(stock),planned,pending,forge);
  }
  public Node allocateReserved(Book.Goal goal,Map<String,Long> owned,Map<String,Long> planned,Map<String,Long> pending,Map<String,Long> forge){
-  Node actual=allocate(goal,owned,pending,forge),reserved=allocate(goal,planned,Map.of(),Map.of());reservations(actual,reserved);return actual;
+  Map<String,Long> acquisitionStock=new HashMap<>(owned);
+  Node actual=allocate(goal,owned,pending,forge),reserved=allocate(goal,planned,Map.of(),Map.of());reservations(actual,reserved);
+  if(!pending.isEmpty()){
+   queuedPool=new HashMap<>(pending);
+   try{linkAcquisition(actual,allocate(goal,acquisitionStock,pending,forge));}finally{queuedPool=Map.of();}
+  }
+  return actual;
  }
+ private void linkAcquisition(Node actual,Node acquisition){actual.acquisition=acquisition;actual.reserved=Math.max(actual.reserved,acquisition.reserved);for(int i=0;i<actual.children.size();i++)linkAcquisition(actual.children.get(i),acquisition.children.get(i));}
  private void reservations(Node actual,Node reserved){actual.reserved=Math.max(0,reserved.equivalent-actual.equivalent);for(int i=0;i<actual.children.size();i++)reservations(actual.children.get(i),reserved.children.get(i));}
  /** Pass one mutable stock pool for ordered goals to avoid promising the same item twice. */
  public Node allocate(Book.Goal goal,Map<String,Long> pool,Map<String,Long> pending,Map<String,Long> forge){
@@ -34,10 +41,12 @@ public final class RecipeProgress {
   boolean checked=goal.checked.contains(id);creditCompressed(id,total-covered,goal,pool);long available=Math.max(0,pool.getOrDefault(id,0L));
   if(parent.isEmpty()&&(goal.freshCraft||goal.crafted>0)&&goal.targetBaseline<0)available=0;
   long used=Math.min(Math.max(0,total-covered),available);if(used>0)pool.put(id,available-used);
-  long have=Math.min(total,covered+used);
+  long queued=Math.min(Math.max(0,total-covered-used),Math.max(0,queuedPool.getOrDefault(id,0L)));
+  if(queued>0)queuedPool.put(id,queuedPool.get(id)-queued);
+  long have=Math.min(total,covered+used+queued);
   long actual=Math.min(used,Math.max(0,physicalPool.getOrDefault(id,0L)));physicalPool.put(id,physicalPool.getOrDefault(id,0L)-actual);
   Node node=new Node(id,parent,total,have,Math.max(0,pending.getOrDefault(id,0L)),Math.max(0,forge.getOrDefault(id,0L)),checked);
-  node.covered=covered;node.physical=actual;
+  node.covered=covered;node.physical=actual;node.equivalent=have-queued;node.reserved=queued;
   Catalog.Item item=catalog.items.get(id);
   if(total==0||item==null||item.raw||item.routes.isEmpty()||path.contains(id)||path.size()>=32)return node;
   Catalog.Route route=item.routes.get(Math.floorMod(goal.choices.getOrDefault(id,0),item.routes.size()));
@@ -52,7 +61,7 @@ public final class RecipeProgress {
    if(outstanding>0)fraction=Math.min(fraction,Math.clamp((child.equivalent-childCovered)/outstanding,0,1));
   }
   path.remove(id);
-  if(!node.children.isEmpty())node.equivalent=Math.min(total,have+fraction*runs*route.count);
+  if(!node.children.isEmpty())node.equivalent=Math.min(total,have-queued+fraction*runs*route.count);
   return node;
  }
  /** Allocate surplus higher compression tiers using only the selected, recorded single-input routes. */
@@ -81,7 +90,7 @@ public final class RecipeProgress {
   * across the original nodes, so merge their credited amounts, never re-read stock.
   */
  public List<Node> displayed(Node root,Book.Goal goal){
-  List<Node> expanded=new ArrayList<>();collect(root,goal,expanded,true);
+  List<Node> expanded=new ArrayList<>();collect(root.acquisition==null?root:root.acquisition,goal,expanded,true);
   return consolidate(expanded);
  }
  static List<Node> consolidate(List<Node> expanded){
@@ -121,6 +130,7 @@ public final class RecipeProgress {
   * Keep full graph coverage for overall progress, strip it from acquisition rows.
   */
  public static Node remaining(Node node){
+  if(node.acquisition!=null)node=node.acquisition;
   long total=Math.max(0,node.total-node.covered);
   Node row=new Node(node.id,node.parent,total,Math.min(total,node.physical),node.pending,node.forge,node.checked);
   row.equivalent=Math.clamp(node.equivalent-node.covered,0,total);

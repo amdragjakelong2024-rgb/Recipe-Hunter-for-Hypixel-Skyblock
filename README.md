@@ -2,7 +2,7 @@
 
 A client-side recipe book and live material tracker for **Hypixel SkyBlock**.
 
-**Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.2**
+**Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.3-rc.1**
 
 ## Install
 
@@ -81,3 +81,8 @@ Code: MIT (`LICENSE`). Catalogue: NEU (`NEU-DATA-LICENSE.txt`). Existing source 
 
 ### Restarting a recipe
 Use **Finish** to mark the saved goal done, then **Reset recipe** to start another craft with the same quantity and display settings. The initial owned output is excluded; newly collected or compacted output counts. Existing ingredient stock is kept. The search field uses larger text and the book has an animated RECIPE HUNTER title.
+
+### Forge progress fix (0.4.3-rc.1 test build)
+Observed running/ready Forge jobs now cover their recipe inputs in the acquisition list. Five Refined Mithril jobs reduce the X555 Enchanted Mithril demand from 8,000 to 7,200, without calling those inputs loose stock. Claiming the output preserves remaining needs. Each HUD row shows `Need` and an approximate number of 64-item stacks; the footer shows allocated Forge output count.
+
+Open The Forge to synchronise its slots. A visible Forge tab-list widget can also update exact slot observations without reopening the menu. Unreadable/absent slots preserve their last observation; only an explicit empty/locked slot clears a job. Ready jobs remain pending until collection is observed. Closed menus and absent tab widgets cannot provide live server evidence.

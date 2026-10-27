@@ -61,10 +61,18 @@ public final class UiSmoke {
      if(!journal(app).getValue().equals("Unfinished diary draft"))throw new IllegalStateException("Diary draft lost on navigation");stage=9;ticks=0;
     }else if(stage==9&&ticks>20&&!pending){
      click(app,"Delete");if(!app.book.diary.isEmpty())throw new IllegalStateException("Diary delete failed");
-     if(!failure.isEmpty())throw new IllegalStateException(failure);Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click/type/focus; Finish/Reset recipe; diary click/type/save/edit/check/delete/draft retention; raw/modern/legacy item identity and live counter checks passed. No Hypixel connection.\n");mc.stop();stage=10;
+     app.book=new Book();var forgeGoal=new Book.Goal("TITANIUM_DRILL_3");forgeGoal.materialDisplay="Enchanted";forgeGoal.hud=new HudLayout();forgeGoal.hud.x=.5;forgeGoal.hud.y=.5;app.book.goals.add(forgeGoal);
+     var running=new CraftDiary.Entry();running.id="REFINED_MITHRIL";running.count=5;
+     var snapshot=LiveProgress.refresh(app.catalog,app.book,Map.of("TITANIUM_DRILL_2",1L,"ENCHANTED_MITHRIL",160L),List.of(running));app.hudProgress.clear();app.hudProgress.putAll(snapshot.rows());app.progressTrees.clear();app.progressTrees.putAll(snapshot.trees());
+     mc.setScreen(new net.minecraft.client.gui.screens.Screen(Component.literal("Forge regression")){
+      @Override public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor g,int mx,int my,float dt){g.fill(0,0,g.guiWidth(),g.guiHeight(),0xff20252c);HudPanels.render(app,g,-1,-1,0);}
+     });stage=10;ticks=0;
+    }else if(stage==10&&ticks>30&&!pending){capture(app,"forge-hud.png");stage=11;ticks=0;
+    }else if(stage==11&&ticks>20&&!pending){
+     if(!failure.isEmpty())throw new IllegalStateException(failure);Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click/type/focus; Finish/Reset recipe; diary click/type/save/edit/check/delete/draft retention; raw/modern/legacy item identity and live counter checks passed. No Hypixel connection.\n");mc.stop();stage=12;
     }
-    if(ticks>1200&&stage<10)throw new IllegalStateException("UI smoke timed out at stage "+stage);
-   }catch(Throwable e){failure=e.toString();try{Files.createDirectories(Path.of("ui-smoke"));Files.writeString(Path.of("ui-smoke/FAIL.txt"),failure);}catch(Exception ignored){}e.printStackTrace();mc.stop();stage=10;}
+    if(ticks>1200&&stage<12)throw new IllegalStateException("UI smoke timed out at stage "+stage);
+   }catch(Throwable e){failure=e.toString();try{Files.createDirectories(Path.of("ui-smoke"));Files.writeString(Path.of("ui-smoke/FAIL.txt"),failure);}catch(Exception ignored){}e.printStackTrace();mc.stop();stage=12;}
   });
  }
  private static MultiLineEditBox journal(RecipeHunter app){return (MultiLineEditBox)app.mc.screen.children().stream().filter(c->c instanceof MultiLineEditBox).findFirst().orElseThrow();}
