@@ -10,6 +10,34 @@ public final class ProgressTest {
  public static void main(String[] args)throws Exception{run(new Catalog(Files.newInputStream(Path.of(args[0]))));}
  public static void run(Catalog c)throws Exception{
   RecipeProgress engine=new RecipeProgress(c);
+  // Repeated input paths must become ONE summary/HUD line without creating stock.
+  RecipeProgress.Node root=new RecipeProgress.Node("TEST_DRILL","",1,0,0,0,false);
+  RecipeProgress.Node ironA=new RecipeProgress.Node("ENCHANTED_IRON","TEST_PLATE",800,160,5,2,false);
+  RecipeProgress.Node ironB=new RecipeProgress.Node("ENCHANTED_IRON","TEST_DRILL_PART",160,0,5,2,false);
+  root.children.add(ironA);root.children.add(ironB);
+  var unique=engine.displayed(root,new Book.Goal("TEST_DRILL"));
+  check(unique.size()==1,"identical material merges into one summary row");
+  var consolidated=unique.getFirst();
+  eq(consolidated.total,960,"800 + 160 iron requirements shown as 960 total");
+  eq(consolidated.equivalent,160,"160 physical iron is counted only once across branches");
+  eq(consolidated.forge,2,"repeated Forge snapshot is not doubled");
+  eq(consolidated.pending,5,"repeated pending snapshot is not doubled");
+  check(consolidated.combined,"merged row flags multiple recipe steps");
+  check(root.children.size()==2,"real dependency tree retains both paths");
+  Book.Goal selectedDrill=new Book.Goal("TITANIUM_DRILL_2");
+  selectedDrill.materialDisplay="Enchanted";
+  Catalog.Item x555=c.items.values().stream().filter(item->item.name.equals("Titanium Drill DR-X555")).findFirst().orElse(null);
+  if(x555!=null){
+   selectedDrill.id=x555.id;
+   var drillTree=engine.evaluate(selectedDrill,Map.of("ENCHANTED_IRON",160L),Map.of(),Map.of());
+   var drillSummary=engine.displayed(drillTree,selectedDrill);
+   check(drillSummary.stream().map(n->n.id).distinct().count()==drillSummary.size(),"actual DR-X555 has no repeated material IDs on HUD");
+   var ironRows=drillSummary.stream().filter(n->n.id.equals("ENCHANTED_IRON")).toList();
+   check(ironRows.size()==1,"DR-X555 iron appears once");
+   check(ironRows.getFirst().total>=160,"DR-X555 iron demand is nonzero");
+   check(ironRows.getFirst().equivalent<=160,"DR-X555 raw inventory cannot be counted twice");
+  }
+
   Book.Goal mithril=new Book.Goal("ENCHANTED_MITHRIL");mithril.count=960;
   var raw=engine.evaluate(mithril,Map.of("MITHRIL_ORE",1600L),Map.of(),Map.of());eq(raw.equivalent,10,"raw Mithril contributes fractional crafted units");
   var compacted=engine.evaluate(mithril,Map.of("ENCHANTED_MITHRIL",10L),Map.of(),Map.of());eq(compacted.equivalent,raw.equivalent,"compaction preserves equivalent progress");

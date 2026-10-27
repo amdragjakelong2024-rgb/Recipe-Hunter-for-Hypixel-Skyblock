@@ -5,7 +5,7 @@ import java.util.*;
 public final class RecipeProgress {
  public static final class Node {
   public final String id,parent;public final long total,owned,pending,forge;public final boolean checked;
-  public double equivalent,reserved;public final List<Node> children=new ArrayList<>();
+  public double equivalent,reserved;public boolean combined;public final List<Node> children=new ArrayList<>();
   Node(String id,String parent,long total,long owned,long pending,long forge,boolean checked){this.id=id;this.parent=parent;this.total=total;this.owned=owned;this.pending=pending;this.forge=forge;this.checked=checked;equivalent=owned;}
   public double remaining(){return Math.max(0,total-equivalent-reserved);}
   public double fraction(){return total==0?1:Math.clamp(equivalent/total,0,1);}
@@ -73,7 +73,33 @@ public final class RecipeProgress {
    }
   }
  }
- public List<Node> displayed(Node root,Book.Goal goal){List<Node> result=new ArrayList<>();collect(root,goal,result,true);return result;}
+ /** Merge identical item IDs in the summary only. The full recipe tree stays intact
+  * to show which intermediate needs each input. One inventory allocation is shared
+  * across the original nodes, so merge their credited amounts, never re-read stock.
+  */
+ public List<Node> displayed(Node root,Book.Goal goal){
+  List<Node> expanded=new ArrayList<>();collect(root,goal,expanded,true);
+  return consolidate(expanded);
+ }
+ static List<Node> consolidate(List<Node> expanded){
+  Map<String,Node> totals=new LinkedHashMap<>();
+  for(Node part:expanded){
+   Node first=totals.get(part.id);
+   if(first==null){totals.put(part.id,part);continue;}
+   long required=Math.addExact(first.total,part.total);
+   long actual=Math.addExact(first.owned,part.owned);
+   // Pending/forge reflect the same global server quantity in each tree node,
+   // not separate reservations. Avoid reporting the same job twice.
+   Node merged=new Node(part.id,"",required,Math.min(required,actual),
+      Math.max(first.pending,part.pending),Math.max(first.forge,part.forge),
+      first.checked&&part.checked);
+   merged.equivalent=Math.min(required,Math.max(0,first.equivalent)+Math.max(0,part.equivalent));
+   merged.reserved=Math.min(required,Math.max(0,first.reserved)+Math.max(0,part.reserved));
+   merged.combined=true;
+   totals.put(part.id,merged);
+  }
+  return new ArrayList<>(totals.values());
+ }
  private void collect(Node node,Book.Goal goal,List<Node> result,boolean root){
   boolean gem=node.id.matches("(?:ROUGH|FLAWED|FINE|FLAWLESS|PERFECT)_[A-Z_]+_GEM");
   boolean stop=node.children.isEmpty();
