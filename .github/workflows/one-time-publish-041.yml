@@ -5,7 +5,7 @@ on:
 
 jobs:
   publish-once:
-    if: github.event.head_commit.message == 'Authorize public 0.4.1 release: consolidated tested Recipe Hunter'
+    if: "github.event.head_commit.message == 'Authorize public 0.4.1 release: consolidated tested Recipe Hunter'"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -13,11 +13,11 @@ jobs:
       - name: Checkout exact approved source
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Verify authorized code commit
         run: |
-          test "$(git rev-parse HEAD^)" = "dbb87ee015dc68e9836ad8b498b0dc59cc22dcb8"
-          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/one-time-publish-041.yml"
+          test "$(git merge-base HEAD dbb87ee015dc68e9836ad8b498b0dc59cc22dcb8)" = "dbb87ee015dc68e9836ad8b498b0dc59cc22dcb8"
+          test "$(git diff --name-only dbb87ee015dc68e9836ad8b498b0dc59cc22dcb8 HEAD)" = ".github/workflows/one-time-publish-041.yml"
       - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
@@ -41,7 +41,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          target="$(git rev-parse HEAD^)"
+          target="dbb87ee015dc68e9836ad8b498b0dc59cc22dcb8"
           if gh release view 0.4.1 >/dev/null 2>&1; then
             gh release upload 0.4.1 build/libs/recipe-hunter-0.4.1+26.1.2.jar --clobber
             gh api --method PATCH "repos/$GH_REPO/git/refs/tags/0.4.1" -f sha="$target" -F force=true
