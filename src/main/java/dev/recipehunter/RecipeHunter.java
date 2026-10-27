@@ -55,6 +55,7 @@ public final class RecipeHunter implements ClientModInitializer {
         ClientReceiveMessageEvents.GAME.register((message,overlay)->{
             if(catalog!=null&&onHypixel()){
                 celebration.message(this,message.getString());
+                menus.serverBalance(message.getString(),catalog);
                 menus.sackMessage(message.getString(),SackChatTracker.changes(message,catalog));
             }
             String text=message.getString().toLowerCase(Locale.ROOT);
@@ -79,17 +80,18 @@ public final class RecipeHunter implements ClientModInitializer {
     public void command(String query){
         ensureAccount();if(catalog==null){say(error);return;}String q=query.trim();
         if(q.startsWith("open ")){String id=q.substring(5).trim();if(catalog.items.containsKey(id))select(id,false);else say("Unknown SkyBlock recipe.");return;}
-        if(q.toLowerCase(Locale.ROOT).startsWith("status ")){String id=catalog.resolve(q.substring(7));if(id.isEmpty()){say("Unknown or ambiguous SkyBlock item. Use its exact ID.");return;}say(id);for(String line:ledger.diagnostics(id))say(line);say("Forge reserved: "+CraftDiary.pending(menus.forge).getOrDefault(id,0L)+" | session-acquired total: Unknown (transfers are not acquisitions)");return;}
+        if(q.toLowerCase(Locale.ROOT).startsWith("status ")){String id=catalog.resolve(q.substring(7));if(id.isEmpty()){say("Unknown or ambiguous SkyBlock item. Use its exact ID.");return;}say(id);for(String line:ledger.diagnostics(id))say(line);say("Observed physical total: "+physicalStock().getOrDefault(id,0L)+". Unseen storage is Unknown. Recipe coverage is not ownership.");say("Forge reserved: "+CraftDiary.pending(menus.forge).getOrDefault(id,0L)+" | session-acquired total: Unknown (transfers are not acquisitions)");return;}
         switch(q.toLowerCase(Locale.ROOT)){
             case ""->openHome();
             case "book"->openBook();
-            case "help"->{for(String line:List.of("/rh - all recipes","/rh book - saved recipes","/rh <name> - search recipes","/rh current - active recipe (click to open)","/rh diary - Craft Diary","/rh calc - calculator","/rh gui - move/resize HUD and change pages","/rh settings - appearance settings","/rh save - save last selected recipe","/rh hide | /rh show - toggle last goal","/rh bigger | /rh smaller - book size","/rh sackstatus - Sack diagnostics","/rh status <ITEM_ID> - observed item sources"))say(line);}
+            case "help"->{for(String line:List.of("/rh - all recipes","/rh book - saved recipes","/rh <name> - search recipes","/rh current - active recipe (click to open)","/rh diary - Craft Diary","/rh calc - calculator","/rh gui - move/resize HUD and change pages","/rh settings - appearance settings","/rh save - save last selected recipe","/rh hide | /rh show - toggle last goal","/rh bigger | /rh smaller - book size","/rh sackstatus - Sack diagnostics","/rh resync - discard stale storage observations","/rh status <ITEM_ID> - observed item sources"))say(line);}
             case "current"->{Book.Goal active=book.active();if(active==null){say("No active recipe. Save and show a goal first.");return;}mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+catalog.item(active.id).name+" x"+active.count+"  ").append(Component.literal("[Open recipe]").withStyle(style->style.withColor(0x88cc55).withUnderlined(true).withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/rh open "+active.id)))));}
 
             case "diary"->open(new ToolsScreen(this,"Craft Diary"));
             case "calc"->open(new ToolsScreen(this,"Calculator"));
             case "gui"->open(new HudEditor(this));
             case "settings"->open(new HunterScreen(this,HunterScreen.Mode.SETTINGS,""));
+            case "resync"->{menus.clear();ownership.clear();ledger.clear();progressTrees.clear();hudProgress.clear();say("Storage observations cleared. Inventory updates automatically. Open each Sack and Ender Chest page once to synchronise their totals; enable Sack Notifications for later live updates.");}
             case "status"->{say("Use /rh status <SkyBlock item ID> for source counts and update times. Inventory is live; unseen storage is Unknown.");}
             case "sackstatus"->{say(menus.sackStatus()+" | notifications: "+menus.sackNoticeCount+" | parsed: "+menus.sackParsedCount+" | no details: "+menus.sackUnparsedCount+". Enable Hypixel SkyBlock Settings > Personal > Chat Feedback > Sack Notifications.");}
             case "bigger"->resizeGui(0.1);

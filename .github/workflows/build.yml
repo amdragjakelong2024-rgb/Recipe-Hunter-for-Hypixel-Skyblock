@@ -27,7 +27,7 @@ jobs:
       - name: Build and test
         run: /tmp/gradle-9.7.0/bin/gradle build plannerTest
       - name: Native Minecraft UI smoke test
-        if: github.ref == 'refs/heads/update/complete-041'
+        if: startsWith(github.ref, 'refs/heads/update/')
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
           ALSOFT_DRIVERS: 'null'
@@ -48,7 +48,7 @@ jobs:
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
-          name: recipe-hunter-0.4.1-mc26.1.2
+          name: recipe-hunter-0.4.2-mc26.1.2
           path: |
             build/libs/
             build/reports/catalogue-progress.txt

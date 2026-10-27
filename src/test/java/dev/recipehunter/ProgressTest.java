@@ -38,6 +38,20 @@ public final class ProgressTest {
    check(ironRows.getFirst().equivalent<=160,"DR-X555 raw inventory cannot be counted twice");
   }
 
+  var upgrade=new Book.Goal("TITANIUM_DRILL_3");upgrade.materialDisplay="Enchanted";
+  var upgradeRows=engine.displayed(engine.evaluate(upgrade,Map.of("TITANIUM_DRILL_2",1L),Map.of(),Map.of()),upgrade);
+  var jewels=upgradeRows.stream().filter(n->n.id.equals("GLACITE_JEWEL")).findFirst().orElseThrow();
+  eq(jewels.total,50,"X455 already covers 60 historical Jewels; upgrade needs only 50");
+  eq(jewels.physical,0,"owned drill is not loose Jewels");eq(jewels.equivalent,0,"historical Jewels do not fill acquisition row");
+  check(upgradeRows.stream().noneMatch(n->Set.of("ENCHANTED_COAL","ENCHANTED_REDSTONE","TREASURITE").contains(n.id)),"owned X455 removes historical-only ingredients");
+  for(var item:c.items.values())for(var route:item.routes){
+   var g=new Book.Goal(item.id);g.choices.put(item.id,item.routes.indexOf(route));g.materialDisplay="Enchanted";
+   Map<String,Long> observed=new HashMap<>();for(var in:route.inputs)observed.merge(in.id,in.count,Long::sum);
+   var rows=engine.displayed(engine.evaluate(g,observed,Map.of(),Map.of()),g);
+   Map<String,Long> shown=new HashMap<>();for(var row:rows)shown.merge(row.id,row.row().have(),Long::sum);
+   for(var e:shown.entrySet())check(e.getValue()<=observed.getOrDefault(e.getKey(),0L),"no invented physical stock for "+item.id+" -> "+e.getKey());
+  }
+
   Book.Goal mithril=new Book.Goal("ENCHANTED_MITHRIL");mithril.count=960;
   var raw=engine.evaluate(mithril,Map.of("MITHRIL_ORE",1600L),Map.of(),Map.of());eq(raw.equivalent,10,"raw Mithril contributes fractional crafted units");
   var compacted=engine.evaluate(mithril,Map.of("ENCHANTED_MITHRIL",10L),Map.of(),Map.of());eq(compacted.equivalent,raw.equivalent,"compaction preserves equivalent progress");

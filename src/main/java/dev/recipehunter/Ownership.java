@@ -65,7 +65,7 @@ public final class Ownership {
         String metadata=id(stack);
         if(!metadata.isEmpty()){
             String resolved=catalog.resolve(metadata);if(!resolved.isEmpty())return resolved;
-            return metadata; // Preserve unknown server IDs for diagnostics; never rename them by icon.
+            if(!metadata.startsWith("minecraft:"))return metadata; // Unknown SkyBlock IDs remain distinct.
         }
         var customName=stack.get(DataComponents.CUSTOM_NAME);
         if(customName!=null){String resolved=catalog.resolve(customName.getString());return resolved;}

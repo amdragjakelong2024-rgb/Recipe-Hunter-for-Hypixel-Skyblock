@@ -116,7 +116,7 @@ public final class RecipeBookScreen extends Screen {
    button("Save",R+218,395,88,()->{app.save(goal);rebuildWidgets();});
   }
  }
- private void treeRows(RecipeProgress.Node node,Book.Goal goal,List<RecipeProgress.Node> rows){rows.add(node);if(goal.expanded.contains(node.id))for(var child:node.children)treeRows(child,goal,rows);}
+ private void treeRows(RecipeProgress.Node node,Book.Goal goal,List<RecipeProgress.Node> rows){var remaining=RecipeProgress.remaining(node);if(remaining.total==0)return;rows.add(remaining);if(goal.expanded.contains(node.id))for(var child:node.children)treeRows(child,goal,rows);}
  private void selector(String title,List<String> options,String current,int x,int y,java.util.function.Consumer<String> action){if(options.isEmpty())return;text(title,x,y,COL,Theme.MUTED);int w=COL/options.size();for(int i=0;i<options.size();i++){String option=options.get(i);button((option.equals(current)?"* ":"")+option,x+i*w,y+10,w-3,()->action.accept(option));}}
  private void quantity(Book.Goal goal,long n){if(n<1||n>1000000){app.say("Enter a whole quantity from 1 to 1000000.");return;}goal.count=n;app.persist();UiSounds.count(app);rebuildWidgets();}
  private static String number(double n){return n==Math.rint(n)?String.format(Locale.US,"%,.0f",n):String.format(Locale.US,"%,.3f",n);}
@@ -149,7 +149,7 @@ public final class RecipeBookScreen extends Screen {
    for(var view:materialViews)if(view.index<nodes.size()){
     var node=nodes.get(view.index);int y=view.y;
     g.fill(R,y,R+20,y+30,0x33795a30);
-    g.text(font,app.trim(number(node.equivalent)+" / "+Catalog.qty(node.total),COL-126),R+24,y+20,Theme.MUTED,false);
+    g.text(font,app.trim((node.equivalent>node.physical?"Eq. ":"Known ")+number(node.equivalent)+" / "+Catalog.qty(node.total),COL-126),R+24,y+20,Theme.MUTED,false);
     g.fill(R+COL-98,y+21,R+COL-31,y+27,0xffaa9a7e);g.fill(R+COL-98,y+21,R+COL-98+(int)(67*node.fraction()),y+27,0xff4b9a24);g.text(font,node.row().percent(),R+COL-28,y+20,0xff35681c,false);
     String parent=node.parent.isEmpty()?selected:node.parent;
     String detail=(node.forge>0?"Forge: "+node.forge+" | ":node.reserved>0?"Reserved: "+number(node.reserved)+" | ":"")+(node.combined?"For: multiple recipe steps (Recipe tree)":"For: "+app.catalog.item(parent).name);

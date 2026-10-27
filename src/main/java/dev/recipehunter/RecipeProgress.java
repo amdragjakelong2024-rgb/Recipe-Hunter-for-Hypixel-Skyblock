@@ -5,13 +5,13 @@ import java.util.*;
 public final class RecipeProgress {
  public static final class Node {
   public final String id,parent;public final long total,owned,pending,forge;public final boolean checked;
-  public double equivalent,reserved;public boolean combined;public final List<Node> children=new ArrayList<>();
-  Node(String id,String parent,long total,long owned,long pending,long forge,boolean checked){this.id=id;this.parent=parent;this.total=total;this.owned=owned;this.pending=pending;this.forge=forge;this.checked=checked;equivalent=owned;}
+  public long covered,physical;public double equivalent,reserved;public boolean combined;public final List<Node> children=new ArrayList<>();
+  Node(String id,String parent,long total,long owned,long pending,long forge,boolean checked){this.id=id;this.parent=parent;this.total=total;this.owned=owned;this.pending=pending;this.forge=forge;this.checked=checked;physical=owned;equivalent=owned;}
   public double remaining(){return Math.max(0,total-equivalent-reserved);}
   public double fraction(){return total==0?1:Math.clamp(equivalent/total,0,1);}
-  public MaterialProgress.Row row(){return new MaterialProgress.Row(id,Math.min(total,owned),total,pending,forge,checked,equivalent,"");}
+  public MaterialProgress.Row row(){return new MaterialProgress.Row(id,Math.min(total,physical),total,pending,forge,checked,equivalent,"");}
  }
- private final Catalog catalog;private int visited;
+ private final Catalog catalog;private int visited;private Map<String,Long> physicalPool;
  public RecipeProgress(Catalog catalog){this.catalog=catalog;}
  public Node evaluate(Book.Goal goal,Map<String,Long> stock,Map<String,Long> pending,Map<String,Long> forge){
   Map<String,Long> planned=new HashMap<>(stock);pending.forEach((id,n)->planned.merge(id,n,Math::addExact));
@@ -25,6 +25,7 @@ public final class RecipeProgress {
  public Node allocate(Book.Goal goal,Map<String,Long> pool,Map<String,Long> pending,Map<String,Long> forge){
   visited=0;Long existing=(goal.freshCraft||goal.crafted>0)?pool.remove(goal.id):null;
   if(existing!=null&&goal.targetBaseline>=0)pool.put(goal.id,Math.max(0,existing-goal.targetBaseline-goal.crafted));
+  physicalPool=new HashMap<>(pool);
   try{return build(goal.id,"",Math.max(0,goal.count-goal.crafted),0,goal,pool,pending,forge,new HashSet<>());}
   finally{if(existing!=null)pool.put(goal.id,existing);}
  }
@@ -34,7 +35,9 @@ public final class RecipeProgress {
   if(parent.isEmpty()&&(goal.freshCraft||goal.crafted>0)&&goal.targetBaseline<0)available=0;
   long used=Math.min(Math.max(0,total-covered),available);if(used>0)pool.put(id,available-used);
   long have=Math.min(total,covered+used);
+  long actual=Math.min(used,Math.max(0,physicalPool.getOrDefault(id,0L)));physicalPool.put(id,physicalPool.getOrDefault(id,0L)-actual);
   Node node=new Node(id,parent,total,have,Math.max(0,pending.getOrDefault(id,0L)),Math.max(0,forge.getOrDefault(id,0L)),checked);
+  node.covered=covered;node.physical=actual;
   Catalog.Item item=catalog.items.get(id);
   if(total==0||item==null||item.raw||item.routes.isEmpty()||path.contains(id)||path.size()>=32)return node;
   Catalog.Route route=item.routes.get(Math.floorMod(goal.choices.getOrDefault(id,0),item.routes.size()));
@@ -68,7 +71,7 @@ public final class RecipeProgress {
     if(current.equals(target)){
      long missing=need-pool.getOrDefault(target,0L);if(missing<=0)return;
      long used=Math.min(pool.get(source),(missing-1)/ratio+1);
-     pool.put(source,pool.get(source)-used);pool.merge(target,Math.multiplyExact(used,ratio),Math::addExact);break;
+     pool.put(source,pool.get(source)-used);physicalPool.put(source,Math.max(0,physicalPool.getOrDefault(source,0L)-used));pool.merge(target,Math.multiplyExact(used,ratio),Math::addExact);break;
     }
    }
   }
@@ -109,10 +112,19 @@ public final class RecipeProgress {
   else stop|=!root&&(node.id.startsWith("ENCHANTED_")||node.id.startsWith("REFINED_")||catalog.item(node.id).routes.stream().anyMatch(r->"forge".equals(r.type)));
   if(goal.expanded.contains(node.id))stop=false;
   if(stop||node.children.isEmpty()){
-   result.add(node);
+   Node remaining=remaining(node);if(remaining.total>0)result.add(remaining);
    // Perfect gemstones retain their non-gemstone costs in every presentation.
    if(gem)for(Node child:node.children)if(!child.id.endsWith("_GEM"))collect(child,goal,result,false);
   }else for(Node child:node.children)collect(child,goal,result,false);
+ }
+ /** Costs already embedded in an owned ancestor are NOT loose items in storage.
+  * Keep full graph coverage for overall progress, strip it from acquisition rows.
+  */
+ public static Node remaining(Node node){
+  long total=Math.max(0,node.total-node.covered);
+  Node row=new Node(node.id,node.parent,total,Math.min(total,node.physical),node.pending,node.forge,node.checked);
+  row.equivalent=Math.clamp(node.equivalent-node.covered,0,total);
+  row.reserved=Math.min(total,node.reserved);row.children.addAll(node.children);return row;
  }
  public Set<String> materialOptions(Node root){Set<String> out=new LinkedHashSet<>(List.of("Compact"));walk(root,n->{if(n.id.startsWith("ENCHANTED_"))out.add(n.id.endsWith("_BLOCK")?"Enchanted Block":"Enchanted");});return out;}
  public Set<String> gemOptions(Node root){Set<String> out=new LinkedHashSet<>();for(String tier:List.of("Fine","Flawless","Perfect"))walk(root,n->{if(n.id.startsWith(tier.toUpperCase(Locale.ROOT)+"_")&&n.id.endsWith("_GEM"))out.add(tier);});return out;}

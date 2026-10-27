@@ -22,6 +22,11 @@ final class LiveTrackingTest {
    PlannerTest.check(!deposited.rows().get(target).isEmpty(),"HUD rows emitted "+target);
    menus.clear();ProgressTest.eq(LiveProgress.refresh(c,book,menus.stock(),List.of()).trees().get(target).equivalent,0,"reconnect clears sack evidence "+target);
   }
+  MenuTracker balances=new MenuTracker();balances.observeSack("GLACITE_JEWEL",60,1);
+  PlannerTest.check(balances.serverBalance("You have no Glacite Jewel in your Sacks!",c),"server zero message recognized");
+  PlannerTest.eq(balances.stock().getOrDefault("GLACITE_JEWEL",-1L),0,"server zero replaces stale balance");
+  PlannerTest.eq(MenuTracker.stored("Stored: 1.5k / 20k"),-1,"abbreviated quantities are unknown, never guessed");
+  PlannerTest.check(MenuTracker.enderPage("Ender Chest (1/9)").equals(MenuTracker.enderPage("Ender Chest (1/5)")),"page capacity change does not duplicate storage");
   Book book=new Book();var goal=new Book.Goal("ENCHANTED_MITHRIL");goal.count=960;book.goals.add(goal);
   var tiny=LiveProgress.refresh(c,book,Map.of("MITHRIL_ORE",1L),List.of());PlannerTest.check(tiny.rows().get(goal.id).stream().anyMatch(r->r.equivalent()>0&&!r.percent().equals("0%")),"one mined Mithril updates visible sub-percent progress");
   var job=CraftDiary.parse(c,"forge 2 Refined Mithril 4h",1000);book.goals.clear();book.goals.add(new Book.Goal("REFINED_MITHRIL"));
