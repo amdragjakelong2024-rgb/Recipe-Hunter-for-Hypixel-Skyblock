@@ -29,6 +29,11 @@ public final class ForgeProgressTest {
   ForgeTracking.tab(c,jobs,"Player list\n2) EMPTY",5000);eq(jobs.size(),4,"non-Forge lines cannot clear jobs");
   check(ForgeTracking.job(c,1,"Refined Mithril","Duration: 6h\nClick to forge!",0)==null,"recipe preview is not a running job");
   check(ForgeTracking.job(c,1,"Refined Mithril","Time Remaining: nonsense",0)==null,"unknown time is not a job");
+  Book compact=new Book();var plateGoal=new Book.Goal("MITHRIL_PLATE");compact.goals.add(plateGoal);
+  var plateStock=Map.of("GOLDEN_PLATE",1L,"REFINED_TITANIUM",1L,"ENCHANTED_IRON_BLOCK",1L);
+  var refining=new CraftDiary.Entry();refining.id="REFINED_MITHRIL";refining.count=5;
+  var engine=new RecipeProgress(c);var compactTree=engine.evaluate(plateGoal,plateStock,CraftDiary.pending(List.of(refining)),CraftDiary.pending(List.of(refining)));
+  eq(compactTree.acquisition.remaining(),0,"pending child jobs cover ready-to-forge parent demand");eq(compactTree.acquisition.equivalent,0,"pending children never become actual finished output");
   // Every recorded Forge route, including multi-input and batched-output recipes.
   int routes=0;
   for(var item:c.items.values())for(var route:item.routes)if(route.type.equals("forge")){

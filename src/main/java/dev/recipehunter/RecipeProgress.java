@@ -5,7 +5,7 @@ import java.util.*;
 public final class RecipeProgress {
  public static final class Node {
   public final String id,parent;public final long total,owned,pending,forge;public final boolean checked;
-  public Node acquisition;public long covered,physical;public double equivalent,reserved;public boolean combined;public final List<Node> children=new ArrayList<>();
+  public Node acquisition;public long covered,physical,queued;public double equivalent,reserved;public boolean combined;public final List<Node> children=new ArrayList<>();
   Node(String id,String parent,long total,long owned,long pending,long forge,boolean checked){this.id=id;this.parent=parent;this.total=total;this.owned=owned;this.pending=pending;this.forge=forge;this.checked=checked;physical=owned;equivalent=owned;}
   public double remaining(){return Math.max(0,total-equivalent-reserved);}
   public double fraction(){return total==0?1:Math.clamp(equivalent/total,0,1);}
@@ -46,22 +46,25 @@ public final class RecipeProgress {
   long have=Math.min(total,covered+used+queued);
   long actual=Math.min(used,Math.max(0,physicalPool.getOrDefault(id,0L)));physicalPool.put(id,physicalPool.getOrDefault(id,0L)-actual);
   Node node=new Node(id,parent,total,have,Math.max(0,pending.getOrDefault(id,0L)),Math.max(0,forge.getOrDefault(id,0L)),checked);
-  node.covered=covered;node.physical=actual;node.equivalent=have-queued;node.reserved=queued;
+  node.covered=covered;node.physical=actual;node.equivalent=have-queued;node.reserved=queued;node.queued=queued;
   Catalog.Item item=catalog.items.get(id);
   if(total==0||item==null||item.raw||item.routes.isEmpty()||path.contains(id)||path.size()>=32)return node;
   Catalog.Route route=item.routes.get(Math.floorMod(goal.choices.getOrDefault(id,0),item.routes.size()));
   if(route.count<=0||route.inputs.isEmpty())return node;
   path.add(id);long fullRuns=(total-1)/route.count+1,missing=total-have,runs=missing==0?0:(missing-1)/route.count+1;
-  double fraction=1;
+  double fraction=1,withPending=1;
   for(var in:route.inputs){
    if(in.count<=0)continue;
    long childTotal=Math.multiplyExact(fullRuns,in.count),childCovered=Math.multiplyExact(fullRuns-runs,in.count);
    Node child=build(in.id,id,childTotal,childCovered,goal,pool,pending,forge,path);node.children.add(child);
    long outstanding=childTotal-childCovered;
-   if(outstanding>0)fraction=Math.min(fraction,Math.clamp((child.equivalent-childCovered)/outstanding,0,1));
+   if(outstanding>0){fraction=Math.min(fraction,Math.clamp((child.equivalent-childCovered)/outstanding,0,1));withPending=Math.min(withPending,Math.clamp((child.equivalent+child.reserved-childCovered)/outstanding,0,1));}
   }
   path.remove(id);
-  if(!node.children.isEmpty())node.equivalent=Math.min(total,have-queued+fraction*runs*route.count);
+  if(!node.children.isEmpty()){
+   node.equivalent=Math.min(total,have-queued+fraction*runs*route.count);
+   node.reserved=Math.min(total-node.equivalent,queued+Math.max(0,withPending-fraction)*runs*route.count);
+  }
   return node;
  }
  /** Allocate surplus higher compression tiers using only the selected, recorded single-input routes. */
