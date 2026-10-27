@@ -1,19 +1,12 @@
-## Recipe Hunter 0.4.1
+# Recipe Hunter 0.4.2 — correct observed ownership
 
-**Minecraft 26.1.2 · Fabric · Java 25**
+Minecraft 26.1.2 / Fabric / Java 25. Replace the previous mod JAR; keep one copy.
 
-- Centered parchment recipe book with All Recipes, saved goals, search and immediate internal navigation.
-- Live material counters with raw/enchanted equivalence, itemized Sack updates and seven-row HUD pages with manual arrows.
-- Fixed additional crafts: old finished copies and checklist marks no longer fill a new goal. Other saved goals no longer reserve stock away from its counter.
-- Finish and reset saved recipes for another craft without losing quantity or display settings.
-- Auto-compacted target items now count above the initial owned baseline; Sack tracking recovers after overlapping snapshots.
-- Larger search text and an animated gold RECIPE HUNTER title.
-- Improved recognition of untagged materials and nested Sack notifications.
-- Repaired Craft Diary input, editing, checkboxes, draft persistence and countdown editing.
-- Removed the AI assistant, chat and provider configuration.
+- Fix all recipe trees: materials embedded in owned intermediate items are no longer shown as loose inventory. X455 → X555 with no loose Jewels now needs 0/50 Jewels; old drill-only coal/redstone/treasurite costs disappear.
+- Separate observed physical quantities from equivalent crafting progress; preserve shared stock allocation across repeated recipe branches.
+- Recognize exact empty-Sack server messages, stabilize Ender Chest page keys, exclude its navigation row, reject approximate Sack quantities, and add `/rh resync`.
+- Keep live inventory refresh, itemized Sack notifications, reset after Finish, larger search text and animated RECIPE HUNTER heading.
 
-Replace the previous JAR; keep only one Recipe Hunter version in `mods`.
+Open each Sack and Ender Chest page once for the starting balance; enable Sack Notifications. Inventory/HUD recomputes every five ticks. Sacks update when Hypixel sends batched per-item messages. Closed storage is a snapshot; unopened storage is unknown. No authenticated Hypixel API integration is included.
 
-**Live tracking:** inventory refreshes every five client ticks. Enable Hypixel Sack Notifications for direct-to-Sack collection; updates arrive in server batches. Open storage/Forge menus for their baseline observations. Unopened storage and unreadable or ambiguous messages cannot provide exact totals. Progress bars represent material equivalence, not completed Forge jobs or server unlocks.
-
-Automated regression and offline Minecraft UI tests accompany this build. Live Hypixel session behaviour is not independently verified here. Use `/rh sackstatus` and `/rh status <ITEM_ID>` to inspect observations.
+Validation: whole-catalogue regression tests, all-route physical-stock invariants, mining/transfer/compaction fixtures, and an offline native Minecraft UI test including a real tagged X455 ItemStack. This is not a live Hypixel server acceptance test.

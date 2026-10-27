@@ -75,6 +75,12 @@ public final class UiSmoke {
   var legacy=new ItemStack(Items.IRON_INGOT,4);var outer=new CompoundTag();outer.putString("id","minecraft:iron_ingot");outer.put("ExtraAttributes",tag);legacy.set(DataComponents.CUSTOM_DATA,CustomData.of(outer));
   var counted=Ownership.countStacks(List.of(iron,mithril,modern,legacy),app.catalog);
   if(counted.getOrDefault("IRON_INGOT",0L)!=28||counted.getOrDefault("MITHRIL_ORE",0L)!=160)throw new IllegalStateException("Live raw/modern/legacy identity failed: "+counted);
+  var drill=new ItemStack(Items.PRISMARINE_SHARD,1);var drillTag=new CompoundTag();drillTag.putString("id","TITANIUM_DRILL_2");drill.set(DataComponents.CUSTOM_DATA,CustomData.of(drillTag));
+  Book upgradeBook=new Book();var upgrade=new Book.Goal("TITANIUM_DRILL_3");upgrade.materialDisplay="Enchanted";upgradeBook.goals.add(upgrade);
+  var upgradeRows=LiveProgress.refresh(app.catalog,upgradeBook,Ownership.countStacks(List.of(drill),app.catalog),List.of()).rows().get(upgrade.id);
+  var jewels=upgradeRows.stream().filter(r->r.id().equals("GLACITE_JEWEL")).findFirst().orElseThrow();
+  if(jewels.have()!=0||jewels.equivalent()!=0||jewels.total()!=50)throw new IllegalStateException("Real X455 stack created phantom Jewels: "+jewels);
+  if(upgradeRows.stream().anyMatch(r->Set.of("ENCHANTED_COAL","ENCHANTED_REDSTONE","TREASURITE").contains(r.id())))throw new IllegalStateException("Owned drill retained historical-only materials");
   Book fixture=new Book();var goal=new Book.Goal("ENCHANTED_MITHRIL");goal.count=960;goal.freshCraft=true;fixture.goals.add(goal);
   double before=LiveProgress.refresh(app.catalog,fixture,Map.of(),List.of()).trees().get(goal.id).equivalent;
   double after=LiveProgress.refresh(app.catalog,fixture,counted,List.of()).trees().get(goal.id).equivalent;

@@ -2,7 +2,7 @@
 
 A client-side recipe book and live material tracker for **Hypixel SkyBlock**.
 
-**Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.1**
+**Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.2**
 
 ## Install
 
@@ -27,6 +27,10 @@ Inventory is sampled and HUD progress recomputed every five client ticks (normal
 Open a Sack once for its historical total. Before a baseline scan, only observed session changes are known. An ambiguous notification overlapping a menu snapshot makes the absolute balance unknown. After the overlap window, further itemized messages resume a conservative observed count; a new scan restores the absolute total. Ender Chest, island chest and Forge data refresh when their respective menus are observed; the client cannot see unopened remote storage.
 
 Raw and compacted variants contribute equivalent progress using recorded recipes. Moving items between observed sources does not add another copy after both source updates arrive. Server updates can arrive at different times. Each saved goal compares against the same observed stock independently; it does not reserve resources away from other goals. Crafting consumes that stock and all affected counters recalculate.
+
+Owned intermediate items cover their recipe branch; their historical ingredients are removed from remaining acquisition rows, never presented as loose stock. For example, an observed X455 removes its embedded 60 Jewels from an X555 goal: with no loose Jewels, the remaining upgrade shows 0/50, not 60/110. This rule applies to every recipe. `Known` means observed allocated items; `Eq.` includes recipe-equivalent material progress.
+
+The mod does not query authenticated Hypixel profile APIs. Inventory is live; unopened remote storage is unknown, and observed closed storage remains a snapshot. `/rh resync` clears session evidence when a rescan is needed. Exact server messages saying you have no item in Sacks replace that Sack balance with zero. Approximate menu amounts are not treated as exact quantities.
 
 Checklist marks and old manual quantity overrides do not create inventory. Forge jobs and explicit diary reservations remain separate from owned materials. A full material-equivalence bar is not proof that intermediate crafts, Forge waiting or unlock requirements are complete.
 
@@ -54,6 +58,7 @@ The mod has no AI assistant, provider chat or API-key configuration. Obsolete pr
 | `/rh settings` | Appearance and observation settings |
 | `/rh save`, `/rh hide`, `/rh show` | Last-selected goal controls |
 | `/rh bigger`, `/rh smaller` | Book size |
+| `/rh resync` | Clear observations and scan live inventory again; reopen storage pages for their balances |
 | `/rh sackstatus` | Sack notification diagnostics |
 | `/rh status <ITEM_ID>` | Counts and freshness by observed source |
 | `/rh help` | Command list |
