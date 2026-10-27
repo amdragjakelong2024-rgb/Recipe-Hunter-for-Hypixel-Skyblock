@@ -52,7 +52,7 @@ final class LiveTrackingTest {
   var compacted=LiveProgress.refresh(c,cycles,Map.of(cycle.id,11L),List.of());
   ProgressTest.eq(raw.trees().get(cycle.id).equivalent,1,"repeat mines raw above old finished output");
   ProgressTest.eq(compacted.trees().get(cycle.id).equivalent,1,"repeat preserves new auto-compacted target output");
-  ProgressTest.eq(new Planner(c).goal(cycle,Map.of(cycle.id,11L)).leaves.getOrDefault("MITHRIL_ORE",0L),1440,"planner uses same target baseline");
+  ProgressTest.eq(new Planner(c).goal(cycle,Map.of(cycle.id,11L)).missing.get(cycle.id),9,"planner uses same target baseline");
   cycles.finish(cycle);PlannerTest.check(cycles.find(cycle.id)==cycle&&cycle.finished&&!cycle.visible,"finish retains goal for reset");
   cycles.restart(cycle,Map.of(cycle.id,20L));
   PlannerTest.check(!cycle.finished&&cycle.visible&&cycle.crafted==0&&cycle.count==10&&!cycles.completed.contains(cycle.id),"reset keeps quantity and clears completion");
