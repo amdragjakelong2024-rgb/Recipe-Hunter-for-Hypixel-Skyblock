@@ -1,0 +1,52 @@
+name: "Feature Request"
+description: "Suggest a new feature, usability improvement, recipe display, or tracker enhancement."
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make Recipe Hunter better? Explain the player problem
+        and your proposed behavior. Please review existing requests first.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature area
+      options:
+        - "Live progress / tracking"
+        - "Recipe Book / search"
+        - "HUD / customization"
+        - "Crafting / material display"
+        - "Diary / Forge"
+        - "Accessibility / performance"
+        - "Other"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      placeholder: "When I am farming materials, I need..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: "Describe how the feature should work from the player's perspective."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or examples
+      description: "Optional mockups, screenshots, related mods, or other approaches."
+    validations:
+      required: false
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before submitting
+      options:
+        - label: "I checked for an existing request about this feature."
+          required: true
