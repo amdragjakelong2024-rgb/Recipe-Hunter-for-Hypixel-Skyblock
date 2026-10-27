@@ -24,7 +24,7 @@ Inventory is sampled and HUD progress recomputed every five client ticks (normal
 
 **Sack Notifications must be enabled** for collection going straight into Sacks. The mod reads per-item additions/removals from notification hover text. Hypixel batches those messages, so Sack counts update when the message arrives, not on every individual block break. The aggregate headline alone cannot identify materials.
 
-Open a Sack once for its historical total. Before a baseline scan, only observed session changes are known. An ambiguous notification overlapping a menu snapshot marks that balance unknown until resynchronised. Ender Chest, island chest and Forge data refresh when their respective menus are observed; the client cannot see unopened remote storage.
+Open a Sack once for its historical total. Before a baseline scan, only observed session changes are known. An ambiguous notification overlapping a menu snapshot makes the absolute balance unknown. After the overlap window, further itemized messages resume a conservative observed count; a new scan restores the absolute total. Ender Chest, island chest and Forge data refresh when their respective menus are observed; the client cannot see unopened remote storage.
 
 Raw and compacted variants contribute equivalent progress using recorded recipes. Moving items between observed sources does not add another copy after both source updates arrive. Server updates can arrive at different times. Each saved goal compares against the same observed stock independently; it does not reserve resources away from other goals. Crafting consumes that stock and all affected counters recalculate.
 

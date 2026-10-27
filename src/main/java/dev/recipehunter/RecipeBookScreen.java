@@ -35,8 +35,8 @@ public final class RecipeBookScreen extends Screen {
   control(all?"Recipe Book":"Back to all recipes",L,66,all?88:151,18,false,()->{all=!all;selected="";emptyDetail=false;page=0;rebuildWidgets();});
   control("Hide completed",L+(all?92:155),66,all?112:151,18,false,()->{filter=filter==CompletionFilter.Mode.HIDE_COMPLETED?CompletionFilter.Mode.ALL:CompletionFilter.Mode.HIDE_COMPLETED;page=0;rebuildWidgets();}).selected(filter==CompletionFilter.Mode.HIDE_COMPLETED);
   if(all)control("Owned only",L+208,66,98,18,false,()->{filter=filter==CompletionFilter.Mode.OWNED_ONLY?CompletionFilter.Mode.ALL:CompletionFilter.Mode.OWNED_ONLY;page=0;rebuildWidgets();}).selected(filter==CompletionFilter.Mode.OWNED_ONLY);
-  search=addRenderableWidget(new SearchBox(font,viewport.x(L+8),viewport.y(93),viewport.size(COL-53),Math.max(14,viewport.size(20)),Component.literal("Search recipe or item")));
-  search.setMaxLength(100);search.setValue(query);search.setTextColor(Theme.INK);search.setBordered(false);search.setHint(Component.literal("Search recipe or item..."));
+  search=addRenderableWidget(new SearchBox(font,viewport.x(L+8),viewport.y(93),viewport.size(COL-53),Math.max(14,viewport.size(20)),Component.literal("Search recipe or item"),viewport.scale()*1.2f));
+  search.setMaxLength(100);search.setValue(query);search.setTextColor(Theme.INK);search.setBordered(false);search.setHint(Component.literal("Search recipes..."));
   search.setResponder(value->{query=value;page=0;refreshSearch=true;});
   control("Go",L+COL-38,90,38,22,false,()->{refreshSearch=false;rebuildWidgets();setFocused(search);});
   if(all){List<String> categories=List.of("All","Crafting","Forge","Pets","Other");int x=L;for(String c:categories){control(c,x,117,60,18,false,()->{category=c;page=0;rebuildWidgets();}).selected(category.equals(c));x+=62;}}
@@ -161,7 +161,7 @@ public final class RecipeBookScreen extends Screen {
   for(var entry:entries){var root=app.tree(entry.goal);double fraction=root.fraction();g.fill(entry.x,entry.y,entry.x+entry.width,entry.y+7,0xffac9c7f);g.outline(entry.x,entry.y,entry.width,7,0xff74674f);g.fill(entry.x+1,entry.y+1,entry.x+1+(int)((entry.width-2)*fraction),entry.y+6,0xff4b9a24);g.text(font,root.row().percent(),entry.x+entry.width+4,entry.y,0xff35681c,false);}
   g.pose().popMatrix();
   // Stable position with a travelling gold highlight; no navigation downtime.
-  String brand="RECIPE HUNTER";float brandScale=Math.max(.65f,scale*1.05f);
+  String brand="RECIPE HUNTER";float brandScale=Math.max(.65f,scale*1.4f);
   int brandY=Math.max(2,top-Math.round(11*brandScale));
   g.pose().pushMatrix();g.pose().translate((width-font.width(brand)*brandScale)/2,brandY);g.pose().scale(brandScale,brandScale);
   double phase=(ticks+dt)/12.0;int bx=0;
