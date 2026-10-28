@@ -1,0 +1,42 @@
+name: Replace owner-approved Recipe Hunter 0.4.2 once
+on:
+  push:
+    branches: [ 'release/replace-042-forge-20261028' ]
+jobs:
+  replace:
+    if: "github.event.head_commit.message == 'Replace requested 0.4.2 release with tested Forge hotfix'"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify tested source and preserve previous release
+        run: |
+          test "$(gh api repos/$GH_REPO/actions/runs/40637427842 --jq .conclusion)" = success
+          test "$(gh api repos/$GH_REPO/actions/runs/40637427842 --jq .head_sha)" = 0609c95ce7d0cdaede627eceb4bb96163ec757cd
+          test "$(gh api repos/$GH_REPO/git/ref/tags/v0.4.2 --jq .object.sha)" = 6c1c8bc537ab8fcbd4e87420eba35c3ea7f8ef44
+          gh api --method POST repos/$GH_REPO/git/refs -f ref=refs/tags/archive/v0.4.2-before-forge-20261028 -f sha=6c1c8bc537ab8fcbd4e87420eba35c3ea7f8ef44
+          gh release download v0.4.2 --dir previous --pattern '*.jar' --pattern SHA256SUMS.txt
+      - name: Preserve replaced assets for rollback
+        uses: actions/upload-artifact@v4
+        with:
+          name: previous-0.4.2-assets
+          path: previous/
+      - name: Verify and stage exact tested JAR
+        run: |
+          gh run download 40637427842 --name recipe-hunter-0.4.2-mc26.1.2 --dir verified
+          cd verified
+          sed 's#build/##' libs/SHA256SUMS.txt | sha256sum --check -
+          test "$(unzip -p libs/recipe-hunter-0.4.2.jar fabric.mod.json | jq -r .version)" = 0.4.2
+          cp libs/recipe-hunter-0.4.2.jar ../recipe-hunter-0.4.2+26.1.2.jar
+      - name: Replace requested release assets and update source tag
+        run: |
+          sha256sum recipe-hunter-0.4.2+26.1.2.jar > SHA256SUMS.txt
+          gh release upload v0.4.2 recipe-hunter-0.4.2+26.1.2.jar SHA256SUMS.txt --clobber
+          gh api --method PATCH repos/$GH_REPO/git/refs/tags/v0.4.2 -f sha=0609c95ce7d0cdaede627eceb4bb96163ec757cd -F force=false
+          gh release edit v0.4.2 --notes-file RELEASE_NOTES.md --latest
+          gh release view v0.4.2 --json tagName,assets,url
