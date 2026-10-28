@@ -13,7 +13,10 @@ public final class HudPanels {
   HudLayout l=layout(app,goal,index,g.guiWidth(),g.guiHeight());float scale=(float)l.scale(g.guiWidth(),g.guiHeight());int x=l.left(g.guiWidth(),g.guiHeight()),y=l.top(g.guiWidth(),g.guiHeight());
   g.pose().pushMatrix();g.pose().translate(x,y);g.pose().scale(scale,scale);
   g.fill(0,0,HudLayout.WIDTH,HudLayout.HEIGHT,0xeeeadbb5);g.outline(0,0,HudLayout.WIDTH,HudLayout.HEIGHT,0xff6c472a);g.fill(1,1,HudLayout.WIDTH-1,20,0xff4d3924);
-  g.item(Icons.stack(app,goal.id),3,2);g.text(app.mc.font,app.trim(app.catalog.item(goal.id).name,HudLayout.WIDTH-25),23,6,0xffd4ed85,true);
+  g.item(Icons.stack(app,ArmorSets.iconId(goal)),3,2);
+  boolean armor=ArmorSets.isSet(goal);
+  g.text(app.mc.font,app.trim(app.catalog.item(goal.id).name,armor?HudLayout.WIDTH-118:HudLayout.WIDTH-25),23,6,0xffd4ed85,true);
+  if(armor)g.text(app.mc.font,ArmorSets.readyPieces(app.progressTrees.get(goal.id))+"/4 ready",HudLayout.WIDTH-79,6,0xffd4ed85,true);
   List<MaterialProgress.Row> rows=app.hudProgress.get(goal.id);int pages=rows==null?1:Math.max(1,(rows.size()+PER_PAGE-1)/PER_PAGE),page=Math.clamp(goal.hudPage,0,pages-1);
   if(rows==null)g.text(app.mc.font,"Loading...",7,28,Theme.INK,false);
   else if(rows.isEmpty())g.text(app.mc.font,"No materials to display",7,28,0xff406820,false);
