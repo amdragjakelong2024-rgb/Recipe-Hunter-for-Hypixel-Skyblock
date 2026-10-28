@@ -21,11 +21,13 @@ public final class HudPanels {
    var row=rows.get(i);int top=25+(i-page*PER_PAGE)*26;g.item(Icons.stack(app,row.id()),5,top);
    g.text(app.mc.font,app.trim(app.catalog.item(row.id()).name,HudLayout.WIDTH-31),26,top,row.done()?0xff396920:Theme.INK,false);
    String extra=(row.equivalent()>row.have()?"Eq. ":"Known ")+String.format(Locale.US,"%,.2f / %,d",row.equivalent(),row.total());
-   if(row.forge()>0)extra+=" | Forge: "+row.forge();
-   else if(row.pending()>0)extra+=" | Planned: "+row.pending();
+   if(row.inForge()>0)extra=String.format(Locale.US,"%,.0f + %,.0f in Forge / %,d",row.equivalent(),row.inForge(),row.total());
+   else if(row.reserved()>0)extra+=" | Planned: "+Catalog.qty((long)Math.ceil(row.reserved()));
    g.text(app.mc.font,app.trim(extra,HudLayout.WIDTH-93),26,top+11,Theme.MUTED,false);
    g.text(app.mc.font,row.percent(),HudLayout.WIDTH-64,top+11,row.done()?0xff396920:Theme.INK,false);
-   g.fill(26,top+22,HudLayout.WIDTH-8,top+24,0xffb5a477);g.fill(26,top+22,26+(int)((HudLayout.WIDTH-34)*row.fraction()),top+24,0xff72a32b);
+   g.fill(26,top+22,HudLayout.WIDTH-8,top+24,0xffb5a477);
+   if(row.inForge()>0)g.fill(26,top+22,26+(int)((HudLayout.WIDTH-34)*row.forgeFraction()),top+24,0xffd69d3a);
+   g.fill(26,top+22,26+(int)((HudLayout.WIDTH-34)*row.fraction()),top+24,0xff72a32b);
   }
   int footer=HudLayout.HEIGHT-21;
   g.fill(6,footer,31,footer+18,page>0?0xffc4a477:0xffdac9a5);g.outline(6,footer,25,18,0xff977248);g.text(app.mc.font,"<",15,footer+5,page>0?Theme.INK:Theme.MUTED,false);
