@@ -22,6 +22,7 @@ public final class RecipeProgress {
    Node forgeProjection=allocate(goal,activeForge,Map.of(),Map.of());
    creditForge(actual,forgeProjection);
   }
+  ArmorSets.averageReadiness(goal,actual);
   return actual;
  }
  public Node allocateReserved(Book.Goal goal,Map<String,Long> owned,Map<String,Long> planned,Map<String,Long> pending,Map<String,Long> forge){
