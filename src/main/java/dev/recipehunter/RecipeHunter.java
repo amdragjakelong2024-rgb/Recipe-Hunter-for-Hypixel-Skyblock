@@ -66,7 +66,7 @@ public final class RecipeHunter implements ClientModInitializer {
     void ensureAccount(){
         String id=mc.getUser().getProfileId().toString();if(id.equals(account))return;account=id;
         bookPath=FabricLoader.getInstance().getConfigDir().resolve("recipehunter").resolve(id+".json");
-        try{book=Book.read(bookPath);writable=true;for(Book.Goal g:book.goals)g.owned.clear();}catch(IOException e){book=new Book();writable=false;say("Book could not be loaded; original file preserved. "+e.getMessage());}
+        try{book=Book.read(bookPath);writable=true;for(Book.Goal g:book.goals){g.owned.clear();if(ArmorSets.isSet(g)&&!ArmorSets.register(catalog,g))throw new IOException("Invalid saved armor set: "+g.id);}}catch(IOException e){book=new Book();writable=false;say("Book could not be loaded; original file preserved. "+e.getMessage());}
     }
     public boolean persist(){progressTrees.clear();hudProgress.clear();ensureAccount();if(!writable){say("Cannot save: fix or back up the unreadable book file first.");return false;}try{book.write(bookPath);return true;}catch(IOException e){say("Save failed: "+e.getMessage());return false;}}
     public void say(String s){if(mc.player!=null)mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+s));}
@@ -75,16 +75,18 @@ public final class RecipeHunter implements ClientModInitializer {
     public void closeBook(){if(book.animations)open(new BookOpening(this,true));else mc.setScreen(null);}
     public void openHomeContent(){open(new RecipeBookScreen(this,true,"",""));}
     public void removeGoal(Book.Goal g){book.goals.remove(g);if(draft==g)draft=null;hudPlans.remove(g.id);book.last=book.goals.isEmpty()?"":book.goals.getFirst().id;persist();}
-    public void gameRecipe(String id){if(!onHypixel()||mc.getConnection()==null){say("Join Hypixel SkyBlock to open server recipes.");return;}if(!id.matches("[A-Z0-9_;:-]+"))return;mc.setScreen(null);mc.getConnection().sendCommand("viewrecipe "+id);}
+    public void gameRecipe(String id){if(id.startsWith(ArmorSets.PREFIX))return;if(!onHypixel()||mc.getConnection()==null){say("Join Hypixel SkyBlock to open server recipes.");return;}if(!id.matches("[A-Z0-9_;:-]+"))return;mc.setScreen(null);mc.getConnection().sendCommand("viewrecipe "+id);}
     public void openBook(){ensureAccount();if(catalog==null){say(error);return;}open(new RecipeBookScreen(this,false,"",""));}
     public void command(String query){
         ensureAccount();if(catalog==null){say(error);return;}String q=query.trim();
+        if(q.toLowerCase(Locale.ROOT).startsWith("set ")){String id=catalog.resolve(q.substring(4).trim());if(id.isEmpty())say("Use a full armor piece name, e.g. Final Destination Helmet.");else saveArmorSet(id);return;}
         if(q.startsWith("open ")){String id=q.substring(5).trim();if(catalog.items.containsKey(id))select(id,false);else say("Unknown SkyBlock recipe.");return;}
         if(q.toLowerCase(Locale.ROOT).startsWith("status ")){String id=catalog.resolve(q.substring(7));if(id.isEmpty()){say("Unknown or ambiguous SkyBlock item. Use its exact ID.");return;}say(id);for(String line:ledger.diagnostics(id))say(line);say("Observed physical total: "+physicalStock().getOrDefault(id,0L)+". Unseen storage is Unknown. Recipe coverage is not ownership.");say("Forge reserved: "+CraftDiary.pending(menus.forge).getOrDefault(id,0L)+" | session-acquired total: Unknown (transfers are not acquisitions)");return;}
         switch(q.toLowerCase(Locale.ROOT)){
             case ""->openHome();
             case "book"->openBook();
-            case "help"->{for(String line:List.of("/rh - all recipes","/rh book - saved recipes","/rh <name> - search recipes","/rh current - active recipe (click to open)","/rh diary - Craft Diary","/rh calc - calculator","/rh gui - move/resize HUD and change pages","/rh settings - appearance settings","/rh save - save last selected recipe","/rh hide | /rh show - toggle last goal","/rh bigger | /rh smaller - book size","/rh sackstatus - Sack diagnostics","/rh resync - discard stale storage observations","/rh status <ITEM_ID> - observed item sources"))say(line);}
+            case "set"->{if(lastViewed.isEmpty())say("Select an armor piece first, then use /rh set.");else saveArmorSet(lastViewed);}
+            case "help"->{for(String line:List.of("/rh - all recipes","/rh book - saved recipes","/rh <name> - search recipes","/rh current - active recipe (click to open)","/rh diary - Craft Diary","/rh calc - calculator","/rh gui - move/resize HUD and change pages","/rh settings - appearance settings","/rh save - save last selected recipe","/rh set - combine four matching armor pieces into one HUD","/rh hide | /rh show - toggle last goal","/rh bigger | /rh smaller - book size","/rh sackstatus - Sack diagnostics","/rh resync - discard stale storage observations","/rh status <ITEM_ID> - observed item sources"))say(line);}
             case "current"->{Book.Goal active=book.active();if(active==null){say("No active recipe. Save and show a goal first.");return;}mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+catalog.item(active.id).name+" x"+active.count+"  ").append(Component.literal("[Open recipe]").withStyle(style->style.withColor(0x88cc55).withUnderlined(true).withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/rh open "+active.id)))));}
 
             case "diary"->open(new ToolsScreen(this,"Craft Diary"));
@@ -117,6 +119,29 @@ public final class RecipeHunter implements ClientModInitializer {
     public Map<String,Long> stock(Book.Goal g){Map<String,Long> stock=onHypixel()?ownership.stock(mc,catalog):new HashMap<>();if(onHypixel())menus.stock().forEach((id,n)->stock.merge(id,n,Math::addExact));return stock;}
     public Planner.Plan plan(Book.Goal g){try{return planner.goal(g,stock(g),CraftDiary.mergeReservations(book.diary,menus.forge));}catch(RuntimeException e){Planner.Plan p=new Planner.Plan();p.warnings.add("Cannot calculate this route: "+e.getMessage());return p;}}
     public void save(Book.Goal g){ensureAccount();if(!writable){say("Book file is unreadable; saving is disabled to protect it.");return;}if(g.finished){book.restart(g,physicalStock());}else if(book.find(g.id)==null){g.targetBaseline=physicalStock().getOrDefault(g.id,0L);book.goals.add(g);}book.last=g.id;book.history.add(g.id);g.visible=true;if(persist())say("Saved: "+catalog.item(g.id).name);}
+    /** Group the four saved pieces into one HUD and a single stock allocation. */
+    public String saveArmorSet(String pieceId){
+        ensureAccount();if(!writable){say("Book is not writable.");return "";}
+        var parts=ArmorSets.detect(catalog,pieceId);
+        if(parts.size()!=4){say("No complete four-piece armor set for this item.");return "";}
+        String id=ArmorSets.id(catalog.item(pieceId).name);
+        Book.Goal grouped=book.find(id);
+        if(grouped==null){
+            grouped=new Book.Goal(id);grouped.armorPieces.addAll(parts);grouped.freshCraft=true;grouped.targetBaseline=0;
+            for(Book.Goal old:book.goals)if(parts.contains(old.id)){
+                grouped.choices.putAll(old.choices);
+                grouped.checked.addAll(old.checked);
+                if(old.hud!=null&&grouped.hud==null)grouped.hud=old.hud;
+                grouped.materialDisplay=old.materialDisplay;grouped.gemDisplay=old.gemDisplay;
+            }
+            if(!ArmorSets.register(catalog,grouped)){say("Unable to register armor set.");return "";}
+        }
+        book.goals.removeIf(g->parts.contains(g.id));
+        if(book.find(id)==null)book.goals.add(grouped);
+        grouped.visible=true;book.last=id;lastViewed=id;book.history.add(id);
+        if(persist())say("Armor set saved: "+catalog.item(id).name+" (4 pieces, one shared tracker).");
+        return id;
+    }
     public void restartGoal(Book.Goal g){book.restart(g,physicalStock());persist();say("Restarted: "+catalog.item(g.id).name);}
     public void finishGoal(Book.Goal g){book.finish(g);persist();}
     public void completed(String id,long count){
