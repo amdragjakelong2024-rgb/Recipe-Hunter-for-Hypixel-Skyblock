@@ -90,6 +90,33 @@ public final class ProgressTest {
   }
   Path report=Path.of("build/reports/catalogue-progress.txt");Files.createDirectories(report.getParent());Files.writeString(report,"Items: "+c.items.size()+"\nRoutes: "+routes+"\nEvaluated graphs: "+graphs+"\nUnknown inputs: "+unknown+"\n"+String.join("\n",issues)+"\nSynthetic fixtures only; live Hypixel acceptance remains unverified.\n");
   check(unknown==0,"all ingredient IDs resolve; see catalogue-progress.txt");
+  // Armor set combines real piece recipes into one shared pool and one HUD row per material.
+  var fd=ArmorSets.detect(c,"FINAL_DESTINATION_HELMET");
+  check(fd.size()==4,"Final Destination has four real armor pieces");
+  var fdSet=new Book.Goal(ArmorSets.id(c.item(fd.getFirst()).name));
+  fdSet.armorPieces.addAll(fd);
+  check(ArmorSets.register(c,fdSet),"register four-piece Final Destination set");
+  var fdTree=engine.evaluate(fdSet,Map.of(),Map.of(),Map.of());
+  check(fdTree.children.size()==4,"all four recipes remain in dependency tree");
+  var fdSummary=engine.displayed(fdTree,fdSet);
+  check(fdSummary.stream().map(row->row.id).distinct().count()==fdSummary.size(),"armor materials appear once in shared HUD");
+  for(var expected:List.of("NULL_SPHERE","ENCHANTED_OBSIDIAN","ENCHANTED_REDSTONE"))
+   check(fdSummary.stream().anyMatch(row->row.id.contains(expected)),"armor summary contains "+expected);
+  var fdOwned=engine.evaluate(fdSet,Map.of("ENCHANTED_OBSIDIAN",96L),Map.of(),Map.of());
+  var obs=engine.displayed(fdOwned,fdSet).stream().filter(n->n.id.equals("ENCHANTED_OBSIDIAN")).findFirst().orElseThrow();
+  eq(obs.physical,96,"96 owned obsidian is credited only once across entire armor set");
+  check(obs.total>96,"armor obsidian total combines multiple pieces");
+  check(ArmorSets.readyPieces(fdOwned)==0,"partial materials are not marked four pieces ready");
+  fdSet.count=2;
+  var twice=engine.evaluate(fdSet,Map.of(),Map.of(),Map.of());
+  var original=fdSummary.stream().filter(n->n.id.equals("ENCHANTED_OBSIDIAN")).findFirst().orElseThrow();
+  var doubled=engine.displayed(twice,fdSet).stream().filter(n->n.id.equals("ENCHANTED_OBSIDIAN")).findFirst().orElseThrow();
+  eq(doubled.total,original.total*2,"two armor sets double ingredient requirements");
+  var bookWithSet=new Book();bookWithSet.goals.add(fdSet);
+  var tempSet=Files.createTempDirectory("rh-armor-goal").resolve("book.json");
+  bookWithSet.write(tempSet);var loadedSet=Book.read(tempSet).goals.getFirst();
+  check(loadedSet.armorPieces.equals(fd)&&ArmorSets.isSet(loadedSet),"armor set persists and restores all four IDs");
+  Files.delete(tempSet);Files.delete(tempSet.getParent());
   System.out.println("PASS: "+checks+" progress/ledger checks; "+graphs+" catalogue graphs; "+routes+" routes");
  }
 }
