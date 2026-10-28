@@ -5,22 +5,34 @@ import java.util.*;
 public final class RecipeProgress {
  public static final class Node {
   public final String id,parent;public final long total,owned,pending,forge;public final boolean checked;
-  public long covered,physical;public double equivalent,reserved;public boolean combined;public final List<Node> children=new ArrayList<>();
+  public long covered,physical;public double equivalent,reserved,inForge;public boolean combined;public final List<Node> children=new ArrayList<>();
   Node(String id,String parent,long total,long owned,long pending,long forge,boolean checked){this.id=id;this.parent=parent;this.total=total;this.owned=owned;this.pending=pending;this.forge=forge;this.checked=checked;physical=owned;equivalent=owned;}
   public double remaining(){return Math.max(0,total-equivalent-reserved);}
   public double fraction(){return total==0?1:Math.clamp(equivalent/total,0,1);}
-  public MaterialProgress.Row row(){return new MaterialProgress.Row(id,Math.min(total,physical),total,pending,forge,checked,equivalent,"");}
+  public MaterialProgress.Row row(){return new MaterialProgress.Row(id,Math.min(total,physical),total,pending,forge,checked,equivalent,"",reserved,inForge);}
  }
  private final Catalog catalog;private int visited;private Map<String,Long> physicalPool;
  public RecipeProgress(Catalog catalog){this.catalog=catalog;}
  public Node evaluate(Book.Goal goal,Map<String,Long> stock,Map<String,Long> pending,Map<String,Long> forge){
   Map<String,Long> planned=new HashMap<>(stock);pending.forEach((id,n)->planned.merge(id,n,Math::addExact));
-  return allocateReserved(goal,new HashMap<>(stock),planned,pending,forge);
+  Node actual=allocateReserved(goal,new HashMap<>(stock),planned,pending,forge);
+  if(!forge.isEmpty()){
+   Map<String,Long> activeForge=new HashMap<>(stock);
+   forge.forEach((id,n)->{if(n>0)activeForge.merge(id,n,Math::addExact);});
+   Node forgeProjection=allocate(goal,activeForge,Map.of(),Map.of());
+   creditForge(actual,forgeProjection);
+  }
+  return actual;
  }
  public Node allocateReserved(Book.Goal goal,Map<String,Long> owned,Map<String,Long> planned,Map<String,Long> pending,Map<String,Long> forge){
   Node actual=allocate(goal,owned,pending,forge),reserved=allocate(goal,planned,Map.of(),Map.of());reservations(actual,reserved);return actual;
  }
  private void reservations(Node actual,Node reserved){actual.reserved=Math.max(0,reserved.equivalent-actual.equivalent);for(int i=0;i<actual.children.size();i++)reservations(actual.children.get(i),reserved.children.get(i));}
+ /** An active Forge job counts toward planned work, never physical ownership. */
+ private void creditForge(Node actual,Node projected){
+  actual.inForge=Math.min(Math.max(0,actual.total-actual.equivalent),Math.max(0,projected.equivalent-actual.equivalent));
+  for(int i=0;i<actual.children.size();i++)creditForge(actual.children.get(i),projected.children.get(i));
+ }
  /** Pass one mutable stock pool for ordered goals to avoid promising the same item twice. */
  public Node allocate(Book.Goal goal,Map<String,Long> pool,Map<String,Long> pending,Map<String,Long> forge){
   visited=0;Long existing=(goal.freshCraft||goal.crafted>0)?pool.remove(goal.id):null;
@@ -98,6 +110,7 @@ public final class RecipeProgress {
       first.checked&&part.checked);
    merged.equivalent=Math.min(required,Math.max(0,first.equivalent)+Math.max(0,part.equivalent));
    merged.reserved=Math.min(required,Math.max(0,first.reserved)+Math.max(0,part.reserved));
+   merged.inForge=Math.min(Math.max(0,required-merged.equivalent),Math.max(0,first.inForge)+Math.max(0,part.inForge));
    merged.combined=true;
    totals.put(part.id,merged);
   }
@@ -124,7 +137,9 @@ public final class RecipeProgress {
   long total=Math.max(0,node.total-node.covered);
   Node row=new Node(node.id,node.parent,total,Math.min(total,node.physical),node.pending,node.forge,node.checked);
   row.equivalent=Math.clamp(node.equivalent-node.covered,0,total);
-  row.reserved=Math.min(total,node.reserved);row.children.addAll(node.children);return row;
+  row.reserved=Math.min(Math.max(0,total-row.equivalent),node.reserved);
+  row.inForge=Math.min(Math.max(0,total-row.equivalent),node.inForge);
+  row.children.addAll(node.children);return row;
  }
  public Set<String> materialOptions(Node root){Set<String> out=new LinkedHashSet<>(List.of("Compact"));walk(root,n->{if(n.id.startsWith("ENCHANTED_"))out.add(n.id.endsWith("_BLOCK")?"Enchanted Block":"Enchanted");});return out;}
  public Set<String> gemOptions(Node root){Set<String> out=new LinkedHashSet<>();for(String tier:List.of("Fine","Flawless","Perfect"))walk(root,n->{if(n.id.startsWith(tier.toUpperCase(Locale.ROOT)+"_")&&n.id.endsWith("_GEM"))out.add(tier);});return out;}
