@@ -9,8 +9,9 @@ public final class MenuTracker {
  public final StorageLedger ender=new StorageLedger();public final Map<String,Long> sacks=new HashMap<>();
  public final List<CraftDiary.Entry> forge=new ArrayList<>();public long observedAt,lastSackSnapshotAt,lastSackMessageAt,lastSackNoticeAt;public int sackNoticeCount,sackParsedCount,sackUnparsedCount;
  public final Map<String,Long> sackSnapshots=new HashMap<>();public final Set<String> uncertainSacks=new HashSet<>();
+ private final ForgeTracking.Observations forgeObservations=new ForgeTracking.Observations(forge);
  private Object menu;private int ticks;private long lastForgeMenuAt;
- public void clear(){lastForgeMenuAt=0;ender.clear();sacks.clear();sackSnapshots.clear();uncertainSacks.clear();forge.clear();menu=null;ticks=0;lastSackSnapshotAt=0;lastSackMessageAt=0;lastSackNoticeAt=0;sackNoticeCount=0;sackParsedCount=0;sackUnparsedCount=0;}
+ public void clear(){forgeObservations.clear();lastForgeMenuAt=0;ender.clear();sacks.clear();sackSnapshots.clear();uncertainSacks.clear();forge.clear();menu=null;ticks=0;lastSackSnapshotAt=0;lastSackMessageAt=0;lastSackNoticeAt=0;sackNoticeCount=0;sackParsedCount=0;sackUnparsedCount=0;}
  public static long stored(String lore){
   Matcher m=Pattern.compile("(?im)^(?:Stored|Amount)\\s*:\\s*([0-9][0-9,]*)(?=\\s*(?:/|$))").matcher(lore.strip());
   if(!m.find())return -1;try{return Long.parseLong(m.group(1).replace(",",""));}catch(NumberFormatException e){return -1;}
@@ -39,8 +40,8 @@ public final class MenuTracker {
    }}
    if(fg&&slot.getContainerSlot()>=10&&slot.getContainerSlot()<=16){
     int forgeSlot=slot.getContainerSlot()-9;String name=stack.getHoverName().getString();
-    if(ForgeTracking.empty(name))ForgeTracking.replace(forge,forgeSlot,null);
-    else {var job=ForgeTracking.job(app.catalog,forgeSlot,name,text,System.currentTimeMillis());if(job!=null)ForgeTracking.replace(forge,forgeSlot,job);}
+    if(ForgeTracking.empty(name))forgeObservations.accept(forgeSlot,null);
+    else {var job=ForgeTracking.job(app.catalog,forgeSlot,name,text,System.currentTimeMillis());if(job!=null)forgeObservations.accept(forgeSlot,job);}
    }
   }
   if(ec)ender.replace(enderPage(title),contents);if(fg)lastForgeMenuAt=System.currentTimeMillis();
@@ -50,7 +51,7 @@ public final class MenuTracker {
  public void tabForge(RecipeHunter app){
   if(System.currentTimeMillis()-lastForgeMenuAt<2000||app.mc.getConnection()==null)return;
   StringBuilder lines=new StringBuilder();for(var p:app.mc.getConnection().getListedOnlinePlayers())if(p.getTabListDisplayName()!=null)lines.append(p.getTabListDisplayName().getString()).append('\n');
-  ForgeTracking.tab(app.catalog,forge,lines.toString(),System.currentTimeMillis());
+  ForgeTracking.tab(app.catalog,forge,lines.toString(),System.currentTimeMillis(),forgeObservations::accept);
  }
  /** Apply only exact per-item chat deltas, never ambiguous aggregate notifications. */
  public void sackMessage(String header,Map<String,Long> delta){

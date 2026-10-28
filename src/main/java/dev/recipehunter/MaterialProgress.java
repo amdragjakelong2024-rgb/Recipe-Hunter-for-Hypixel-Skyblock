@@ -8,8 +8,10 @@ import java.util.*;
  * not a claim that a partial enchanted item already exists.
  */
 public final class MaterialProgress {
- public record Row(String id,long have,long total,long pending,long forge,boolean checked,double equivalent,String conversion,double reserved){
-  public Row(String id,long have,long total,long pending,long forge,boolean checked,double equivalent,String conversion){this(id,have,total,pending,forge,checked,equivalent,conversion,0);}
+ public record Row(String id,long have,long total,long pending,long forge,boolean checked,double equivalent,String conversion,double reserved,double inForge){
+  public Row(String id,long have,long total,long pending,long forge,boolean checked,double equivalent,String conversion){this(id,have,total,pending,forge,checked,equivalent,conversion,0,0);}
+  public double forgeFraction(){return total<=0?1:Math.clamp((equivalent+inForge)/total,0,1);}
+  public double stillNeeded(){return remaining();}
   public double remaining(){return Math.max(0,total-equivalent-reserved);}
   public String needed(){double n=remaining();return n<64?String.format(Locale.US,"Need %,.0f",Math.ceil(n)):String.format(Locale.US,"Need %,.0f (~%,.1f stacks)",Math.ceil(n),n/64.0);}
   public Row(String id,long have,long total,long pending,long forge,boolean checked){

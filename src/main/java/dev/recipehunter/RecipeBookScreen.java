@@ -150,7 +150,7 @@ public final class RecipeBookScreen extends Screen {
     var node=nodes.get(view.index);int y=view.y;
     g.fill(R,y,R+20,y+30,0x33795a30);
     g.text(font,app.trim((node.equivalent>node.physical?"Eq. ":"Known ")+number(node.equivalent)+" / "+Catalog.qty(node.total),COL-126),R+24,y+20,Theme.MUTED,false);
-    g.fill(R+COL-98,y+21,R+COL-31,y+27,0xffaa9a7e);g.fill(R+COL-98,y+21,R+COL-98+(int)(67*node.fraction()),y+27,0xff4b9a24);g.text(font,node.row().percent(),R+COL-28,y+20,0xff35681c,false);
+    g.fill(R+COL-98,y+21,R+COL-31,y+27,0xffaa9a7e);if(node.inForge>0&&node.total>0)g.fill(R+COL-98,y+21,R+COL-98+(int)(67*node.row().forgeFraction()),y+27,0xffd69d3a);g.fill(R+COL-98,y+21,R+COL-98+(int)(67*node.fraction()),y+27,0xff4b9a24);g.text(font,node.row().percent(),R+COL-28,y+20,0xff35681c,false);
     String parent=node.parent.isEmpty()?selected:node.parent;
     String detail=node.row().needed()+(node.reserved>0?" | "+(node.forge>0?"Forge: ":"Planned: ")+number(node.reserved):"");
     g.text(font,app.trim(detail,COL-24),R+24,y+32,Theme.MUTED,false);

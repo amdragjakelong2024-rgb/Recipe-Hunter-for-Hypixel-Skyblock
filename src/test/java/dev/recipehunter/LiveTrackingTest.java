@@ -31,6 +31,31 @@ final class LiveTrackingTest {
   var tiny=LiveProgress.refresh(c,book,Map.of("MITHRIL_ORE",1L),List.of());PlannerTest.check(tiny.rows().get(goal.id).stream().anyMatch(r->r.equivalent()>0&&!r.percent().equals("0%")),"one mined Mithril updates visible sub-percent progress");
   var job=CraftDiary.parse(c,"forge 2 Refined Mithril 4h",1000);book.goals.clear();book.goals.add(new Book.Goal("REFINED_MITHRIL"));
   var pending=LiveProgress.refresh(c,book,Map.of(),List.of(job));ProgressTest.eq(pending.trees().get("REFINED_MITHRIL").equivalent,0,"forge is not physical stock");PlannerTest.check(pending.trees().get("REFINED_MITHRIL").forge>0,"forge visible in live refresh");
+  // A Forge job is planned output, never a phantom physical item.
+  Book forgeBook=new Book();var forgedGoal=new Book.Goal("REFINED_MITHRIL");
+  forgedGoal.materialDisplay="Enchanted";forgeBook.goals.add(forgedGoal);
+  var working=LiveProgress.refresh(c,forgeBook,Map.of(),List.of(CraftDiary.parse(c,"forge 1 Refined Mithril 4h",1000)));
+  var forging=working.trees().get("REFINED_MITHRIL");
+  ProgressTest.eq(forging.equivalent,0,"active Forge job never becomes loose stock");
+  ProgressTest.eq(forging.inForge,1,"active Forge output credited only to queued progress");
+  ProgressTest.eq(forging.remaining(),0,"queued output removes remaining grind demand");
+  var forgingRows=working.rows().get("REFINED_MITHRIL");
+  PlannerTest.check(forgingRows.stream().anyMatch(r->r.inForge()>0&&r.have()==0&&r.stillNeeded()==0),"Forge ingredients show as in progress, not 8k uncollected");
+  var claimedForge=LiveProgress.refresh(c,forgeBook,Map.of("REFINED_MITHRIL",1L),List.of());
+  ProgressTest.eq(claimedForge.trees().get("REFINED_MITHRIL").equivalent,1,"claim becomes owned only when observed in inventory");
+  ProgressTest.eq(claimedForge.trees().get("REFINED_MITHRIL").inForge,0,"claim clears in-progress bar");
+  // Verify every Forge route, rather than patching one mining recipe.
+  int forgeRoutes=0;
+  for(var item:c.items.values())for(int index=0;index<item.routes.size();index++){
+   var route=item.routes.get(index);if(!"forge".equals(route.type))continue;
+   var g=new Book.Goal(item.id);g.count=route.count;g.choices.put(item.id,index);
+   var projected=new RecipeProgress(c).evaluate(g,Map.of(),Map.of(item.id,route.count),Map.of(item.id,route.count));
+   ProgressTest.eq(projected.equivalent,0,"no phantom Forge output "+item.id);
+   ProgressTest.eq(projected.inForge,route.count,"Forge output projected across route "+item.id);
+   ProgressTest.eq(projected.remaining(),0,"Forge output not requested again "+item.id);
+   forgeRoutes++;
+  }
+  PlannerTest.check(forgeRoutes>=100,"whole Forge catalogue covered");
   Book repeatBook=new Book();var repeat=new Book.Goal("ENCHANTED_MITHRIL");repeat.freshCraft=true;repeat.count=10;repeat.checked.add("MITHRIL_ORE");repeat.owned.put("MITHRIL_ORE",999999L);repeatBook.goals.add(repeat);
   ProgressTest.eq(LiveProgress.refresh(c,repeatBook,Map.of("ENCHANTED_MITHRIL",10L),List.of()).trees().get(repeat.id).equivalent,0,"old crafted item, checklist and manual override cannot fill a new craft");
   ProgressTest.eq(LiveProgress.refresh(c,repeatBook,Map.of("ENCHANTED_MITHRIL",10L,"MITHRIL_ORE",160L),List.of()).trees().get(repeat.id).equivalent,1,"newly gathered materials count toward repeat craft");

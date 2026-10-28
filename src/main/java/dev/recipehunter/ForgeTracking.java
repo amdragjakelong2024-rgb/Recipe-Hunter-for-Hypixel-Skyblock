@@ -30,16 +30,28 @@ public final class ForgeTracking {
   e.readyAt=now+seconds*1000;return e;
  }
  public static void replace(List<CraftDiary.Entry> jobs,int slot,CraftDiary.Entry job){jobs.removeIf(e->e.key.equals("forge:"+slot));if(job!=null)jobs.add(job);}
- public static void tab(Catalog c,List<CraftDiary.Entry> jobs,String text,long now){
+ public static final class Observations {
+  private final Map<Integer,String> candidate=new HashMap<>(),accepted=new HashMap<>();
+  private final Map<Integer,Integer> scans=new HashMap<>();private final List<CraftDiary.Entry> jobs;
+  public Observations(List<CraftDiary.Entry> jobs){this.jobs=jobs;}
+  public void clear(){candidate.clear();accepted.clear();scans.clear();}
+  public void accept(int slot,CraftDiary.Entry entry){
+   String signature=entry==null?"empty":entry.id+":"+entry.count;
+   int count=signature.equals(candidate.put(slot,signature))?scans.getOrDefault(slot,0)+1:1;scans.put(slot,count);
+   if(count>=2&&!signature.equals(accepted.get(slot))){replace(jobs,slot,entry);accepted.put(slot,signature);}
+  }
+ }
+ public static void tab(Catalog c,List<CraftDiary.Entry> jobs,String text,long now){tab(c,jobs,text,now,(slot,e)->replace(jobs,slot,e));}
+ public static void tab(Catalog c,List<CraftDiary.Entry> jobs,String text,long now,java.util.function.BiConsumer<Integer,CraftDiary.Entry> observer){
   String cleaned=clean(text);
   if(!Pattern.compile("(?im)^\\s*Forges?\\s*(?::|\\([0-9]+\\))?\\s*$").matcher(cleaned).find())return;
   for(String line:cleaned.split("\\R")){
    Matcher m=Pattern.compile("^\\s*([1-7])\\)\\s*(.+?)\\s*$").matcher(line);if(!m.matches())continue;
    int slot=Integer.parseInt(m.group(1));String body=m.group(2);
-   if(empty(body)){replace(jobs,slot,null);continue;}
+   if(empty(body)){observer.accept(slot,null);continue;}
    int sep=body.lastIndexOf(":");if(sep<0)continue;
    var entry=timed(c,slot,body.substring(0,sep).strip(),body.substring(sep+1),now);
-   if(entry!=null)replace(jobs,slot,entry);
+   if(entry!=null)observer.accept(slot,entry);
   }
  }
 }
