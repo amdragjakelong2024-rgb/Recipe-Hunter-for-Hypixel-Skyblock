@@ -10,9 +10,9 @@ public final class MenuTracker {
  public final List<CraftDiary.Entry> forge=new ArrayList<>();public long observedAt,lastSackSnapshotAt,lastSackMessageAt,lastSackNoticeAt;public int sackNoticeCount,sackParsedCount,sackUnparsedCount;
  public final Map<String,Long> sackSnapshots=new HashMap<>();public final Set<String> uncertainSacks=new HashSet<>();
  private Object menu;private int ticks;
- private String forgeCandidate=null;private int forgeStableScans;
+ private String forgeCandidate=null,forgeAccepted=null;private int forgeStableScans;
  /** Ignore one-off half-loaded Forge menus that made progress oscillate. */
- public void clear(){ender.clear();sacks.clear();sackSnapshots.clear();uncertainSacks.clear();forge.clear();menu=null;ticks=0;forgeCandidate=null;forgeStableScans=0;lastSackSnapshotAt=0;lastSackMessageAt=0;lastSackNoticeAt=0;sackNoticeCount=0;sackParsedCount=0;sackUnparsedCount=0;}
+ public void clear(){ender.clear();sacks.clear();sackSnapshots.clear();uncertainSacks.clear();forge.clear();menu=null;ticks=0;forgeCandidate=null;forgeAccepted=null;forgeStableScans=0;lastSackSnapshotAt=0;lastSackMessageAt=0;lastSackNoticeAt=0;sackNoticeCount=0;sackParsedCount=0;sackUnparsedCount=0;}
  public static long stored(String lore){
   Matcher m=Pattern.compile("(?im)^(?:Stored|Amount)\\s*:\\s*([0-9][0-9,]*)(?=\\s*(?:/|$))").matcher(lore.strip());
   if(!m.find())return -1;try{return Long.parseLong(m.group(1).replace(",",""));}catch(NumberFormatException e){return -1;}
@@ -52,7 +52,7 @@ public final class MenuTracker {
    String signature=jobs.stream().map(e->e.key+"|"+e.id+"|"+e.count).sorted().reduce("",(a,b)->a+";"+b);
    if(signature.equals(forgeCandidate))forgeStableScans++;else{forgeCandidate=signature;forgeStableScans=1;}
    // Only accept stable server snapshots, avoiding alternating empty/full frames.
-   if(forgeStableScans>=2){forge.clear();forge.addAll(jobs);}
+   if(forgeStableScans>=2&&!signature.equals(forgeAccepted)){forge.clear();forge.addAll(jobs);forgeAccepted=signature;}
   }
   if(sack)lastSackSnapshotAt=System.currentTimeMillis();
   observedAt=System.currentTimeMillis();
