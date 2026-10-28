@@ -53,3 +53,45 @@ jobs:
             build/libs/
             build/reports/catalogue-progress.txt
           if-no-files-found: error
+
+  publish_verified_042:
+    name: Publish 0.4.2 Forge hotfix to existing release
+    if: github.ref == 'refs/heads/update/forge-042-repair'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify tested source matches main
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "5d43e98fcb1ea30130250678b3dc8123f7831801"
+          git diff --quiet origin/main HEAD -- src/ build.gradle gradle.properties
+      - name: Download passing build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: recipe-hunter-0.4.2-mc26.1.2
+          path: dist
+      - name: Prepare same-name release assets
+        run: |
+          set -euo pipefail
+          jar="$(find dist -type f -name 'recipe-hunter-0.4.2.jar' -print -quit)"
+          test -n "$jar"
+          test -s "$jar"
+          mkdir -p publish
+          cp "$jar" 'publish/recipe-hunter-0.4.2+26.1.2.jar'
+          (cd publish && sha256sum 'recipe-hunter-0.4.2+26.1.2.jar' > SHA256SUMS.txt)
+      - name: Replace existing v0.4.2 assets and source tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release upload v0.4.2 'publish/recipe-hunter-0.4.2+26.1.2.jar' 'publish/SHA256SUMS.txt' --clobber
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -f v0.4.2 5d43e98fcb1ea30130250678b3dc8123f7831801
+          git push --force origin refs/tags/v0.4.2
+          gh release edit v0.4.2 --target 5d43e98fcb1ea30130250678b3dc8123f7831801 --title 'Recipe Hunter 0.4.2 · Minecraft 26.1.2' --notes-file RELEASE_NOTES.md
