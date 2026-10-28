@@ -34,6 +34,12 @@ public final class ForgeProgressTest {
   var refining=new CraftDiary.Entry();refining.id="REFINED_MITHRIL";refining.count=5;
   var engine=new RecipeProgress(c);var compactTree=engine.evaluate(plateGoal,plateStock,CraftDiary.pending(List.of(refining)),CraftDiary.pending(List.of(refining)));
   eq(compactTree.acquisition.remaining(),0,"pending child jobs cover ready-to-forge parent demand");eq(compactTree.acquisition.equivalent,0,"pending children never become actual finished output");
+  var observed=new ArrayList<CraftDiary.Entry>();var watcher=new ForgeTracking.Observations(observed);
+  var watched=ForgeTracking.job(c,1,"Refined Mithril","Time Remaining: 1h",0);
+  watcher.accept(1,watched);eq(observed.size(),0,"one transient frame is not accepted");watcher.accept(1,watched);eq(observed.size(),1,"stable slot accepted");
+  watcher.accept(1,null);watcher.accept(1,watched);eq(observed.size(),1,"transient empty slot preserves work");
+  observed.clear();watcher.accept(1,watched);watcher.accept(1,watched);eq(observed.size(),0,"unchanged slot cannot resurrect claimed output");
+  watcher.accept(1,null);watcher.accept(1,null);watcher.accept(1,watched);watcher.accept(1,watched);eq(observed.size(),1,"new job after empty slot is tracked");
   // Every recorded Forge route, including multi-input and batched-output recipes.
   int routes=0;
   for(var item:c.items.values())for(var route:item.routes)if(route.type.equals("forge")){

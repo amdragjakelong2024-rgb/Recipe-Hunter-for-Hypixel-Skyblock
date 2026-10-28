@@ -61,7 +61,7 @@ public final class UiSmoke {
      if(!journal(app).getValue().equals("Unfinished diary draft"))throw new IllegalStateException("Diary draft lost on navigation");stage=9;ticks=0;
     }else if(stage==9&&ticks>20&&!pending){
      click(app,"Delete");if(!app.book.diary.isEmpty())throw new IllegalStateException("Diary delete failed");
-     app.book=new Book();var forgeGoal=new Book.Goal("TITANIUM_DRILL_3");forgeGoal.materialDisplay="Enchanted";forgeGoal.hud=new HudLayout();forgeGoal.hud.x=.5;forgeGoal.hud.y=.5;app.book.goals.add(forgeGoal);
+     app.book=new Book();var forgeGoal=new Book.Goal("TITANIUM_DRILL_3");forgeGoal.materialDisplay="Enchanted";forgeGoal.hudPage=1;forgeGoal.hud=new HudLayout();forgeGoal.hud.x=.5;forgeGoal.hud.y=.5;app.book.goals.add(forgeGoal);
      var running=new CraftDiary.Entry();running.id="REFINED_MITHRIL";running.count=5;
      var snapshot=LiveProgress.refresh(app.catalog,app.book,Map.of("TITANIUM_DRILL_2",1L,"ENCHANTED_MITHRIL",160L),List.of(running));app.hudProgress.clear();app.hudProgress.putAll(snapshot.rows());app.progressTrees.clear();app.progressTrees.putAll(snapshot.trees());
      mc.setScreen(new net.minecraft.client.gui.screens.Screen(Component.literal("Forge regression")){
