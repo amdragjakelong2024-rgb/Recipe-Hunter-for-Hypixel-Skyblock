@@ -46,7 +46,7 @@ public final class RecipeBookScreen extends Screen {
   int perPage=6;totalPages=Math.max(1,(items.size()+perPage-1)/perPage);page=Math.clamp(page,0,totalPages-1);
   for(int i=page*perPage;i<Math.min(items.size(),(page+1)*perPage);i++){
    var item=items.get(i);int y=145+(i-page*perPage)*39;Book.Goal saved=app.book.find(item.id);Book.Goal display=saved==null?new Book.Goal(item.id):saved;
-   cards.add(new int[]{L,y,COL,37,selected.equals(item.id)?1:0});icons.add(new ItemIcon(item.id,L+5,y+5));
+   cards.add(new int[]{L,y,COL,37,selected.equals(item.id)?1:0});icons.add(new ItemIcon(saved!=null&&ArmorSets.isSet(saved)?ArmorSets.iconId(saved):item.id,L+5,y+5));
    control(item.name,L+29,y+1,COL-54,15,true,()->{selected=item.id;emptyDetail=false;materialPage=0;rebuildWidgets();});
    if(all){control(">",L+COL-22,y+4,20,29,false,()->{selected=item.id;emptyDetail=false;materialPage=0;rebuildWidgets();});entries.add(new Entry(display,L+32,y+20,COL-88));}
    else {entries.add(new Entry(display,L+32,y+20,108));
@@ -67,7 +67,7 @@ public final class RecipeBookScreen extends Screen {
   if(all||!selected.isEmpty())detail();else settings();
  }
  private List<Catalog.Item> catalogItems(){return app.catalog.items.values().stream().filter(i->!i.id.endsWith("_NPC")&&!i.id.endsWith("_BOSS"))
-  .filter(i->query.isBlank()||Catalog.normal(i.name).contains(Catalog.normal(query)))
+  .filter(i->!i.id.startsWith(ArmorSets.PREFIX)).filter(i->query.isBlank()||Catalog.normal(i.name).contains(Catalog.normal(query)))
   .filter(i->switch(category){case "Crafting"->i.routes.stream().anyMatch(r->"crafting".equals(r.type));case "Forge"->i.routes.stream().anyMatch(r->"forge".equals(r.type));case "Pets"->i.name.endsWith(" Pet");case "Other"->i.routes.isEmpty();default->true;})
   .sorted(Comparator.comparing(i->i.name)).toList();}
  private void settings(){
@@ -83,14 +83,14 @@ public final class RecipeBookScreen extends Screen {
  }
  private void detail(){
   if(selected.isEmpty()){text("Select a recipe",R,45,COL,Theme.MUTED);return;}
-  Book.Goal goal=app.goal(selected);Catalog.Item item=app.catalog.item(selected);icons.add(new ItemIcon(selected,R,36));text(item.name,R+24,35,COL-24,Theme.INK);
+  Book.Goal goal=app.goal(selected);Catalog.Item item=app.catalog.item(selected);icons.add(new ItemIcon(ArmorSets.iconId(goal),R,36));text(item.name,R+24,35,COL-24,Theme.INK);
   button("-",R,63,24,()->quantity(goal,Math.max(1,goal.count-1)));button("+",R+28,63,24,()->quantity(goal,Math.min(1000000,goal.count+1)));
   EditBox count=addRenderableWidget(new EditBox(font,viewport.x(R+60),viewport.y(65),viewport.size(66),Math.max(14,viewport.size(20)),Component.literal("Quantity")));count.setMaxLength(7);count.setValue(Long.toString(goal.count));count.setTextColor(Theme.INK);count.setBordered(false);
   button("Set",R+132,63,40,()->{try{quantity(goal,Long.parseLong(count.getValue()));}catch(NumberFormatException e){app.say("Enter a whole quantity from 1 to 1000000.");}});
   button("Reset x1",R+180,63,72,()->quantity(goal,1));
   button("Back",R+259,63,47,()->{selected="";emptyDetail=true;materialPage=0;rebuildWidgets();});
   RecipeProgress engine=new RecipeProgress(app.catalog);RecipeProgress.Node tree=app.tree(goal);
-  text("Required Materials",R,94,COL,Theme.INK);
+  text(ArmorSets.isSet(goal)?"Armor Set Materials (4 pieces)":"Required Materials",R,94,COL,Theme.INK);
   List<RecipeProgress.Node> materials;if(treeMode){materials=new ArrayList<>();for(var child:tree.children)treeRows(child,goal,materials);}else materials=engine.displayed(tree,goal);int pages=Math.max(1,(materials.size()+2)/3);materialPage=Math.clamp(materialPage,0,pages-1);
   for(int i=materialPage*3;i<Math.min(materials.size(),materialPage*3+3);i++){
    var node=materials.get(i);int y=112+(i-materialPage*3)*44;icons.add(new ItemIcon(node.id,R,y));
@@ -102,13 +102,21 @@ public final class RecipeBookScreen extends Screen {
   button("Reset branches",R+172,247,134,()->{goal.expanded.clear();app.persist();flip();});
   selector("Material Display",new ArrayList<>(engine.materialOptions(tree)),goal.materialDisplay,R,274,value->{goal.materialDisplay=value;app.persist();rebuildWidgets();});
   selector("Gemstone Display",new ArrayList<>(engine.gemOptions(tree)),goal.gemDisplay,R,306,value->{goal.gemDisplay=value;app.persist();rebuildWidgets();});
-  if(!item.routes.isEmpty()){
+  if(ArmorSets.isSet(goal)){
+   text("One shared pool for all four armor pieces",R,341,COL,Theme.MUTED);
+   for(int i=0;i<goal.armorPieces.size();i++)icons.add(new ItemIcon(goal.armorPieces.get(i),R+10+i*43,361));
+  }else if(!item.routes.isEmpty()){
    Catalog.Route route=item.routes.get(Math.floorMod(goal.choices.getOrDefault(item.id,0),item.routes.size()));
    if(!route.slots.isEmpty())for(int i=0;i<route.slots.size()&&i<9;i++){int sx=R+i%3*19,sy=340+i/3*18;gridCells.add(new int[]{sx,sy});var slot=route.slots.get(i);if(slot!=null)icons.add(new ItemIcon(slot.id,sx,sy,slot.count));}
    else {text(route.type.toUpperCase(Locale.ROOT),R,345,100,Theme.MUTED);text("Output: "+route.count,R,360,100,Theme.MUTED);}
    text(">",R+66,365,16,Theme.INK);icons.add(new ItemIcon(item.id,R+84,359,route.count));
    if(item.routes.size()>1)button("Route "+(Math.floorMod(goal.choices.getOrDefault(item.id,0),item.routes.size())+1),R+127,354,90,()->{goal.choices.merge(item.id,1,Integer::sum);app.persist();flip();});
   }else text("Acquired directly",R,351,COL,Theme.MUTED);
+  if(!ArmorSets.isSet(goal)&&ArmorSets.detect(app.catalog,selected).size()==4)
+   button("Combine into Armor Set",R+80,373,225,()->{
+    String id=app.saveArmorSet(selected);
+    if(!id.isEmpty()){selected=id;all=false;materialPage=0;treeMode=false;rebuildWidgets();}
+   });
   if(app.book.find(goal.id)==null)button("Save as Goal",R+60,395,186,()->{app.save(goal);rebuildWidgets();});
   else {
    button(goal.finished?"Finished":"Finish",R,395,94,()->{app.finishGoal(goal);rebuildWidgets();}).active=!goal.finished;
