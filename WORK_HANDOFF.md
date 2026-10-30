@@ -5,6 +5,7 @@
 ## Repository and precise starting point
 
 - Repository: https://github.com/amdragjakelong2024-rgb/Recipe-Hunter-for-Hypixel-Skyblock
+- **FPS fix tested source commit:** `2215832dc8e60074e4641671b23556c4d2dbabc8`; successful CI [41102450015](https://github.com/amdragjakelong2024-rgb/Recipe-Hunter-for-Hypixel-Skyblock/actions/runs/41102450015). Handoff-only commits after that may advance the branch head; always fetch current HEAD before editing.
 - **CONTINUE FROM:** branch `update/performance-043-20261030` (this handoff and the performance fixes).
 - Prior 0.4.3 Forge branch: `update/forge-dashboard-043`. It does **not** include the new performance optimizations until merged intentionally.
 - `main` / public release remain older; do **not** use `main` or public v0.4.2 as the new starting point.
@@ -23,8 +24,10 @@ These are **code optimizations, not verified FPS gains**. User reports that Reci
 5. `src/test/java/dev/recipehunter/ProgressTest.java`: regression checks that new inventory material counts, changed display modes, new/claimed Forge jobs and cache reset force reevaluation, while unchanged inputs are reused.
 6. `.github/workflows/build.yml`: continuous integration stays **test-artifact-only**. A concurrency group was added to cancel superseded runs for the same branch. Never re-enable automatic publishing.
 7. README and CHANGELOG document these optimization changes, limitations and `/rh perf`.
+8. **Final FPS fix on `2215832...`**: `RecipeHunter.java` now scans WorldContext/scoreboard, Forge Tab widget and optional SkyHanni Sack bridge **once every 20 ticks (roughly once per second)**, rather than every 5–10 ticks; Pet menus are scanned every 5 ticks rather than every tick. **Inventory and recipe-progress stock observation remains every five ticks (roughly 4 Hz)** and incoming Sack packets are still event-driven. Do not undo the throttling or claim that the SkyHanni/Forge polls are real-time sub-second.
+9. The public `v0.4.2` release remains unchanged. `0.4.3` is still explicitly `TEST BUILD 2`. Do not merge or publish until the owner confirms it works in game.
 
-**Important:** As of writing this handoff, CI runs for these FPS changes were queued and a complete successful post-optimization build has **NOT YET BEEN CONFIRMED**. The earlier, pre-optimization 0.4.3 Forge build passed. Check the latest commit's actual CI outcome, fix any compile/test failures, run a native Minecraft UI smoke test, and do not claim the optimized Test 2 JAR is verified until it succeeds.
+**Verified FPS fix build (30 October 2026):** GitHub Actions run [41102450015](https://github.com/amdragjakelong2024-rgb/Recipe-Hunter-for-Hypixel-Skyblock/actions/runs/41102450015) completed successfully for source commit `2215832dc8e60074e4641671b23556c4d2dbabc8`. It built an installable `0.4.3` JAR, ran automated tests and native Minecraft GUI smoke tests, and uploaded artifact `recipe-hunter-0.4.3-mc26.1.2` (artifact ID `13000750577`). The owner was given an FPS-focused test JAR named `Recipe-Hunter-0.4.3-FPS-FIX-TEST-2.jar`. The successful build is for **the FPS fixes only**, NOT confirmation that the SETTINGS/Dark Mode/Forge command redesign below has been implemented, nor an actual Hypixel FPS benchmark. Changes to this handoff after commit `2215832...` are documentation-only. If Work modifies code, it must rebuild and rerun all tests on the new exact commit.
 
 ## Mandatory owner-requested 0.4.3 Test Build 2 finishing work
 
@@ -72,4 +75,4 @@ The owner also gave a separate detailed **Settings / HUD redesign request**. The
 5. Do **NOT** create a GitHub Release, edit public release assets or move public tags. Do **NOT** merge to `main` solely to publish a test.
 6. **Only after the owner personally tests 0.4.3 Test Build 2, confirms everything works, and explicitly requests the release**, may Work publish 0.4.3. This permission is NOT granted by this handoff or by asking for a test JAR.
 
-**Priority:** complete and verify the performance fixes, finish the previously requested Settings/HUD work, deliver the **0.4.3 TEST BUILD 2**, then stop before any public release and wait for the owner's explicit go-ahead.
+**Priority:** the FPS fixes have now passed CI and have been handed to the owner in a test JAR; preserve them. Finish the previously requested SETTINGS/HUD work, run fresh tests for those changes, deliver **0.4.3 TEST BUILD 2** as a verified candidate, then stop before any public release and await the owner's explicit go-ahead.
