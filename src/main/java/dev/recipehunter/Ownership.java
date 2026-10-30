@@ -94,7 +94,11 @@ public final class Ownership {
     public void clearPets(){petPages.clear();petsVisited=false;}
     public int petPageCount(){return petPages.size();}
     public Map<String,Long> stock(Minecraft mc,Catalog catalog){
-        Map<String,Long> result=inventory(mc,catalog);storage.totals().forEach((id,n)->result.merge(id,n,Long::sum));
+        return stock(mc,catalog,inventory(mc,catalog));
+    }
+    /** Reuse an already observed inventory snapshot within the same client tick. */
+    public Map<String,Long> stock(Minecraft mc,Catalog catalog,Map<String,Long> inventory){
+        Map<String,Long> result=new HashMap<>(inventory);storage.totals().forEach((id,n)->result.merge(id,n,Long::sum));
         Map<String,String> pets=new HashMap<>();for(var page:petPages.values())pets.putAll(page);for(String id:pets.values())result.merge(id,1L,Math::max);return result;
     }
     public Map<String,Long> inventory(Minecraft mc,Catalog catalog){

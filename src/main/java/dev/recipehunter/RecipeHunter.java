@@ -140,17 +140,26 @@ public final class RecipeHunter implements ClientModInitializer {
         if(ticks%5==0){
             hudPlans.clear();hudProgress.clear();progressTrees.clear();
             long now=System.currentTimeMillis();
-            ledger.snapshot("Inventory",ownership.inventory(mc,catalog),now,MaterialLedger.Quality.LIVE);
+            Map<String,Long> inventory=ownership.inventory(mc,catalog);
+            ledger.snapshot("Inventory",inventory,now,MaterialLedger.Quality.LIVE);
             ledger.snapshot("Ender Chest",menus.ender.totals(),menus.observedAt,MaterialLedger.Quality.LAST_SYNCED);
             ledger.snapshot("Island chests",ownership.storage.totals(),now,MaterialLedger.Quality.LAST_SYNCED);
             ledger.snapshot("Sacks",Map.of(),now,MaterialLedger.Quality.UNKNOWN);
             for(var e:menus.sacks.entrySet())ledger.put("Sacks",e.getKey(),new MaterialLedger.Balance(e.getValue(),Math.max(menus.lastSackMessageAt,menus.sackSnapshots.getOrDefault(e.getKey(),0L)),menus.uncertainSacks.contains(e.getKey())?MaterialLedger.Quality.UNKNOWN:menus.sackSnapshots.containsKey(e.getKey())?MaterialLedger.Quality.LAST_SYNCED:MaterialLedger.Quality.SESSION_ONLY));
-            Map<String,Long> pool=new HashMap<>(onHypixel()?ownership.stock(mc,catalog):Map.of());if(onHypixel())menus.stock().forEach((id,n)->pool.merge(id,n,Long::sum));
+            boolean hypixel=onHypixel();
+            Map<String,Long> pool=hypixel?ownership.stock(mc,catalog,inventory):new HashMap<>();
+            if(hypixel)menus.stock().forEach((id,n)->pool.merge(id,n,Long::sum));
             for(var goal:book.goals)if(goal.freshCraft&&goal.targetBaseline<0)goal.targetBaseline=pool.getOrDefault(goal.id,0L);
             try{
                 var fresh=LiveProgress.refresh(catalog,book,pool,menus.forge);
                 progressTrees.putAll(fresh.trees());hudProgress.putAll(fresh.rows());
-                for(Book.Goal goal:book.goals)hudPlans.put(goal.id,plan(goal));
+                // Plans and progress use the same observed stock. Do not re-scan every
+                // inventory stack and every storage source once per saved HUD goal.
+                var reservations=CraftDiary.mergeReservations(book.diary,menus.forge);
+                for(Book.Goal goal:book.goals){
+                    try{hudPlans.put(goal.id,planner.goal(goal,pool,reservations));}
+                    catch(RuntimeException ex){Planner.Plan failure=new Planner.Plan();failure.warnings.add("Cannot calculate this route: "+ex.getMessage());hudPlans.put(goal.id,failure);}
+                }
                 if(onHypixel()){var notices=alerts.update(catalog,book,pool,book.goals.stream().filter(g->g.visible&&!g.finished).map(g->progressTrees.get(g.id)).filter(Objects::nonNull).toList(),menus,now);if(book.progressAlerts&&!notices.isEmpty()){for(String notice:notices)say(notice);UiSounds.count(this);}}
             }catch(RuntimeException e){error="Progress unavailable: "+e.getMessage();}
 
