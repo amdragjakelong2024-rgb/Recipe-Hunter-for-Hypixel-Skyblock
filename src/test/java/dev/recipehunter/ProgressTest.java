@@ -90,6 +90,24 @@ public final class ProgressTest {
   }
   Path report=Path.of("build/reports/catalogue-progress.txt");Files.createDirectories(report.getParent());Files.writeString(report,"Items: "+c.items.size()+"\nRoutes: "+routes+"\nEvaluated graphs: "+graphs+"\nUnknown inputs: "+unknown+"\n"+String.join("\n",issues)+"\nSynthetic fixtures only; live Hypixel acceptance remains unverified.\n");
   check(unknown==0,"all ingredient IDs resolve; see catalogue-progress.txt");
+  // Hot path must avoid recomputing large recipe trees when nothing changed.
+  var refreshPolicy=new ProgressRefreshPolicy();var perfBook=new Book();
+  var perfGoal=new Book.Goal("ENCHANTED_MITHRIL");perfBook.goals.add(perfGoal);
+  check(refreshPolicy.changed(Map.of("MITHRIL_ORE",160L),perfBook,List.of()),"first stock snapshot triggers calculation");
+  check(!refreshPolicy.changed(Map.of("MITHRIL_ORE",160L),perfBook,List.of()),"unchanged stock avoids redundant calculation");
+  check(refreshPolicy.changed(Map.of("MITHRIL_ORE",161L),perfBook,List.of()),"one raw material gain refreshes live progress");
+  check(!refreshPolicy.changed(Map.of("MITHRIL_ORE",161L),perfBook,List.of()),"same material count stays cached");
+  perfGoal.materialDisplay="Enchanted";
+  check(refreshPolicy.changed(Map.of("MITHRIL_ORE",161L),perfBook,List.of()),"display change refreshes shown rows");
+  var pendingJob=new CraftDiary.Entry();pendingJob.id="REFINED_MITHRIL";pendingJob.count=1;pendingJob.active=true;
+  check(refreshPolicy.changed(Map.of("MITHRIL_ORE",161L),perfBook,List.of(pendingJob)),"Forge start refreshes material demand");
+  pendingJob.count=2;
+  check(refreshPolicy.changed(Map.of("MITHRIL_ORE",161L),perfBook,List.of(pendingJob)),"Forge count change refreshes material demand");
+  pendingJob.active=false;
+  check(refreshPolicy.changed(Map.of("MITHRIL_ORE",161L),perfBook,List.of(pendingJob)),"Forge claimed/removed refreshes material demand");
+  check(!refreshPolicy.changed(Map.of("MITHRIL_ORE",161L),perfBook,List.of(pendingJob)),"unchanged inactive Forge does not rebuild");
+  refreshPolicy.clear();
+  check(refreshPolicy.changed(Map.of("MITHRIL_ORE",161L),perfBook,List.of()),"reconnect and settings invalidation refreshes progress");
   System.out.println("PASS: "+checks+" progress/ledger checks; "+graphs+" catalogue graphs; "+routes+" routes");
  }
 }
