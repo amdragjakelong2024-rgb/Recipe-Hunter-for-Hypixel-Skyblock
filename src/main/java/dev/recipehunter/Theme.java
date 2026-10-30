@@ -10,6 +10,7 @@ public final class Theme {
  public static int ink(int color){int r=(color>>16)&255,g=(color>>8)&255,b=color&255;return 0xff000000|((r*2/5)<<16)|((g*2/5)<<8)|(b*2/5);}
  public static void background(GuiGraphicsExtractor g,Font font,int w,int h,String title){
   g.blit(RenderPipelines.GUI_TEXTURED,Identifier.fromNamespaceAndPath("recipehunter","textures/gui/recipe_book.png"),0,0,0f,0f,w,h,1656,950,1656,950);
+  g.text(font,"v"+RecipeHunter.VERSION,w-52,h-12,MUTED,false);
   int x=12;for(int i=0;i<title.length();i++){String c=title.substring(i,i+1);g.text(font,c,x,8,rainbow(i*.035),true);x+=font.width(c);}
  }
 }

@@ -39,19 +39,26 @@ public final class ForgeTracking {
    String signature=entry==null?"empty":entry.id+":"+entry.count;
    int count=signature.equals(candidate.put(slot,signature))?scans.getOrDefault(slot,0)+1:1;scans.put(slot,count);
    if(count>=2&&!signature.equals(accepted.get(slot))){replace(jobs,slot,entry);accepted.put(slot,signature);}
+   else if(count>=2&&entry!=null){
+    var current=jobs.stream().filter(e->e.key.equals("forge:"+slot)).findFirst().orElse(null);
+    if(current!=null&&current.active&&current.count>0){if(entry.readyAt<current.readyAt||Math.abs(entry.readyAt-current.readyAt)>3000)current.readyAt=entry.readyAt;}
+    else if(entry.readyAt>System.currentTimeMillis()+60000){replace(jobs,slot,entry);}
+   }
   }
  }
  public static void tab(Catalog c,List<CraftDiary.Entry> jobs,String text,long now){tab(c,jobs,text,now,(slot,e)->replace(jobs,slot,e));}
- public static void tab(Catalog c,List<CraftDiary.Entry> jobs,String text,long now,java.util.function.BiConsumer<Integer,CraftDiary.Entry> observer){
+ public interface SlotObserver {void accept(int slot,CraftDiary.Entry e,ForgeState.Slot state);}
+ public static void tab(Catalog c,List<CraftDiary.Entry> jobs,String text,long now,java.util.function.BiConsumer<Integer,CraftDiary.Entry> observer){tabSlots(c,text,now,(slot,e,state)->observer.accept(slot,e));}
+ public static void tabSlots(Catalog c,String text,long now,SlotObserver observer){
   String cleaned=clean(text);
   if(!Pattern.compile("(?im)^\\s*Forges?\\s*(?::|\\([0-9]+\\))?\\s*$").matcher(cleaned).find())return;
   for(String line:cleaned.split("\\R")){
    Matcher m=Pattern.compile("^\\s*([1-7])\\)\\s*(.+?)\\s*$").matcher(line);if(!m.matches())continue;
    int slot=Integer.parseInt(m.group(1));String body=m.group(2);
-   if(empty(body)){observer.accept(slot,null);continue;}
+   if(empty(body)){observer.accept(slot,null,body.equalsIgnoreCase("LOCKED")?ForgeState.Slot.LOCKED:ForgeState.Slot.EMPTY);continue;}
    int sep=body.lastIndexOf(":");if(sep<0)continue;
    var entry=timed(c,slot,body.substring(0,sep).strip(),body.substring(sep+1),now);
-   if(entry!=null)observer.accept(slot,entry);
+   if(entry!=null)observer.accept(slot,entry,ForgeState.Slot.BUSY);
   }
  }
 }

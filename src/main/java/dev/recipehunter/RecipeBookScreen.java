@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
 
 /** Two-page book over the live world. All coordinates are book-local. */
 public final class RecipeBookScreen extends Screen {
- private final RecipeHunter app;private boolean all,treeMode,emptyDetail;private String query="",selected="",category="All";
+ private final RecipeHunter app;private final UpgradeHover upgradeHover=new UpgradeHover();private boolean all,treeMode,emptyDetail;private String query="",selected="",category="All";
  private int page,materialPage,ticks,totalPages=1;private BookViewport viewport;private boolean refreshSearch;private CompletionFilter.Mode filter=CompletionFilter.Mode.ALL;private float scale;private int left,top;private long turnedAt;
  private static final int W=720,H=430,L=28,R=382,COL=306;
  private EditBox search;private final List<Entry> entries=new ArrayList<>();private final List<Text> texts=new ArrayList<>();private final List<ItemIcon> icons=new ArrayList<>();private final List<int[]> gridCells=new ArrayList<>();
@@ -80,6 +80,7 @@ public final class RecipeBookScreen extends Screen {
   button("Recipe Planner  >",R,221,COL,()->{all=true;page=0;rebuildWidgets();});
   button("Diary  >",R,254,COL,()->app.open(new ToolsScreen(app,"Craft Diary")));
   button("Calculator  >",R,287,COL,()->app.open(new ToolsScreen(app,"Calculator")));
+  button("Forge timers  >",R,320,COL,()->app.open(new ForgeScreen(app)));
  }
  private void detail(){
   if(selected.isEmpty()){text("Select a recipe",R,45,COL,Theme.MUTED);return;}
@@ -168,6 +169,9 @@ public final class RecipeBookScreen extends Screen {
   for(int i=0;i<brand.length();i++){String letter=brand.substring(i,i+1);double glow=(Math.sin(phase-i*.55)+1)/2;int color=0xff000000|((int)(205+50*glow)<<16)|((int)(146+95*glow)<<8)|(int)(57+125*glow);g.text(font,letter,bx,0,color,true);bx+=font.width(letter);}
   g.pose().popMatrix();
   super.extractRenderState(g,mx,my,dt);
-  for(var icon:icons)if(lx>=icon.x&&lx<icon.x+18&&ly>=icon.y&&ly<icon.y+18)RecipePreview.render(app,g,icon.id,selected.isEmpty()?null:app.goal(selected),mx,my);
+  String hovered="";
+  for(var icon:icons)if(lx>=icon.x&&lx<icon.x+18&&ly>=icon.y&&ly<icon.y+18){RecipePreview.render(app,g,icon.id,selected.isEmpty()?null:app.goal(selected),mx,my);hovered=icon.id;}
+  if(!selected.isEmpty())for(var icon:icons)if(icon.x==R&&icon.y>=112&&icon.y<=200&&lx>=R&&lx<R+COL&&ly>=icon.y&&ly<icon.y+40)hovered=icon.id;
+  upgradeHover.render(app,g,hovered,mx,my);
  }
 }

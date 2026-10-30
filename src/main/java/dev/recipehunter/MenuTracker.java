@@ -9,9 +9,11 @@ public final class MenuTracker {
  public final StorageLedger ender=new StorageLedger();public final Map<String,Long> sacks=new HashMap<>();
  public final List<CraftDiary.Entry> forge=new ArrayList<>();public long observedAt,lastSackSnapshotAt,lastSackMessageAt,lastSackNoticeAt;public int sackNoticeCount,sackParsedCount,sackUnparsedCount;
  public final Map<String,Long> sackSnapshots=new HashMap<>();public final Set<String> uncertainSacks=new HashSet<>();
+ public final ForgeState forgeState=new ForgeState();public final Set<String> bridgedSacks=new HashSet<>();
+ private final Map<Integer,String> slotCandidates=new HashMap<>();private final Map<Integer,Integer> slotSamples=new HashMap<>();
  private final ForgeTracking.Observations forgeObservations=new ForgeTracking.Observations(forge);
  private Object menu;private int ticks;private long lastForgeMenuAt;
- public void clear(){forgeObservations.clear();lastForgeMenuAt=0;ender.clear();sacks.clear();sackSnapshots.clear();uncertainSacks.clear();forge.clear();menu=null;ticks=0;lastSackSnapshotAt=0;lastSackMessageAt=0;lastSackNoticeAt=0;sackNoticeCount=0;sackParsedCount=0;sackUnparsedCount=0;}
+ public void clear(){forgeState.clear();bridgedSacks.clear();slotCandidates.clear();slotSamples.clear();forgeObservations.clear();lastForgeMenuAt=0;ender.clear();sacks.clear();sackSnapshots.clear();uncertainSacks.clear();forge.clear();menu=null;ticks=0;lastSackSnapshotAt=0;lastSackMessageAt=0;lastSackNoticeAt=0;sackNoticeCount=0;sackParsedCount=0;sackUnparsedCount=0;}
  public static long stored(String lore){
   Matcher m=Pattern.compile("(?im)^(?:Stored|Amount)\\s*:\\s*([0-9][0-9,]*)(?=\\s*(?:/|$))").matcher(lore.strip());
   if(!m.find())return -1;try{return Long.parseLong(m.group(1).replace(",",""));}catch(NumberFormatException e){return -1;}
@@ -40,8 +42,8 @@ public final class MenuTracker {
    }}
    if(fg&&slot.getContainerSlot()>=10&&slot.getContainerSlot()<=16){
     int forgeSlot=slot.getContainerSlot()-9;String name=stack.getHoverName().getString();
-    if(ForgeTracking.empty(name))forgeObservations.accept(forgeSlot,null);
-    else {var job=ForgeTracking.job(app.catalog,forgeSlot,name,text,System.currentTimeMillis());if(job!=null)forgeObservations.accept(forgeSlot,job);}
+    if(ForgeTracking.empty(name))observeForge(forgeSlot,null,ForgeTracking.clean(name).equalsIgnoreCase("LOCKED")?ForgeState.Slot.LOCKED:ForgeState.Slot.EMPTY,"Forge menu");
+    else {var job=ForgeTracking.job(app.catalog,forgeSlot,name,text,System.currentTimeMillis());if(job!=null)observeForge(forgeSlot,job,ForgeState.Slot.BUSY,"Forge menu");}
    }
   }
   if(ec)ender.replace(enderPage(title),contents);if(fg)lastForgeMenuAt=System.currentTimeMillis();
@@ -51,7 +53,11 @@ public final class MenuTracker {
  public void tabForge(RecipeHunter app){
   if(System.currentTimeMillis()-lastForgeMenuAt<2000||app.mc.getConnection()==null)return;
   StringBuilder lines=new StringBuilder();for(var p:app.mc.getConnection().getListedOnlinePlayers())if(p.getTabListDisplayName()!=null)lines.append(p.getTabListDisplayName().getString()).append('\n');
-  ForgeTracking.tab(app.catalog,forge,lines.toString(),System.currentTimeMillis(),forgeObservations::accept);
+  ForgeTracking.tabSlots(app.catalog,lines.toString(),System.currentTimeMillis(),(slot,e,state)->observeForge(slot,e,state,"Forge Tab widget"));
+ }
+ public void observeForge(int slot,CraftDiary.Entry job,ForgeState.Slot state,String source){
+  String signature=state+":"+(job==null?"":job.id);int count=signature.equals(slotCandidates.put(slot,signature))?slotSamples.getOrDefault(slot,0)+1:1;slotSamples.put(slot,count);
+  forgeObservations.accept(slot,job);if(count>=2)forgeState.observe(slot,state,source,System.currentTimeMillis());
  }
  /** Apply only exact per-item chat deltas, never ambiguous aggregate notifications. */
  public void sackMessage(String header,Map<String,Long> delta){
@@ -61,6 +67,7 @@ public final class MenuTracker {
   sackParsedCount++;
   long now=System.currentTimeMillis();
   for(var e:delta.entrySet()){
+   if(bridgedSacks.contains(e.getKey()))continue;
    long snapshot=sackSnapshots.getOrDefault(e.getKey(),0L);
    if(snapshot>0&&now-snapshot<=SackChanges.secondsBack(header)*1000L){
     // A batched message overlapping a snapshot cannot be split reliably.
@@ -76,6 +83,7 @@ public final class MenuTracker {
   lastSackMessageAt=now;
  }
  public String sackStatus(){
+  if(!bridgedSacks.isEmpty())return "Sacks: SkyHanni exact balances + server updates";
   if(sackParsedCount>0)return "Sack chat live (updates batched)";
   if(sackNoticeCount>0)return "Sack messages seen, item details unreadable";
   if(lastSackSnapshotAt>0)return "Sacks: snapshot only (enable notifications)";

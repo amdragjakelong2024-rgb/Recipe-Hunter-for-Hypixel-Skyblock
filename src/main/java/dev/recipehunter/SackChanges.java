@@ -18,7 +18,7 @@ public final class SackChanges {
    String line=raw.strip();
    if(line.equalsIgnoreCase("Added items:")){section=1;continue;}
    if(line.equalsIgnoreCase("Removed items:")){section=-1;continue;}
-   if(section==0)continue;
+   if(section==0&&!line.matches("^[+-].*"))continue;
    Matcher m=ITEM.matcher(line);
    if(!m.matches())continue;
    try{

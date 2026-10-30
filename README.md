@@ -86,3 +86,11 @@ Use **Finish** to mark the saved goal done, then **Reset recipe** to start anoth
 Observed running/ready Forge jobs now cover their recipe inputs in the acquisition list. Five Refined Mithril jobs reduce the X555 Enchanted Mithril demand from 8,000 to 7,200, without calling those inputs loose stock. Claiming the output preserves remaining needs. Each HUD row shows `Need` and an approximate number of 64-item stacks; the footer shows allocated Forge output count.
 
 Open The Forge to synchronise its slots. A visible Forge tab-list widget can also update exact slot observations without reopening the menu. Unreadable/absent slots preserve their last observation; only an explicit empty/locked slot clears a job. Ready jobs remain pending until collection is observed. Closed menus and absent tab widgets cannot provide live server evidence.
+
+## 0.4.3 Forge dashboard
+
+Use `/rh forge` for observed Forge slots and countdowns; drag the preview and scroll to resize the persistent HUD. `HUD: On/Off` and `Alerts: On/Off` are saved. Unknown slots are never treated as free or locked. All-job wait time is the longest remaining observed timer.
+
+Hover recipe materials for two seconds for next-step ingredients and missing quantities. Readiness notifications apply to steps in saved active recipe goals and use physical ingredients, not uncollected Forge jobs. Unlock requirements still apply.
+
+Sack updates are read from server packets independently of chat visibility. If compatible SkyHanni is installed, its exact active-profile Sack balances are reused without adding duplicate counts. Otherwise itemized Sack notifications update observed balances; unseen initial contents remain unknown. `/rh sackstatus` reports the active source. No API credentials, session tokens or automatic inventory clicks are used.

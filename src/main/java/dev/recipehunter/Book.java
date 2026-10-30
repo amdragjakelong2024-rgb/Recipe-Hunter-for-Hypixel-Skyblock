@@ -20,6 +20,7 @@ public final class Book {
     public Set<String> history=new HashSet<>(),completed=new HashSet<>(),celebrated=new HashSet<>();
     public List<CraftDiary.Entry> diary=new ArrayList<>();
     public boolean uiSounds=true,animations=true;
+    public boolean forgeVisible=true,progressAlerts=true; public ForgeLayout forgeHud=new ForgeLayout();
     public boolean celebrations=true,celebrationSound=true;
     public double guiScale=1.0,hudScale=1.0;
     public String diaryDraft="",diaryEditingKey="";
@@ -29,6 +30,7 @@ public final class Book {
         if(!Files.exists(path))return new Book();
         try(var r=Files.newBufferedReader(path)){
             Book b=GSON.fromJson(r,Book.class);if(b==null||b.goals==null)throw new IOException("Invalid book");
+            if(b.forgeHud==null)b.forgeHud=new ForgeLayout();
             if(b.history==null)b.history=new HashSet<>();
             if(b.celebrated==null)b.celebrated=new HashSet<>();if(b.completed==null)b.completed=new HashSet<>();if(b.diary==null)b.diary=new ArrayList<>();
             if(b.diaryDraft==null)b.diaryDraft="";if(b.diaryEditingKey==null)b.diaryEditingKey="";

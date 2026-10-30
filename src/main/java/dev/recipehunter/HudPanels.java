@@ -2,13 +2,15 @@ package dev.recipehunter;
 import java.util.*;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 public final class HudPanels {
- public static final int PER_PAGE=7;
+ public static final int PER_PAGE=7;private static final UpgradeHover hover=new UpgradeHover();
+ public static int contentHeight(RecipeHunter app,Book.Goal goal){var rows=app.hudProgress.get(goal.id);int n=rows==null?1:Math.min(PER_PAGE,Math.max(1,rows.size()-Math.clamp(goal.hudPage,0,pages(app,goal)-1)*PER_PAGE));return 25+n*36;}
+ public static boolean hit(RecipeHunter app,Book.Goal goal,double mx,double my,int w,int h){var l=goal.hud;if(l==null)return false;double x=(mx-l.left(w,h))/l.scale(w,h),y=(my-l.top(w,h))/l.scale(w,h);return x>=0&&x<HudLayout.WIDTH&&y>=0&&(y<contentHeight(app,goal)||(y>=HudLayout.HEIGHT-21&&y<HudLayout.HEIGHT));}
  public static int pages(RecipeHunter app,Book.Goal goal){var rows=app.hudProgress.get(goal.id);return rows==null?1:Math.max(1,(rows.size()+PER_PAGE-1)/PER_PAGE);}
  public static boolean pageClick(RecipeHunter app,Book.Goal goal,double mx,double my,int w,int h){var l=goal.hud;double x=(mx-l.left(w,h))/l.scale(w,h),y=(my-l.top(w,h))/l.scale(w,h);if(y<HudLayout.HEIGHT-21||y>=HudLayout.HEIGHT-2)return false;int delta=x>=6&&x<=31?-1:x>=HudLayout.WIDTH-31&&x<=HudLayout.WIDTH-6?1:0;if(delta==0)return false;int next=BookViewport.page(goal.hudPage,delta,pages(app,goal));if(next!=goal.hudPage){goal.hudPage=next;app.persist();}return true;}
  public static HudLayout layout(RecipeHunter app,Book.Goal goal,int index,int w,int h){if(goal.hud==null){goal.hud=new HudLayout();goal.hud.scale=app.book.hudScale;goal.hud.move(w-HudLayout.WIDTH*goal.hud.scale-8-(index/Math.max(1,(int)(h/(HudLayout.HEIGHT*goal.hud.scale+8))))*(HudLayout.WIDTH*goal.hud.scale+8),12+(index%Math.max(1,(int)(h/(HudLayout.HEIGHT*goal.hud.scale+8))))*(HudLayout.HEIGHT*goal.hud.scale+8),w,h);}return goal.hud;}
  private static long forging(RecipeProgress.Node node){if(node==null)return 0;if(node.acquisition!=null)node=node.acquisition;long count=node.queuedForge;for(var child:node.children)count+=forging(child);return count;}
  public static void render(RecipeHunter app,GuiGraphicsExtractor g,int mx,int my,long pageClock){
-  int index=0;for(Book.Goal goal:app.book.goals)if(goal.visible)renderGoal(app,g,mx,my,goal,index++);
+  int index=0;String hovered="";for(Book.Goal goal:app.book.goals)if(goal.visible){renderGoal(app,g,mx,my,goal,index++);var l=goal.hud;double x=(mx-l.left(g.guiWidth(),g.guiHeight()))/l.scale(g.guiWidth(),g.guiHeight()),y=(my-l.top(g.guiWidth(),g.guiHeight()))/l.scale(g.guiWidth(),g.guiHeight());var rows=app.hudProgress.get(goal.id);if(rows!=null&&x>=0&&x<HudLayout.WIDTH&&y>=25&&y<contentHeight(app,goal)){int i=Math.clamp(goal.hudPage,0,pages(app,goal)-1)*PER_PAGE+(int)((y-25)/36);if(i<rows.size())hovered=rows.get(i).id();}}hover.render(app,g,hovered,mx,my);
  }
  private static void renderGoal(RecipeHunter app,GuiGraphicsExtractor g,int mx,int my,Book.Goal goal,int index){
   HudLayout l=layout(app,goal,index,g.guiWidth(),g.guiHeight());float scale=(float)l.scale(g.guiWidth(),g.guiHeight());int x=l.left(g.guiWidth(),g.guiHeight()),y=l.top(g.guiWidth(),g.guiHeight());

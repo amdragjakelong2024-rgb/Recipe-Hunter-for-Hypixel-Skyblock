@@ -25,6 +25,7 @@ public final class UiSmoke {
     if(stage==0&&ticks>100&&mc.screen!=null&&mc.getOverlay()==null){
      BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(VanillaRegistries.createLookup()).forEach(p->p.apply());
      app.ensureAccount();
+     Class.forName("net.minecraft.client.multiplayer.ClientPacketListener");
      verifyStacks(app);
      app.book=new Book();app.book.animations=false;
      for(String id:new String[]{"MITHRIL_PLATE","ENCHANTED_DIAMOND_BLOCK","PERFECT_JADE_GEM","ENCHANTED_MITHRIL"})if(app.catalog.items.containsKey(id))app.book.goals.add(new Book.Goal(id));
@@ -69,10 +70,27 @@ public final class UiSmoke {
      });stage=10;ticks=0;
     }else if(stage==10&&ticks>30&&!pending){capture(app,"forge-hud.png");stage=11;ticks=0;
     }else if(stage==11&&ticks>20&&!pending){
-     if(!failure.isEmpty())throw new IllegalStateException(failure);Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click/type/focus; Finish/Reset recipe; diary click/type/save/edit/check/delete/draft retention; raw/modern/legacy item identity and live counter checks passed. No Hypixel connection.\n");mc.stop();stage=12;
+     app.menus.clear();long now=System.currentTimeMillis();
+     for(int i=1;i<=7;i++){var job=i<=3?ForgeTracking.job(app.catalog,i,i==3?"Mithril Plate":"Refined Mithril",i==1?"Click to collect!":"Time Remaining: 5h 15m",now):null;for(int scan=0;scan<2;scan++)app.menus.observeForge(i,job,i<=3?ForgeState.Slot.BUSY:i<=5?ForgeState.Slot.EMPTY:ForgeState.Slot.LOCKED,"Forge menu");}
+     app.book.forgeHud.x=.5;app.book.forgeHud.y=.5;mc.setScreen(new ForgeScreen(app));stage=12;ticks=0;
+    }else if(stage==12&&ticks>30&&!pending){
+     capture(app,"forge-dashboard.png");click(app,"HUD: On");if(app.book.forgeVisible)throw new IllegalStateException("Forge hide failed");click(app,"HUD: Off");
+     var l=app.book.forgeHud;double x=l.left(mc.screen.width,mc.screen.height)+10,y=l.top(mc.screen.width,mc.screen.height)+10;
+     mc.screen.mouseClicked(new MouseButtonEvent(x,y,new MouseButtonInfo(0,0)),false);
+     mc.screen.mouseDragged(new MouseButtonEvent(x+24,y+12,new MouseButtonInfo(0,0)),24,12);
+     mc.screen.mouseReleased(new MouseButtonEvent(x+24,y+12,new MouseButtonInfo(0,0)));
+     if(l.x==.5&&l.y==.5)throw new IllegalStateException("Forge drag failed");
+     mc.screen.mouseScrolled(x+24,y+12,0,1);if(l.zoom<=1)throw new IllegalStateException("Forge resize failed");
+     mc.setScreen(new net.minecraft.client.gui.screens.Screen(Component.literal("Upgrade hover")){
+      final UpgradeHover hover=new UpgradeHover();
+      @Override public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor g,int mx,int my,float dt){g.fill(0,0,g.guiWidth(),g.guiHeight(),0xff20252c);hover.render(app,g,"ENCHANTED_MITHRIL",20,40);}
+     });stage=13;ticks=0;
+    }else if(stage==13&&ticks>65&&!pending){capture(app,"upgrade-hover.png");stage=14;ticks=0;
+    }else if(stage==14&&ticks>20&&!pending){
+     if(!failure.isEmpty())throw new IllegalStateException(failure);Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click/type/focus; Finish/Reset recipe; diary click/type/save/edit/check/delete/draft retention; raw/modern/legacy item identity and live counter checks passed. Forge preview hide/show/drag/resize and delayed next-step tooltip rendered. No Hypixel connection.\n");mc.stop();stage=15;
     }
-    if(ticks>1200&&stage<12)throw new IllegalStateException("UI smoke timed out at stage "+stage);
-   }catch(Throwable e){failure=e.toString();try{Files.createDirectories(Path.of("ui-smoke"));Files.writeString(Path.of("ui-smoke/FAIL.txt"),failure);}catch(Exception ignored){}e.printStackTrace();mc.stop();stage=12;}
+    if(ticks>1200&&stage<15)throw new IllegalStateException("UI smoke timed out at stage "+stage);
+   }catch(Throwable e){failure=e.toString();try{Files.createDirectories(Path.of("ui-smoke"));Files.writeString(Path.of("ui-smoke/FAIL.txt"),failure);}catch(Exception ignored){}e.printStackTrace();mc.stop();stage=15;}
   });
  }
  private static MultiLineEditBox journal(RecipeHunter app){return (MultiLineEditBox)app.mc.screen.children().stream().filter(c->c instanceof MultiLineEditBox).findFirst().orElseThrow();}

@@ -24,6 +24,8 @@ import net.minecraft.world.InteractionResult;
 
 public final class RecipeHunter implements ClientModInitializer {
     public static RecipeHunter INSTANCE;
+    public static final String VERSION=FabricLoader.getInstance().getModContainer("recipehunter").orElseThrow().getMetadata().getVersion().getFriendlyString();
+    public final ProgressAlerts alerts=new ProgressAlerts();public final SackBridge sackBridge=new SackBridge();
     public final Minecraft mc=Minecraft.getInstance();
     public final MenuTracker menus=new MenuTracker(); public final GrindEstimates estimates=new GrindEstimates();
     public final MaterialLedger ledger=new MaterialLedger();
@@ -50,18 +52,19 @@ public final class RecipeHunter implements ClientModInitializer {
         UseBlockCallback.EVENT.register((player,world,hand,hit)->{if(world.isClientSide()&&onHypixel())ownership.clicked(mc,hit.getBlockPos(),context);return InteractionResult.PASS;});
         ClientTickEvents.END_CLIENT_TICK.register(client->tick());
         UiSmoke.register(this);
-        ClientPlayConnectionEvents.JOIN.register((handler,sender,client)->{ownership.clear();menus.clear();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();celebration.reset();draft=null;account="";});
-        ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->{ownership.clear();menus.clear();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();celebration.reset();hudPlans.clear();});
-        ClientReceiveMessageEvents.GAME.register((message,overlay)->{
+        ClientPlayConnectionEvents.JOIN.register((handler,sender,client)->{ownership.clear();menus.clear();alerts.reset();sackBridge.reset();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();celebration.reset();draft=null;account="";});
+        ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->{ownership.clear();menus.clear();alerts.reset();sackBridge.reset();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();celebration.reset();hudPlans.clear();});
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("recipehunter","goals"),(g,dt)->hud(g));
+    }
+    public void serverMessage(Component message,boolean overlay){
+        if(overlay||!onHypixel())return;
             if(catalog!=null&&onHypixel()){
                 celebration.message(this,message.getString());
                 menus.serverBalance(message.getString(),catalog);
                 menus.sackMessage(message.getString(),SackChatTracker.changes(message,catalog));
             }
             String text=message.getString().toLowerCase(Locale.ROOT);
-            if(text.contains("profile")&&(text.contains("switched")||text.contains("switching")||text.contains("joined"))){ownership.clear();menus.clear();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();for(Book.Goal g:book.goals)g.owned.clear();for(var e:book.diary)e.active=false;persist();celebration.reset();hudPlans.clear();}
-        });
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("recipehunter","goals"),(g,dt)->hud(g));
+            if(text.contains("profile")&&(text.contains("switched")||text.contains("switching")||text.contains("joined"))){ownership.clear();menus.clear();alerts.reset();sackBridge.reset();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();for(Book.Goal g:book.goals)g.owned.clear();for(var e:book.diary)e.active=false;persist();celebration.reset();hudPlans.clear();}
     }
     void ensureAccount(){
         String id=mc.getUser().getProfileId().toString();if(id.equals(account))return;account=id;
@@ -84,16 +87,17 @@ public final class RecipeHunter implements ClientModInitializer {
         switch(q.toLowerCase(Locale.ROOT)){
             case ""->openHome();
             case "book"->openBook();
-            case "help"->{for(String line:List.of("/rh - all recipes","/rh book - saved recipes","/rh <name> - search recipes","/rh current - active recipe (click to open)","/rh diary - Craft Diary","/rh calc - calculator","/rh gui - move/resize HUD and change pages","/rh settings - appearance settings","/rh save - save last selected recipe","/rh hide | /rh show - toggle last goal","/rh bigger | /rh smaller - book size","/rh sackstatus - Sack diagnostics","/rh resync - discard stale storage observations","/rh status <ITEM_ID> - observed item sources"))say(line);}
+            case "help"->{for(String line:List.of("/rh - all recipes","/rh book - saved recipes","/rh <name> - search recipes","/rh current - active recipe (click to open)","/rh diary - Craft Diary","/rh forge - Forge slots, timers and movable HUD","/rh calc - calculator","/rh gui - move/resize HUD and change pages","/rh settings - appearance settings","/rh save - save last selected recipe","/rh hide | /rh show - toggle last goal","/rh bigger | /rh smaller - book size","/rh sackstatus - Sack diagnostics","/rh resync - discard stale storage observations","/rh status <ITEM_ID> - observed item sources"))say(line);}
             case "current"->{Book.Goal active=book.active();if(active==null){say("No active recipe. Save and show a goal first.");return;}mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+catalog.item(active.id).name+" x"+active.count+"  ").append(Component.literal("[Open recipe]").withStyle(style->style.withColor(0x88cc55).withUnderlined(true).withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/rh open "+active.id)))));}
 
+            case "forge"->open(new ForgeScreen(this));
             case "diary"->open(new ToolsScreen(this,"Craft Diary"));
             case "calc"->open(new ToolsScreen(this,"Calculator"));
             case "gui"->open(new HudEditor(this));
             case "settings"->open(new HunterScreen(this,HunterScreen.Mode.SETTINGS,""));
             case "resync"->{menus.clear();ownership.clear();ledger.clear();progressTrees.clear();hudProgress.clear();say("Storage observations cleared. Inventory updates automatically. Open each Sack and Ender Chest page once to synchronise their totals; enable Sack Notifications for later live updates.");}
             case "status"->{say("Use /rh status <SkyBlock item ID> for source counts and update times. Inventory is live; unseen storage is Unknown.");}
-            case "sackstatus"->{say(menus.sackStatus()+" | notifications: "+menus.sackNoticeCount+" | parsed: "+menus.sackParsedCount+" | no details: "+menus.sackUnparsedCount+". Enable Hypixel SkyBlock Settings > Personal > Chat Feedback > Sack Notifications.");}
+            case "sackstatus"->{say(sackBridge.status);say(menus.sackStatus()+" | notifications: "+menus.sackNoticeCount+" | parsed: "+menus.sackParsedCount+" | no details: "+menus.sackUnparsedCount+". Enable Hypixel SkyBlock Settings > Personal > Chat Feedback > Sack Notifications.");}
             case "bigger"->resizeGui(0.1);
             case "smaller"->resizeGui(-0.1);
             case "save"->{if(lastViewed.isEmpty())say("First search for a recipe using /rh <name>.");else save(goal(lastViewed));}
@@ -127,7 +131,7 @@ public final class RecipeHunter implements ClientModInitializer {
         if(catalog==null||mc.player==null)return;ensureAccount();ticks++;
         if(onHypixel()){
             if(ticks%10==0)context=WorldContext.text(mc);
-            if(ticks%5==0)menus.tabForge(this);
+            if(ticks%5==0){menus.tabForge(this);sackBridge.sync(this);}
             ownership.scanPets(mc);ownership.scanChest(mc,context,catalog);menus.tick(this);estimates.tick(this);celebration.tick(this);
         }
         if(nextScreen!=null){Screen s=nextScreen;nextScreen=null;mc.setScreen(s);}
@@ -145,6 +149,7 @@ public final class RecipeHunter implements ClientModInitializer {
                 var fresh=LiveProgress.refresh(catalog,book,pool,menus.forge);
                 progressTrees.putAll(fresh.trees());hudProgress.putAll(fresh.rows());
                 for(Book.Goal goal:book.goals)hudPlans.put(goal.id,plan(goal));
+                if(onHypixel()){var notices=alerts.update(catalog,book,pool,progressTrees.values(),menus,now);if(book.progressAlerts&&!notices.isEmpty()){for(String notice:notices)say(notice);UiSounds.count(this);}}
             }catch(RuntimeException e){error="Progress unavailable: "+e.getMessage();}
 
         }
@@ -152,7 +157,7 @@ public final class RecipeHunter implements ClientModInitializer {
     void hud(GuiGraphicsExtractor g){
         if(catalog==null||mc.player==null||mc.options.hideGui||!onHypixel())return;
         if(mc.screen==null){
-            HudPanels.render(this,g,-1,-1,0);
+            HudPanels.render(this,g,-1,-1,0);ForgeHud.render(this,g,false);
 
         }
         celebration.render(this,g);
