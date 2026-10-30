@@ -5,6 +5,10 @@ on:
     branches: [ main, 'update/**' ]
   workflow_dispatch:
 
+concurrency:
+  group: recipe-hunter-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
