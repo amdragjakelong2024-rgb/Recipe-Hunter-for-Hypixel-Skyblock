@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.3 — Forge dashboard and crafting milestones (development)
+
+- Added `/rh forge` to preview seven observed Forge slots, local countdowns, and parallel-job wait time.
+- Added an independently movable, resizable and persistent Forge HUD with visibility and alert toggles.
+- Added 2-second hover previews for the next catalogue-defined crafting/Forge step, with missing ingredients.
+- Added debounced material-ready and Forge-ready notifications; only unfinished active saved goals trigger material milestones.
+- Observes itemized Sack updates from incoming server packets, including messages hidden by another chat mod.
+- Added an optional read-only SkyHanni active-profile Sack balance bridge; exact balances replace, rather than duplicate, server deltas.
+- Keeps unknown Forge slots unknown; never treats queued Forge output as inventory.
+- Shows the installed mod version in small type; interface and alerts are in English.
+- Extended offline regression, full-catalogue and native Minecraft GUI smoke tests.
+- **Limitations:** Live Hypixel formats and optional SkyHanni compatibility still need an in-game test. A successful synthetic test does not guarantee a live server observation.
+
 ## 0.4.1
 
 See [release notes](RELEASE_NOTES.md) for the consolidated release. Superseded 0.4.1 patch descriptions have been replaced by this single entry.
