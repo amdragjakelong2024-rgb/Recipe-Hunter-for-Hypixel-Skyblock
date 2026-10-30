@@ -87,6 +87,12 @@ Observed running/ready Forge jobs now cover their recipe inputs in the acquisiti
 
 Open The Forge to synchronise its slots. A visible Forge tab-list widget can also update exact slot observations without reopening the menu. Unreadable/absent slots preserve their last observation; only an explicit empty/locked slot clears a job. Ready jobs remain pending until collection is observed. Closed menus and absent tab widgets cannot provide live server evidence.
 
+## Performance diagnostics (0.4.3)
+
+Use `/rh perf` for CPU-only timings from the material tracker and HUD rendering submissions. This is not an FPS benchmark and does not measure GPU work or other mods. Compare FPS in the same SkyBlock location with the same graphics settings and a single Recipe Hunter JAR enabled/disabled.
+
+HUD item icons now reuse a read-only inventory lookup per client tick instead of scanning the inventory for every icon on every rendered frame. The inventory is still checked every five client ticks; expensive recipe/planner graph recalculations are skipped while stock, Forge reservations and saved goal settings remain unchanged. Forge readiness alerts continue on a periodic heartbeat.
+
 ## 0.4.3 Forge dashboard
 
 Use `/rh forge` for observed Forge slots and countdowns; drag the preview and scroll to resize the persistent HUD. `HUD: On/Off` and `Alerts: On/Off` are saved. Unknown slots are never treated as free or locked. All-job wait time is the longest remaining observed timer.
