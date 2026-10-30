@@ -61,7 +61,9 @@ public final class RecipeHunter implements ClientModInitializer {
             if(catalog!=null&&onHypixel()){
                 celebration.message(this,message.getString());
                 menus.serverBalance(message.getString(),catalog);
-                menus.sackMessage(message.getString(),SackChatTracker.changes(message,catalog));
+                var changes=SackChatTracker.changes(message,catalog);
+                if(SackChatTracker.omitted(message))for(String id:menus.sacks.keySet())if(!changes.containsKey(id)&&!menus.bridgedSacks.contains(id))menus.uncertainSacks.add(id);
+                menus.sackMessage(message.getString(),changes);
             }
             String text=message.getString().toLowerCase(Locale.ROOT);
             if(text.contains("profile")&&(text.contains("switched")||text.contains("switching")||text.contains("joined"))){ownership.clear();menus.clear();alerts.reset();sackBridge.reset();ledger.clear();progressTrees.clear();hudProgress.clear();estimates.reset();for(Book.Goal g:book.goals)g.owned.clear();for(var e:book.diary)e.active=false;persist();celebration.reset();hudPlans.clear();}
@@ -149,7 +151,7 @@ public final class RecipeHunter implements ClientModInitializer {
                 var fresh=LiveProgress.refresh(catalog,book,pool,menus.forge);
                 progressTrees.putAll(fresh.trees());hudProgress.putAll(fresh.rows());
                 for(Book.Goal goal:book.goals)hudPlans.put(goal.id,plan(goal));
-                if(onHypixel()){var notices=alerts.update(catalog,book,pool,progressTrees.values(),menus,now);if(book.progressAlerts&&!notices.isEmpty()){for(String notice:notices)say(notice);UiSounds.count(this);}}
+                if(onHypixel()){var notices=alerts.update(catalog,book,pool,book.goals.stream().filter(g->g.visible&&!g.finished).map(g->progressTrees.get(g.id)).filter(Objects::nonNull).toList(),menus,now);if(book.progressAlerts&&!notices.isEmpty()){for(String notice:notices)say(notice);UiSounds.count(this);}}
             }catch(RuntimeException e){error="Progress unavailable: "+e.getMessage();}
 
         }

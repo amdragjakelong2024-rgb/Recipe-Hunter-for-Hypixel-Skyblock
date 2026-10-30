@@ -13,7 +13,7 @@ public final class SackBridge {
   try{
    Class<?> cls=Class.forName("at.hannibal2.skyhanni.data.ProfileStorageData");Object instance=cls.getField("INSTANCE").get(null);
    Object current=cls.getMethod("getSackProfiles").invoke(instance);
-   if(current==null){status="Waiting for SkyHanni profile";return;}
+   if(current==null){apply(app.menus,Map.of(),System.currentTimeMillis());status="Waiting for SkyHanni profile";return;}
    if(profile!=null&&profile!=current){app.menus.clear();app.ownership.clear();app.alerts.reset();app.progressTrees.clear();app.hudProgress.clear();}
    profile=current;
    Map<?,?> data=(Map<?,?>)current.getClass().getMethod("getSackContents").invoke(current);

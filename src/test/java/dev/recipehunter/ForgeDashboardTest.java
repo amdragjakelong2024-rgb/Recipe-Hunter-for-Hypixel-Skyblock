@@ -3,6 +3,7 @@ import java.util.*;
 import java.nio.file.*;
 final class ForgeDashboardTest {
  static void run(Catalog c)throws Exception{
+  PlannerTest.check(ForgeTracking.emptyState("Slot #6","Requires Heart of the Mountain Tier 7")==ForgeState.Slot.LOCKED,"locked slot identified by requirement lore");
   long now=System.currentTimeMillis();var menus=new MenuTracker();
   var a=ForgeTracking.job(c,1,"Refined Mithril","Time Remaining: 6h",now);
   var b=ForgeTracking.job(c,2,"Mithril Plate","Time Remaining: 18h",now);

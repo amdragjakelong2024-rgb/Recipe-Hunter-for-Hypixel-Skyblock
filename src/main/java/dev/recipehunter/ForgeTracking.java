@@ -7,6 +7,7 @@ public final class ForgeTracking {
  private ForgeTracking(){}
  public static String clean(String s){return s.replaceAll("§.","").strip();}
  public static boolean empty(String name){return clean(name).matches("(?i)(?:Slot #[1-7]|EMPTY|LOCKED)");}
+ public static ForgeState.Slot emptyState(String name,String lore){String text=clean(name+"\n"+lore).toLowerCase(Locale.ROOT);return text.matches("(?s).*\\b(?:locked|requires|unlock)\\b.*")?ForgeState.Slot.LOCKED:ForgeState.Slot.EMPTY;}
  public static CraftDiary.Entry job(Catalog c,int slot,String label,String lore,long now){
   String text=clean(lore),name=clean(label);
   Matcher timer=Pattern.compile("(?im)^\\s*Time Remaining:\\s*(.+)$").matcher(text);

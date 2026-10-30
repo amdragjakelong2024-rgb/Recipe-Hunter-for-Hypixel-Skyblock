@@ -12,7 +12,7 @@ public final class ForgeHud {
   for(int slot=1;slot<=7;slot++){
    int sn=slot,y=24+(slot-1)*20;var e=jobs.stream().filter(v->ForgeState.slot(v)==sn).findFirst().orElse(null);
    g.fill(6,y-1,24,y+17,0xffb7a485);
-   if(e==null){g.text(app.mc.font,""+slot,11,y+3,Theme.INK,false);g.text(app.mc.font,app.menus.forgeState.slots.getOrDefault(slot,ForgeState.Slot.UNKNOWN).toString(),30,y+3,Theme.MUTED,false);}
+   if(e==null){g.text(app.mc.font,""+slot,11,y+3,Theme.INK,false);g.text(app.mc.font,(app.menus.forgeState.slots.getOrDefault(slot,ForgeState.Slot.UNKNOWN)==ForgeState.Slot.BUSY?"Awaiting update":app.menus.forgeState.slots.getOrDefault(slot,ForgeState.Slot.UNKNOWN).toString()),30,y+3,Theme.MUTED,false);}
    else {g.item(Icons.stack(app,e.id),7,y);g.text(app.mc.font,app.trim(app.catalog.item(e.id).name,ForgeLayout.W-35),30,y,Theme.INK,false);g.text(app.mc.font,e.readyAt<=now?"READY — collect in game":ForgeState.duration(e.readyAt-now),30,y+10,e.readyAt<=now?0xff397421:Theme.MUTED,false);}
   }
   g.text(app.mc.font,"All observed jobs: "+ForgeState.duration(ForgeState.waitMillis(jobs,now)),6,169,Theme.INK,false);

@@ -10,6 +10,11 @@ public final class SackChatTracker {
  public static boolean isNotice(Component message){
   return message!=null&&message.getString().replaceAll("§.","").contains("[Sacks]");
  }
+ public static boolean omitted(Component message){
+  if(!isNotice(message))return false;final boolean[] missing={false};
+  message.visit((style,text)->{if(style.getHoverEvent() instanceof HoverEvent.ShowText show&&show.value().getString().toLowerCase(Locale.ROOT).contains("other items"))missing[0]=true;return Optional.empty();},net.minecraft.network.chat.Style.EMPTY);
+  return missing[0];
+ }
  public static Map<String,Long> changes(Component message,Catalog catalog){
   if(catalog==null||!isNotice(message))return Map.of();
   Set<String> hovers=new LinkedHashSet<>();

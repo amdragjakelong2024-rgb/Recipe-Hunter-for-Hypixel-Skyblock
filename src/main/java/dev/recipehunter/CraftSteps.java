@@ -20,5 +20,5 @@ public final class CraftSteps {
   out.sort(Comparator.<Step>comparingInt(v->preferred.contains(v.id)?0:1).thenComparingInt(v->v.required.size()).thenComparing(v->c.item(v.id).name));return out;
  }
  public static Set<String> targets(Collection<RecipeProgress.Node> roots){Set<String> out=new LinkedHashSet<>();for(var n:roots)collect(n,out);return out;}
- private static void collect(RecipeProgress.Node n,Set<String> out){out.add(n.id);for(var child:n.children)collect(child,out);}
+ private static void collect(RecipeProgress.Node n,Set<String> out){if(n.acquisition!=null)n=n.acquisition;if(n.total<=n.covered+n.physical+n.queued)return;out.add(n.id);for(var child:n.children)collect(child,out);}
 }

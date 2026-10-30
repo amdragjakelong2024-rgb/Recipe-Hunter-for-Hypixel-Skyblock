@@ -42,7 +42,7 @@ public final class MenuTracker {
    }}
    if(fg&&slot.getContainerSlot()>=10&&slot.getContainerSlot()<=16){
     int forgeSlot=slot.getContainerSlot()-9;String name=stack.getHoverName().getString();
-    if(ForgeTracking.empty(name))observeForge(forgeSlot,null,ForgeTracking.clean(name).equalsIgnoreCase("LOCKED")?ForgeState.Slot.LOCKED:ForgeState.Slot.EMPTY,"Forge menu");
+    if(ForgeTracking.empty(name))observeForge(forgeSlot,null,ForgeTracking.emptyState(name,text),"Forge menu");
     else {var job=ForgeTracking.job(app.catalog,forgeSlot,name,text,System.currentTimeMillis());if(job!=null)observeForge(forgeSlot,job,ForgeState.Slot.BUSY,"Forge menu");}
    }
   }
