@@ -35,6 +35,7 @@ public final class RecipeHunter implements ClientModInitializer {
     public String error="",lastViewed="",account="";public Book.Goal draft;
     private Path bookPath;private boolean writable=true;private Screen nextScreen;
     private int ticks;public String context="";public final Celebration celebration=new Celebration();
+    private long lastTrackerNs,peakTrackerNs,lastHudNs,peakHudNs,rebuilds,reuses;
     public final Map<String,Planner.Plan> hudPlans=new HashMap<>();
     public final Map<String,List<MaterialProgress.Row>> hudProgress=new HashMap<>();
     public RecipeProgress.Node tree(Book.Goal goal){
@@ -90,7 +91,13 @@ public final class RecipeHunter implements ClientModInitializer {
         switch(q.toLowerCase(Locale.ROOT)){
             case ""->openHome();
             case "book"->openBook();
-            case "help"->{for(String line:List.of("/rh - all recipes","/rh book - saved recipes","/rh <name> - search recipes","/rh current - active recipe (click to open)","/rh diary - Craft Diary","/rh forge - Forge slots, timers and movable HUD","/rh calc - calculator","/rh gui - move/resize HUD and change pages","/rh settings - appearance settings","/rh save - save last selected recipe","/rh hide | /rh show - toggle last goal","/rh bigger | /rh smaller - book size","/rh sackstatus - Sack diagnostics","/rh resync - discard stale storage observations","/rh status <ITEM_ID> - observed item sources"))say(line);}
+            case "perf"->{
+                say(String.format(Locale.US,"CPU tracker: last %.2f ms, peak %.2f ms | HUD submission: last %.2f ms, peak %.2f ms",
+                    lastTrackerNs/1e6,peakTrackerNs/1e6,lastHudNs/1e6,peakHudNs/1e6));
+                say("Recipe rebuilds: "+rebuilds+" | reused cached recipes: "+reuses+" | visible goal HUDs: "+book.goals.stream().filter(g->g.visible).count());
+                say("CPU-only timings; measure actual FPS in the same location with and without Recipe Hunter.");
+            }
+            case "help"->{for(String line:List.of("/rh - all recipes","/rh book - saved recipes","/rh <name> - search recipes","/rh current - active recipe (click to open)","/rh diary - Craft Diary","/rh forge - Forge slots, timers and movable HUD","/rh perf - tracker and HUD CPU timing diagnostics","/rh calc - calculator","/rh gui - move/resize HUD and change pages","/rh settings - appearance settings","/rh save - save last selected recipe","/rh hide | /rh show - toggle last goal","/rh bigger | /rh smaller - book size","/rh sackstatus - Sack diagnostics","/rh resync - discard stale storage observations","/rh status <ITEM_ID> - observed item sources"))say(line);}
             case "current"->{Book.Goal active=book.active();if(active==null){say("No active recipe. Save and show a goal first.");return;}mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+catalog.item(active.id).name+" x"+active.count+"  ").append(Component.literal("[Open recipe]").withStyle(style->style.withColor(0x88cc55).withUnderlined(true).withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/rh open "+active.id)))));}
 
             case "forge"->open(new ForgeScreen(this));
@@ -139,6 +146,7 @@ public final class RecipeHunter implements ClientModInitializer {
         }
         if(nextScreen!=null){Screen s=nextScreen;nextScreen=null;mc.setScreen(s);}
         if(ticks%5==0){
+            long cpuStart=System.nanoTime();
             long now=System.currentTimeMillis();
             Map<String,Long> inventory=ownership.inventory(mc,catalog);
             ledger.snapshot("Inventory",inventory,now,MaterialLedger.Quality.LIVE);
@@ -155,6 +163,7 @@ public final class RecipeHunter implements ClientModInitializer {
                 // Keep live scans at 4 Hz, but do not rebuild large recipe graphs
                 // when neither owned materials nor saved goals/Forge have changed.
                 if(changed||progressTrees.size()!=book.goals.size()||hudProgress.size()!=book.goals.size()||hudPlans.size()!=book.goals.size()){
+                    rebuilds++;
                     hudPlans.clear();hudProgress.clear();progressTrees.clear();
                     var fresh=LiveProgress.refresh(catalog,book,pool,menus.forge);
                     progressTrees.putAll(fresh.trees());hudProgress.putAll(fresh.rows());
@@ -163,23 +172,25 @@ public final class RecipeHunter implements ClientModInitializer {
                         try{hudPlans.put(goal.id,planner.goal(goal,pool,reservations));}
                         catch(RuntimeException ex){Planner.Plan failure=new Planner.Plan();failure.warnings.add("Cannot calculate this route: "+ex.getMessage());hudPlans.put(goal.id,failure);}
                     }
-                }
+                }else reuses++;
                 // Countdown alerts still need a heartbeat with no material movement.
                 if(hypixel&&(changed||ticks%20==0)){
                     var notices=alerts.update(catalog,book,pool,book.goals.stream().filter(g->g.visible&&!g.finished).map(g->progressTrees.get(g.id)).filter(Objects::nonNull).toList(),menus,now);
                     if(book.progressAlerts&&!notices.isEmpty()){for(String notice:notices)say(notice);UiSounds.count(this);}
                 }
             }catch(RuntimeException e){error="Progress unavailable: "+e.getMessage();refreshPolicy.clear();}
-
+            lastTrackerNs=System.nanoTime()-cpuStart;peakTrackerNs=Math.max(peakTrackerNs,lastTrackerNs);
         }
     }
     void hud(GuiGraphicsExtractor g){
         if(catalog==null||mc.player==null||mc.options.hideGui||!onHypixel())return;
+        long cpuStart=System.nanoTime();
         if(mc.screen==null){
             HudPanels.render(this,g,-1,-1,0);ForgeHud.render(this,g,false);
 
         }
         celebration.render(this,g);
+        lastHudNs=System.nanoTime()-cpuStart;peakHudNs=Math.max(peakHudNs,lastHudNs);
     }
     String trim(String s,int width){return mc.font.plainSubstrByWidth(s,Math.max(8,width));}
 }
