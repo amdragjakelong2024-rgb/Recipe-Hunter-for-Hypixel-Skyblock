@@ -13,6 +13,16 @@
 - Extended offline regression, full-catalogue and native Minecraft GUI smoke tests.
 - **Limitations:** Live Hypixel formats and optional SkyHanni compatibility still need an in-game test. A successful synthetic test does not guarantee a live server observation.
 
+## 0.4.3 – Performance maintenance (development test)
+
+- Avoided per-frame inventory rescans and repeated item-stack copies for every rendered HUD icon.
+- Shared one inventory observation across all saved goals in each material update.
+- Added change detection to reuse recipe and planner calculations when material stock, Forge reservations and goal settings have not changed.
+- Kept live inventory observation at four updates per second and retained Forge notification checks during idle periods.
+- Added `/rh perf` CPU-only update and HUD submission timings for in-game diagnosis.
+- Added cache invalidation tests for stock changes, display preferences and Forge jobs.
+- Real FPS impact still needs a controlled in-game A/B comparison.
+
 ## 0.4.1
 
 See [release notes](RELEASE_NOTES.md) for the consolidated release. Superseded 0.4.1 patch descriptions have been replaced by this single entry.
