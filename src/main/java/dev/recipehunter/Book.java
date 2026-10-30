@@ -6,6 +6,7 @@ import java.util.*;
 
 public final class Book {
     public static final class Goal {
+        public List<String> armorPieces=new ArrayList<>();public Map<String,Boolean> armorPreviousVisibility=new LinkedHashMap<>();
         public String id; public boolean visible=true; public long count=1;
         public int hudPage=0; public String materialDisplay="Compact",gemDisplay="Fine";
         public Set<String> checked=new HashSet<>();
@@ -20,6 +21,12 @@ public final class Book {
     public Set<String> history=new HashSet<>(),completed=new HashSet<>(),celebrated=new HashSet<>();
     public List<CraftDiary.Entry> diary=new ArrayList<>();
     public boolean uiSounds=true,animations=true;
+    public Boolean forgeNotifications,craftingNotifications;public boolean notificationSound=true,darkMode=false;
+    public String notificationTrigger="Both",defaultMaterialDisplay="Compact",defaultGemDisplay="Fine";
+    public boolean forgeAlerts(){return forgeNotifications==null?progressAlerts:forgeNotifications;}
+    public boolean craftAlerts(){return craftingNotifications==null?progressAlerts:craftingNotifications;}
+    public boolean triggerCraft(){return !"Goal Reached".equals(notificationTrigger);}
+    public boolean triggerGoal(){return !"Craft Ready".equals(notificationTrigger);}
     public boolean forgeVisible=true,progressAlerts=true; public ForgeLayout forgeHud=new ForgeLayout();
     public boolean celebrations=true,celebrationSound=true;
     public double guiScale=1.0,hudScale=1.0;
@@ -35,7 +42,10 @@ public final class Book {
             if(b.celebrated==null)b.celebrated=new HashSet<>();if(b.completed==null)b.completed=new HashSet<>();if(b.diary==null)b.diary=new ArrayList<>();
             if(b.diaryDraft==null)b.diaryDraft="";if(b.diaryEditingKey==null)b.diaryEditingKey="";
             b.guiScale=Math.clamp(b.guiScale,0.65,1.6);b.hudScale=Math.clamp(b.hudScale,0.65,1.6);
-            for(Goal g:b.goals){g.freshCraft=true;if(g.materialDisplay==null)g.materialDisplay="Compact";if(g.gemDisplay==null)g.gemDisplay="Fine";if(g.expanded==null)g.expanded=new HashSet<>();if(g.checked==null)g.checked=new HashSet<>();b.history.add(g.id);if(g.id==null||g.count<1)throw new IOException("Invalid goal");if(g.owned==null)g.owned=new HashMap<>();if(g.choices==null)g.choices=new HashMap<>();if(g.rates==null)g.rates=new HashMap<>();}
+            if(!List.of("Craft Ready","Goal Reached","Both").contains(b.notificationTrigger))b.notificationTrigger="Both";
+            if(!List.of("Compact","Enchanted","Enchanted Block").contains(b.defaultMaterialDisplay))b.defaultMaterialDisplay="Compact";
+            if(!List.of("Fine","Flawless","Perfect").contains(b.defaultGemDisplay))b.defaultGemDisplay="Fine";
+            for(Goal g:b.goals){if(g.armorPieces==null)g.armorPieces=new ArrayList<>();if(g.armorPreviousVisibility==null)g.armorPreviousVisibility=new LinkedHashMap<>();g.freshCraft=true;if(g.materialDisplay==null)g.materialDisplay="Compact";if(g.gemDisplay==null)g.gemDisplay="Fine";if(g.expanded==null)g.expanded=new HashSet<>();if(g.checked==null)g.checked=new HashSet<>();b.history.add(g.id);if(g.id==null||g.count<1)throw new IOException("Invalid goal");if(g.owned==null)g.owned=new HashMap<>();if(g.choices==null)g.choices=new HashMap<>();if(g.rates==null)g.rates=new HashMap<>();}
             return b;
         }catch(JsonParseException e){throw new IOException("Invalid book; original file preserved",e);}
     }

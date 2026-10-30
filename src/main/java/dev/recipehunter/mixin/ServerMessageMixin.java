@@ -10,4 +10,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ServerMessageMixin {
  @Inject(method="handleSystemChat",at=@At("TAIL"))
  private void recipehunter$observe(ClientboundSystemChatPacket packet,CallbackInfo ci){var app=RecipeHunter.INSTANCE;if(app!=null)app.serverMessage(packet.content(),packet.overlay());}
+ @Inject(method={"handleContainerSetSlot","handleContainerContent"},at=@At("TAIL"))
+ private void recipehunter$inventory(CallbackInfo ci){dev.recipehunter.Icons.invalidateInventory();}
 }

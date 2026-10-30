@@ -3,7 +3,7 @@ package dev.recipehunter;
 /** Resolution-independent position; no player identifiers or network data. */
 public final class HudLayout {
     public double x=1,y=0,scale=1;
-    public static final int WIDTH=276,HEIGHT=302;
+    public static final int WIDTH=276,HEIGHT=328;
     private static double finite(double n,double fallback){return Double.isFinite(n)?n:fallback;}
     public double scale(int w,int h){return Math.max(0.1,Math.min(Math.clamp(finite(scale,1),0.5,2),Math.min(w/(double)WIDTH,h/(double)HEIGHT)));}
     public int left(int w,int h){return (int)Math.round(Math.clamp(finite(x,1),0,1)*Math.max(0,w-WIDTH*scale(w,h)));}

@@ -49,5 +49,6 @@ public final class Icons {
    var tag=new net.minecraft.nbt.CompoundTag();var attrs=new net.minecraft.nbt.CompoundTag();attrs.putString("id",id);tag.put("ExtraAttributes",attrs);s.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));return s;
   }catch(Exception e){return new ItemStack(Items.PAPER);}
  }
+ public static void invalidateInventory(){inventoryTick=Integer.MIN_VALUE;}
  public static void clear(){CACHE.clear();INVENTORY_ICONS.clear();inventoryPlayer=null;inventoryTick=Integer.MIN_VALUE;}
 }

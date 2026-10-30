@@ -17,18 +17,12 @@ public final class MaterialProgress {
   public Row(String id,long have,long total,long pending,long forge,boolean checked){
    this(id,have,total,pending,forge,checked,have,"");
   }
-  public boolean done(){return equivalent>=total-1e-9;}
+  public boolean done(){return equivalent>=total;}
   public double fraction(){return total<=0?1:Math.clamp(equivalent/total,0.0,1.0);}
   public String count(){return have+"/"+total+(conversion.isEmpty()?"":" (+"+conversion+")");}
-  public String percent(){
-   double n=100*fraction();
-   if(n==0)return "0%";
-   if(n<0.001)return "<0.001%";
-   if(n<0.1)return String.format(Locale.US,"%.3f%%",n);
-   if(n<1)return String.format(Locale.US,"%.2f%%",n);
-   if(n<10)return String.format(Locale.US,"%.1f%%",n);
-   return n<100?String.format(Locale.US,"%.1f%%",Math.floor(n*10)/10):"100%";
-  }
+  public String percent(){return percentage(equivalent,total);}
+  public static String percentage(double have,long total){if(total<=0||have>=total)return "100%";if(!(have>0))return "0%";double n=100*(have/total);return n<1?"<1%":Math.min(99,(int)Math.floor(n))+"%";}
+
  }
 
  private record Requirement(String id,long total){}

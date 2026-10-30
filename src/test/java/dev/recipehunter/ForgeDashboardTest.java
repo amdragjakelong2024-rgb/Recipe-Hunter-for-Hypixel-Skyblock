@@ -19,11 +19,11 @@ final class ForgeDashboardTest {
   alerts.update(c,book,Map.of(),List.of(),menus,now);
   PlannerTest.check(alerts.update(c,book,Map.of(),List.of(),menus,now).stream().anyMatch(t->t.contains("full")),"full warning edge");
   PlannerTest.check(alerts.update(c,book,Map.of(),List.of(),menus,now).isEmpty(),"full warning not repeated");
-  PlannerTest.eq(alerts.update(c,book,Map.of(),List.of(),menus,now+19*3600000L).size(),2,"both ready jobs notified");
+  alerts.update(c,book,Map.of(),List.of(),menus,now+19*3600000L);alerts.update(c,book,Map.of(),List.of(),menus,now+19*3600000L);PlannerTest.eq(alerts.update(c,book,Map.of(),List.of(),menus,now+19*3600000L).size(),2,"both elapsed timers notified");
   PlannerTest.check(alerts.update(c,book,Map.of(),List.of(),menus,now+19*3600000L).isEmpty(),"ready notifications once per job");
   menus.claimed(book,a.id,1);PlannerTest.check(!menus.forgeState.full(menus.forge),"claimed inactive slot not full");
   var root=new RecipeProgress(c).evaluate(new Book.Goal("REFINED_MITHRIL"),Map.of(),Map.of(),Map.of());
-  alerts.reset();menus.clear();alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",159L),List.of(root),menus,now);
+  book.goals.add(new Book.Goal("REFINED_MITHRIL"));alerts.reset();menus.clear();alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",159L),List.of(root),menus,now);
   for(int i=0;i<2;i++)PlannerTest.check(alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(root),menus,now).isEmpty(),"threshold debounced");
   PlannerTest.check(alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(root),menus,now).stream().anyMatch(t->t.contains("Refined Mithril")),"first Refined Mithril notification at 160");
   PlannerTest.check(alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(root),menus,now).isEmpty(),"craft notification not repeated");

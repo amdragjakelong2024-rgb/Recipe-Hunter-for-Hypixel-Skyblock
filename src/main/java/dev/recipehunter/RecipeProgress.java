@@ -15,11 +15,13 @@ public final class RecipeProgress {
  public RecipeProgress(Catalog catalog){this.catalog=catalog;}
  public Node evaluate(Book.Goal goal,Map<String,Long> stock,Map<String,Long> pending,Map<String,Long> forge){
   Map<String,Long> planned=new HashMap<>(stock);pending.forEach((id,n)->planned.merge(id,n,Math::addExact));
+  ArmorSets.register(catalog,goal);
   Node actual=allocateReserved(goal,new HashMap<>(stock),planned,pending,forge);
   if(!forge.isEmpty()){
    Map<String,Long> projected=new HashMap<>(stock);forge.forEach((id,n)->{if(n>0)projected.merge(id,n,Math::addExact);});
    creditForge(actual,allocate(goal,projected,Map.of(),Map.of()));
   }
+  ArmorSets.averageReadiness(goal,actual);if(actual.acquisition!=null)ArmorSets.averageReadiness(goal,actual.acquisition);
   return actual;
  }
  public Node allocateReserved(Book.Goal goal,Map<String,Long> owned,Map<String,Long> planned,Map<String,Long> pending,Map<String,Long> forge){

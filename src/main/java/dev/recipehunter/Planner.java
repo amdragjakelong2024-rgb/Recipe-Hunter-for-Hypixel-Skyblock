@@ -18,7 +18,7 @@ public final class Planner {
     }
     public Plan goal(Book.Goal g,Map<String,Long> stock){return goal(g,stock,Map.of());}
     public Plan goal(Book.Goal g,Map<String,Long> stock,Map<String,Long> pending){
-        if(g.crafted>=g.count)return new Plan();
+        ArmorSets.register(c,g);if(g.crafted>=g.count)return new Plan();
         Map<String,Long> available=new HashMap<>(stock);if(g.freshCraft||g.crafted>0){if(g.targetBaseline<0)available.remove(g.id);else available.put(g.id,Math.max(0,available.getOrDefault(g.id,0L)-g.targetBaseline-g.crafted));}
         pending.forEach((id,n)->available.merge(id,n,Math::addExact));
         return calculate(g.id,g.count-g.crafted,available,g.choices,true,g.fineGems,Set.of(),g.expanded,g.compact);

@@ -14,8 +14,7 @@ public final class Celebration {
   String s=Catalog.normal(text);if(!s.startsWith("you crafted ")&&!s.startsWith("you have crafted "))return;
   for(String id:new ArrayList<>(app.book.history)){String name=Catalog.normal(app.catalog.item(id).name);if(s.equals("you crafted "+name)||s.startsWith("you crafted "+name+" ")||s.equals("you have crafted "+name)){start(app,id);break;}}
  }
- public void tick(RecipeHunter app){
-  Map<String,Long> now=app.ownership.inventory(app.mc,app.catalog);
+ public void tick(RecipeHunter app,Map<String,Long> now){
   if(app.mc.screen instanceof AbstractContainerScreen<?> screen&&craftMenu(screen.getTitle().getString()))craftingGrace=8;else craftingGrace=Math.max(0,craftingGrace-1);
   if(app.mc.screen instanceof AbstractContainerScreen<?> screen&&screen.getTitle().getString().toLowerCase(Locale.ROOT).contains("forge")){
    forgeGrace=8;for(var job:app.menus.forge)if(job.active&&job.readyAt<=System.currentTimeMillis())forgeOutputs.add(job.id);for(var slot:screen.getMenu().slots)if(slot.container!=app.mc.player.getInventory()){var stack=slot.getItem();var lore=stack.get(net.minecraft.core.component.DataComponents.LORE);if(lore!=null&&lore.lines().stream().anyMatch(l->l.getString().toLowerCase(Locale.ROOT).matches(".*(?:claim|collect).*")))forgeOutputs.add(Ownership.id(stack));}

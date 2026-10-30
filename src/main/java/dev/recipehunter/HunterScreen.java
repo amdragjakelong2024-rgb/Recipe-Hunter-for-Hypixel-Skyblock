@@ -222,7 +222,7 @@ public final class HunterScreen extends Screen {
         Theme.background(g,font,width,height,"RECIPE HUNTER");
         for(Label l:labels)g.text(font,l.text,l.x,l.y,Theme.ink(l.color),false);
         super.extractRenderState(g,mx,my,dt);
-        for(Icon i:icons){g.fill(i.x-1,i.y-1,i.x+19,i.y+19,0xffc3b38c);g.item(icon(i.id),i.x,i.y);if(i.count>0)g.text(font,Long.toString(i.count),i.x+10,i.y+12,0xffffffff,true);
+        for(Icon i:icons){g.fill(i.x-1,i.y-1,i.x+19,i.y+19,Theme.well());g.item(icon(i.id),i.x,i.y);if(i.count>0)g.text(font,Long.toString(i.count),i.x+10,i.y+12,0xffffffff,true);
             if(mx>=i.x&&mx<i.x+22&&my>=i.y&&my<i.y+22){ /* Icon preview is rendered after the scaled UI below. */ }
         }
         g.pose().popMatrix();

@@ -16,7 +16,7 @@ public final class ProgressRefreshPolicy {
   for(Book.Goal g:book.goals)
    nextGoals.add(g.id+"|"+g.count+"|"+g.crafted+"|"+g.targetBaseline+"|"+g.finished+"|"+
       g.freshCraft+"|"+g.materialDisplay+"|"+g.gemDisplay+"|"+g.fineGems+"|"+
-      g.compact+"|"+g.expanded+"|"+g.choices+"|"+g.checked);
+      g.compact+"|"+g.armorPieces+"|"+g.visible+"|"+g.expanded+"|"+g.choices+"|"+g.checked);
   if(stock!=null&&stock.equals(current)&&planned.equals(nextPlanned)&&forge.equals(nextForge)&&goals.equals(nextGoals))return false;
   stock=new HashMap<>(current);planned=nextPlanned;forge=nextForge;goals=nextGoals;
   return true;

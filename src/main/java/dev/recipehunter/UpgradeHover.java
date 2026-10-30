@@ -1,24 +1,23 @@
 package dev.recipehunter;
 import java.util.*;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-/** Two-second dwell, derived from actual recipe inputs and the current physical pool. */
+/** One selected next craft, after a continuous three-second dwell. Computation is revision-cached. */
 public final class UpgradeHover {
- private String key="";private long since;
- public void render(RecipeHunter app,GuiGraphicsExtractor g,String id,int mx,int my){
-  long now=System.currentTimeMillis();if(!id.equals(key)){key=id;since=now;}if(id.isEmpty()||now-since<2000)return;
-  var steps=CraftSteps.next(app.catalog,id,app.physicalStock(),CraftSteps.targets(app.progressTrees.values()));
-  List<String> lines=new ArrayList<>();lines.add("Next recipe from "+app.catalog.item(id).name);
-  if(steps.isEmpty())lines.add("No further crafting / Forge recipe.");
-  for(var step:steps.stream().limit(3).toList()){
-   lines.add(step.output()+"x "+app.catalog.item(step.id()).name+" | "+step.batches()+" batch(es) ready");
-   for(var e:step.required().entrySet()){
-    long have=step.have().getOrDefault(e.getKey(),0L);lines.add("  "+app.catalog.item(e.getKey()).name+": "+Catalog.qty(have)+" / "+e.getValue()+" (need "+Math.max(0,e.getValue()-have)+")");
-   }
+ private final HoverDwell dwell=new HoverDwell();private String cachedKey="";private long revision=-1;private List<String> lines=List.of();
+ public void render(RecipeHunter app,GuiGraphicsExtractor g,String id,int mx,int my){render(app,g,id,null,mx,my);}
+ public void render(RecipeHunter app,GuiGraphicsExtractor g,String id,Book.Goal goal,int mx,int my){
+  String key=id.isEmpty()?"":id+":"+(goal==null?"":goal.id);if(!dwell.ready(key,System.currentTimeMillis()))return;
+  if(!key.equals(cachedKey)||revision!=app.materialRevision){cachedKey=key;revision=app.materialRevision;
+   String next=CraftReadiness.next(app.catalog,id,goal,goal==null?null:app.tree(goal));
+   lines=next.isEmpty()?List.of("Next Craft: None"):describe(app.catalog,CraftReadiness.assess(app.catalog,next,goal==null?Map.of():goal.choices,app.observedStock));
   }
-  if(steps.size()>3)lines.add("+"+(steps.size()-3)+" other uses; open recipe for all inputs.");
-  lines.add("Owned materials only; Forge output counts after collection.");
-  int w=Math.min(420,g.guiWidth()-4),max=Math.max(2,(g.guiHeight()-16)/12);if(lines.size()>max){lines=new ArrayList<>(lines.subList(0,max-1));lines.add("More ingredients in the full recipe.");}
-  int h=lines.size()*12+12,x=Math.clamp(mx+10,2,Math.max(2,g.guiWidth()-w-2)),y=Math.clamp(my+12,2,Math.max(2,g.guiHeight()-h-2));
-  g.fill(x,y,x+w,y+h,0xffeadbb5);g.outline(x,y,w,h,0xff6c472a);int yy=y+6;for(String line:lines){g.text(app.mc.font,app.trim(line,w-12),x+6,yy,Theme.INK,false);yy+=12;}
+  int localWidth=390;List<String> wrapped=new ArrayList<>();for(String line:lines){String rest=line;while(app.mc.font.width(rest)>localWidth-12){String cut=app.mc.font.plainSubstrByWidth(rest,localWidth-12);wrapped.add(cut);rest=rest.substring(cut.length());}wrapped.add(rest);}
+  int height=wrapped.size()*11+12;float scale=(float)Math.min(1,Math.min((g.guiWidth()-4)/(double)localWidth,(g.guiHeight()-4)/(double)height));
+  int w=(int)(localWidth*scale),h=(int)(height*scale),x=Math.clamp(mx+10,2,Math.max(2,g.guiWidth()-w-2)),y=Math.clamp(my+12,2,Math.max(2,g.guiHeight()-h-2));
+  g.pose().pushMatrix();g.pose().translate(x,y);g.pose().scale(scale,scale);g.fill(0,0,localWidth,height,Theme.paper());g.outline(0,0,localWidth,height,Theme.edge());int yy=6;
+  for(String line:wrapped){g.text(app.mc.font,line,6,yy,line.equals("Ready to Craft")?Theme.good():Theme.ink(),false);yy+=11;}g.pose().popMatrix();
  }
+ public static List<String> describe(Catalog c,CraftReadiness.Result r){List<String> out=new ArrayList<>();out.add("Next Craft: "+c.item(r.id()).name);out.add("Requires:");r.required().forEach((id,n)->out.add("  "+c.item(id).name+" x"+Catalog.qty(n)));
+  out.add("You Have:");r.required().forEach((id,n)->{long owned=r.owned().get(id),available=r.available().get(id);out.add("  "+c.item(id).name+" x"+Catalog.qty(owned)+(available>owned?" (+"+(available-owned)+" through crafting)":""));});
+  out.add("Missing:");boolean none=true;for(var e:r.required().entrySet()){long n=e.getValue()-r.available().get(e.getKey());if(n>0){none=false;out.add("  "+c.item(e.getKey()).name+" x"+Catalog.qty(n));}}if(none)out.add("  None");out.add(r.ready()?"Ready to Craft":"Not Ready");out.add("Unobserved storage: Unknown. Unlocks still apply.");return List.copyOf(out);}
 }

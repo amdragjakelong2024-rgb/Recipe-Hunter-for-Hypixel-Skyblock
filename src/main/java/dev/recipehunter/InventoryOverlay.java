@@ -15,6 +15,7 @@ public final class InventoryOverlay {
    if(app.book.forgeVisible&&app.book.forgeHud.contains(e.x(),e.y(),w,h)){if(e.button()==0)app.open(new ForgeScreen(app));return false;}
    var goal=hit(app,e.x(),e.y(),w,h);if(goal==null)return true;var l=goal.hud;
    if(!l.contains(e.x(),e.y(),w,h))return true;
+   if(e.button()==0&&HudControls.click(app,goal,e.x(),e.y(),w,h))return false;
    if(e.button()==0&&HudPanels.pageClick(app,goal,e.x(),e.y(),w,h))return false;
    if(e.button()==1){goal.hudPage=BookViewport.page(goal.hudPage,1,HudPanels.pages(app,goal));app.persist();return false;}
    if(e.button()==0){app.select(goal.id,false);return false;}return true;

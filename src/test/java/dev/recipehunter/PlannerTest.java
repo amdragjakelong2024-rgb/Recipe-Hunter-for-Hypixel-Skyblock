@@ -213,7 +213,7 @@ public final class PlannerTest {
         ProgressTest.run(new Catalog(Files.newInputStream(Path.of(args[0]))));
         UiBehaviorTest.run();
         LiveTrackingTest.run(c);
-        ForgeProgressTest.run(c);ForgeDashboardTest.run(c);
+        ForgeProgressTest.run(c);ForgeDashboardTest.run(c);TestBuild2Test.run(c);
         DiaryTest.run(c);
         System.out.println("PASS: "+checks+" checks; "+c.items.size()+" catalogue items.");
         System.out.println("Legendary stone raw totals: "+stone.leaves);

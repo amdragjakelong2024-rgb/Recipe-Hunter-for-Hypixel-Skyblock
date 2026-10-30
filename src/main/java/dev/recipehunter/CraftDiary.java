@@ -6,6 +6,7 @@ import java.util.regex.*;
 public final class CraftDiary {
  public static final class Entry {
   public String key=UUID.randomUUID().toString(),text="",id="",source="diary";
+  public boolean readyVerified;public long observedAt,observedRemainingMs;
   public long count,readyAt,createdAt=System.currentTimeMillis(); public boolean active=true,done=false;
  }
  public static Entry parse(Catalog catalog,String text,long now){

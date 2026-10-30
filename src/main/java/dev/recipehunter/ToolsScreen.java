@@ -17,7 +17,7 @@ public final class ToolsScreen extends Screen {
  private BookButton button(String s,int x,int y,int w,Runnable action){return addRenderableWidget(new BookButton(s,view.x(x),view.y(y),view.size(w),view.size(21),view.scale(),false,action));}
  private EditBox field(String key,int x,int y,int w,String hint,String fallback){
   EditBox e=addRenderableWidget(new EditBox(font,view.x(x),view.y(y),view.size(w),Math.max(14,view.size(22)),Component.literal(hint)));
-  e.setMaxLength(1000);e.setTextColor(Theme.INK);e.setBordered(false);e.setHint(Component.literal(hint));e.setValue(fields.getOrDefault(key,fallback));e.setResponder(value->fields.put(key,value));return e;
+  e.setMaxLength(1000);e.setTextColor(Theme.ink());e.setBordered(false);e.setHint(Component.literal(hint));e.setValue(fields.getOrDefault(key,fallback));e.setResponder(value->fields.put(key,value));return e;
  }
  @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
  @Override public boolean isPauseScreen(){return false;}
@@ -27,7 +27,7 @@ public final class ToolsScreen extends Screen {
   button(diary()?"Calculator":"Diary",L+84,63,110,()->{saveDraft();app.open(new ToolsScreen(app,diary()?"Calculator":"Craft Diary"));});
   if(!diary()){calculator();return;}
   journal=addRenderableWidget(MultiLineEditBox.builder().setX(view.x(L+7)).setY(view.y(111))
-   .setTextColor(Theme.INK).setTextShadow(false).setCursorColor(Theme.INK).setShowBackground(false)
+   .setTextColor(Theme.ink()).setTextShadow(false).setCursorColor(Theme.ink()).setShowBackground(false)
    .setPlaceholder(Component.literal("Write a note...")).build(font,view.size(COL-14),view.size(238),Component.literal("Diary entry")));
   journal.setCharacterLimit(4000);journal.setValue(app.book.diaryDraft);
   journal.setValueListener(value->{app.book.diaryDraft=value;draftDirty=true;});
@@ -80,26 +80,26 @@ public final class ToolsScreen extends Screen {
  @Override public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float dt){
   g.pose().pushMatrix();g.pose().translate(view.left(),view.top());g.pose().scale(view.scale(),view.scale());
   Theme.background(g,font,720,430,"");
-  g.pose().pushMatrix();g.pose().translate(L,31);g.pose().scale(1.8f,1.8f);text(g,diary()?"CRAFT DIARY":"CALCULATOR",0,0,Theme.INK);g.pose().popMatrix();
+  g.pose().pushMatrix();g.pose().translate(L,31);g.pose().scale(1.8f,1.8f);text(g,diary()?"CRAFT DIARY":"CALCULATOR",0,0,Theme.ink());g.pose().popMatrix();
   if(diary()){
-   text(g,app.book.diaryEditingKey.isEmpty()?"NEW ENTRY":"EDIT ENTRY",L,95,Theme.INK);text(g,"MY NOTES",R,62,Theme.INK);box(g,L,107,COL,246);
-   text(g,app.trim(result,COL),L,396,Theme.MUTED);
-   if(app.book.diary.isEmpty())text(g,"Your saved notes show here",R,98,Theme.MUTED);
-   text(g,(page+1)+" / "+pages(),R+COL/2-18,398,Theme.MUTED);
+   text(g,app.book.diaryEditingKey.isEmpty()?"NEW ENTRY":"EDIT ENTRY",L,95,Theme.ink());text(g,"MY NOTES",R,62,Theme.ink());box(g,L,107,COL,246);
+   text(g,app.trim(result,COL),L,396,Theme.muted());
+   if(app.book.diary.isEmpty())text(g,"Your saved notes show here",R,98,Theme.muted());
+   text(g,(page+1)+" / "+pages(),R+COL/2-18,398,Theme.muted());
    for(int i=page*PER_PAGE;i<Math.min(app.book.diary.size(),(page+1)*PER_PAGE);i++){
     var e=app.book.diary.get(i);int y=91+(i-page*PER_PAGE)*94;
     var lines=font.split(Component.literal(e.text),COL-8);
-    for(int n=0;n<Math.min(4,lines.size());n++)g.text(font,lines.get(n),R+3,y+26+n*10,e.done?0xff5f713d:Theme.INK);
-    if(lines.size()>4)text(g,"...",R+COL-22,y+56,Theme.MUTED);
+    for(int n=0;n<Math.min(4,lines.size());n++)g.text(font,lines.get(n),R+3,y+26+n*10,e.done?Theme.good():Theme.ink());
+    if(lines.size()>4)text(g,"...",R+COL-22,y+56,Theme.muted());
     String stamp=java.time.Instant.ofEpochMilli(e.createdAt).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString();
     String info=e.done?"Done":!e.active?"Excluded":e.id.isEmpty()?stamp:e.count+"x "+app.catalog.item(e.id).name+" | "+CraftDiary.remaining(e,System.currentTimeMillis());
-    text(g,app.trim(info,COL-6),R+3,y+70,Theme.MUTED);g.fill(R,y+86,R+COL,y+87,0x337e6747);
+    text(g,app.trim(info,COL-6),R+3,y+70,Theme.muted());g.fill(R,y+86,R+COL,y+87,0x337e6747);
    }
   }else{
-   text(g,"EXPRESSION",L,96,Theme.MUTED);box(g,L,107,COL,29);g.textWithWordWrap(font,Component.literal(result),L,184,COL,Theme.INK);
-   text(g,"MINING ESTIMATE",R,62,Theme.INK);text(g,"Material",R,96,Theme.MUTED);text(g,"Mining speed",R,146,Theme.MUTED);text(g,"Mining fortune",R+152,146,Theme.MUTED);text(g,"Block strength",R,198,Theme.MUTED);text(g,"Base drops",R+152,198,Theme.MUTED);text(g,"Uptime (0..1)",R,250,Theme.MUTED);
+   text(g,"EXPRESSION",L,96,Theme.muted());box(g,L,107,COL,29);g.textWithWordWrap(font,Component.literal(result),L,184,COL,Theme.ink());
+   text(g,"MINING ESTIMATE",R,62,Theme.ink());text(g,"Material",R,96,Theme.muted());text(g,"Mining speed",R,146,Theme.muted());text(g,"Mining fortune",R+152,146,Theme.muted());text(g,"Block strength",R,198,Theme.muted());text(g,"Base drops",R+152,198,Theme.muted());text(g,"Uptime (0..1)",R,250,Theme.muted());
    box(g,R,107,COL,29);for(int y:new int[]{158,210}){box(g,R,y,140,29);box(g,R+152,y,150,29);}box(g,R,262,140,29);
-   g.textWithWordWrap(font,Component.literal("Estimate from entered assumptions. Excludes Pristine, travel and random drops."),R,348,COL,Theme.MUTED);
+   g.textWithWordWrap(font,Component.literal("Estimate from entered assumptions. Excludes Pristine, travel and random drops."),R,348,COL,Theme.muted());
   }
   g.pose().popMatrix();super.extractRenderState(g,mx,my,dt);
  }

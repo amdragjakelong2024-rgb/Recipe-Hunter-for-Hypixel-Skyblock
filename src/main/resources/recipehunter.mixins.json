@@ -3,7 +3,8 @@
   "package": "dev.recipehunter.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "ServerMessageMixin"
+    "ServerMessageMixin",
+    "ResourceReloadMixin"
   ],
   "injectors": {
     "defaultRequire": 1

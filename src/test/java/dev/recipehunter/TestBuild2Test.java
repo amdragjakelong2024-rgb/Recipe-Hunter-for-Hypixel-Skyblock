@@ -1,0 +1,39 @@
+package dev.recipehunter;
+import java.util.*;
+import java.nio.file.*;
+final class TestBuild2Test {
+ static void run(Catalog c)throws Exception{
+  for(var test:List.of(new double[]{2.87,100,2},new double[]{99.99,100,99}))PlannerTest.check(MaterialProgress.Row.percentage(test[0],(long)test[1]).equals((int)test[2]+"%"),"integer percentage truncates");
+  PlannerTest.check(MaterialProgress.Row.percentage(.1,100).equals("<1%"),"positive small progress");PlannerTest.check(MaterialProgress.Row.percentage(99.9999999999,100).equals("99%"),"near complete is not complete");PlannerTest.check(MaterialProgress.Row.percentage(100,100).equals("100%"),"precise complete");
+  var dwell=new HoverDwell();for(long t=0;t<3000;t+=100)PlannerTest.check(!dwell.ready("mithril",t),"not before three seconds");PlannerTest.check(dwell.ready("mithril",3000),"three seconds");PlannerTest.check(!dwell.ready("carrot",3100),"different item resets dwell");PlannerTest.check(!dwell.ready("carrot",7000),"leaving screen resets dwell");
+  var required=CraftReadiness.assess(c,"REFINED_MITHRIL",Map.of(),Map.of("ENCHANTED_MITHRIL",160L));PlannerTest.check(required.ready(),"direct next craft ready");
+  PlannerTest.check(CraftReadiness.assess(c,"REFINED_MITHRIL",Map.of(),Map.of("MITHRIL_ORE",25600L)).ready(),"craft-only conversion prepares enchanted inputs");
+  PlannerTest.check(!CraftReadiness.assess(c,"MITHRIL_PLATE",Map.of(),Map.of("ENCHANTED_MITHRIL",800L,"GOLDEN_PLATE",1L,"REFINED_TITANIUM",1L,"ENCHANTED_IRON_BLOCK",1L)).ready(),"unforged Mithril cannot become Refined Mithril");
+  PlannerTest.check(CraftReadiness.assess(c,"MITHRIL_PLATE",Map.of(),Map.of("REFINED_MITHRIL",5L,"GOLDEN_PLATE",1L,"REFINED_TITANIUM",1L,"ENCHANTED_IRON_BLOCK",1L)).ready(),"mixed recipe needs all four actual ingredients");
+  // Alternative recipes are selected explicitly, never inferred from first matching use.
+  var fixture=new Catalog.Item();fixture.id="TEST_2_CHOICE";fixture.name="Choice";for(String raw:List.of("MITHRIL_ORE","CARROT_ITEM")){var r=new Catalog.Route();r.type="crafting";r.inputs.add(new Catalog.Ingredient(raw,160));fixture.routes.add(r);}c.items.put(fixture.id,fixture);
+  PlannerTest.check(!CraftReadiness.assess(c,fixture.id,Map.of(fixture.id,1),Map.of("MITHRIL_ORE",160L)).ready(),"selected alternate recipe respected");
+  var book=new Book();for(String id:ArmorSets.detect(c,"FINAL_DESTINATION_HELMET"))book.goals.add(new Book.Goal(id));var set=ArmorSets.combine(c,book,"FINAL_DESTINATION_HELMET");
+  PlannerTest.check(set!=null&&set.armorPieces.size()==4&&book.goals.stream().filter(g->g.visible).count()==1,"one HUD, original goals preserved hidden");
+  var engine=new RecipeProgress(c);var root=engine.evaluate(set,Map.of(),Map.of(),Map.of());var rows=engine.displayed(root,set);Map<String,Long> totals=new HashMap<>();for(var row:rows)totals.put(row.id,row.total);
+  PlannerTest.eq(totals.get("NULL_SPHERE"),1536,"set spheres catalogue total");PlannerTest.eq(totals.get("ENCHANTED_OBSIDIAN"),384,"set obsidian catalogue total");PlannerTest.eq(totals.get("ENCHANTED_REDSTONE"),768,"set redstone catalogue total");
+  var partial=engine.evaluate(set,Map.of("ENCHANTED_OBSIDIAN",96L),Map.of(),Map.of());var obs=engine.displayed(partial,set).stream().filter(n->n.id.equals("ENCHANTED_OBSIDIAN")).findFirst().orElseThrow();PlannerTest.eq(obs.physical,96,"shared physical stock credited once");
+  var ownedPiece=engine.evaluate(set,Map.of("FINAL_DESTINATION_HELMET",1L),Map.of(),Map.of());PlannerTest.eq(ArmorSets.readyPieces(ownedPiece),1,"individual piece readiness");ProgressTest.eq(ownedPiece.fraction(),.25,"overall four-piece readiness");
+  set.count=2;PlannerTest.eq(engine.displayed(engine.evaluate(set,Map.of(),Map.of(),Map.of()),set).stream().filter(n->n.id.equals("NULL_SPHERE")).findFirst().orElseThrow().total,3072,"multiple sets scale correctly");
+  PlannerTest.check(ArmorSets.detect(c,"YOUNG_DRAGON_HELMET").size()==4,"other recognized armor set");
+  book.darkMode=true;book.forgeNotifications=false;book.craftingNotifications=false;book.notificationSound=false;book.notificationTrigger="Goal Reached";book.defaultMaterialDisplay="Enchanted Block";book.defaultGemDisplay="Perfect";book.hudScale=1.4;
+  var p=Files.createTempDirectory("rh-test2").resolve("book.json");book.write(p);var loaded=Book.read(p);ArmorSets.restore(c,loaded);PlannerTest.check(loaded.darkMode&&!loaded.forgeAlerts()&&!loaded.craftAlerts()&&!loaded.notificationSound&&loaded.notificationTrigger.equals("Goal Reached")&&loaded.hudScale==1.4,"all new settings persist");
+  PlannerTest.check(ArmorSets.isSet(loaded.find(set.id)),"armor set reload");ArmorSets.split(loaded,loaded.find(set.id));PlannerTest.eq(loaded.goals.stream().filter(g->g.visible).count(),4,"safe restore of original piece goals");
+  Files.writeString(p,"{\"goals\":[],\"progressAlerts\":false,\"uiSounds\":false}");var old=Book.read(p);PlannerTest.check(!old.forgeAlerts()&&!old.craftAlerts()&&!old.uiSounds&&!old.darkMode,"old settings migrate without re-enabling disabled alerts");Files.delete(p);Files.delete(p.getParent());
+  var alerts=new ProgressAlerts();var g=new Book.Goal("REFINED_MITHRIL");book=new Book();book.goals.add(g);var menus=new MenuTracker();long now=System.currentTimeMillis();
+  for(int i=0;i<3;i++)alerts.update(c,book,Map.of(),List.of(),menus,now+i);
+  List<String> notices=List.of();for(int i=0;i<3;i++)notices=alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(),menus,now+100+i);
+  PlannerTest.check(notices.equals(List.of("You can craft now Refined Mithril")),"exact craft message on readiness edge");PlannerTest.check(alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(),menus,now+1000).isEmpty(),"no refresh spam");
+  alerts.reset();book.notificationTrigger="Goal Reached";for(int i=0;i<3;i++)notices=alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(),menus,now+i);PlannerTest.check(notices.isEmpty(),"goal-only ignores materials ready");
+  for(int i=0;i<3;i++)notices=alerts.update(c,book,Map.of("REFINED_MITHRIL",1L),List.of(),menus,now+100+i);PlannerTest.check(notices.contains("Goal reached: Refined Mithril"),"observed goal reached");
+  var job=ForgeTracking.job(c,1,"Refined Mithril","Time Remaining: 1s",now);menus.forge.add(job);PlannerTest.check(!job.readyVerified&&ForgeCommands.info(c,menus,1,now+2000).stream().noneMatch(x->x.equals("Ready to Collect")),"timer expiry is not verified ready");
+  var ready=ForgeTracking.job(c,1,"Refined Mithril","Click to collect!",now);menus.forge.clear();menus.forge.add(ready);PlannerTest.check(ready.readyVerified&&ForgeCommands.info(c,menus,1,now).contains("Ready to Collect"),"server confirms ready");PlannerTest.check(ForgeCommands.info(c,menus,7,now).getFirst().contains("UNKNOWN"),"unobserved slot stays unknown");
+  for(int count:List.of(1,4,8)){Book many=new Book();int n=0;for(String id:List.of("REFINED_MITHRIL","MITHRIL_PLATE","ENCHANTED_DIAMOND_BLOCK","ENCHANTED_CARROT","ENCHANTED_MELON_BLOCK","REFINED_TITANIUM","ENCHANTED_IRON_BLOCK","GOLDEN_PLATE")){many.goals.add(new Book.Goal(id));if(++n==count)break;}var policy=new ProgressRefreshPolicy();Map<String,Long> stock=Map.of("MITHRIL_ORE",160L);PlannerTest.check(policy.changed(stock,many,List.of()),"initial "+count+" HUD evaluation");for(int i=0;i<20;i++)PlannerTest.check(!policy.changed(stock,many,List.of()),"reuse "+count+" HUDs");PlannerTest.check(policy.changed(Map.of("MITHRIL_ORE",161L),many,List.of()),"live change "+count+" HUDs");HudControls.cycle(many.goals.getFirst(),false);PlannerTest.check(policy.changed(Map.of("MITHRIL_ORE",161L),many,List.of()),"HUD display invalidates "+count);policy.clear();PlannerTest.check(policy.changed(stock,many,List.of()),"reconnect/profile clear "+count);}
+  System.out.println("PASS: Test Build 2 settings migration, armor sets, notifications, selected crafts, 3s dwell, percentages and 1/4/8-HUD cache scenarios (not FPS benchmarks)");
+ }
+}

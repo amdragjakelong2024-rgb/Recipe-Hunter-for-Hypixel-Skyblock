@@ -17,7 +17,7 @@ public final class CraftSteps {
    if(c.item(input).routes.stream().anyMatch(back->back.inputs.stream().anyMatch(in->in.id.equals(id))))continue;
    out.add(step(c,id,i,stock));
   }
-  out.sort(Comparator.<Step>comparingInt(v->preferred.contains(v.id)?0:1).thenComparingInt(v->v.required.size()).thenComparing(v->c.item(v.id).name));return out;
+  out.sort(Comparator.<Step>comparingInt(v->preferred.contains(v.id)?0:1).thenComparingInt(v->c.item(v.id).routes.get(v.route).type.equals("forge")&&v.required.size()==1?0:v.required.size()==1&&v.required.values().iterator().next()>=64?1:2).thenComparingInt(v->v.required.size()).thenComparing(v->c.item(v.id).name));return out;
  }
  public static Set<String> targets(Collection<RecipeProgress.Node> roots){Set<String> out=new LinkedHashSet<>();for(var n:roots)collect(n,out);return out;}
  private static void collect(RecipeProgress.Node n,Set<String> out){if(n.acquisition!=null)n=n.acquisition;if(n.total<=n.covered+n.physical+n.queued)return;out.add(n.id);for(var child:n.children)collect(child,out);}

@@ -28,7 +28,7 @@ public final class ForgeTracking {
   var e=new CraftDiary.Entry();e.key="forge:"+slot;e.source="forge";e.id=id;e.text=item.name;
   // A Forge slot is one job. Its icon stack size is not an output quantity.
   e.count=item.routes.stream().filter(r->r.type.equals("forge")).findFirst().orElseThrow().count;
-  e.readyAt=now+seconds*1000;return e;
+  e.readyAt=now+seconds*1000;e.observedAt=now;e.observedRemainingMs=seconds*1000;e.readyVerified=t.matches("(?i)(?:Ready!|Completed!)");return e;
  }
  public static void replace(List<CraftDiary.Entry> jobs,int slot,CraftDiary.Entry job){jobs.removeIf(e->e.key.equals("forge:"+slot));if(job!=null)jobs.add(job);}
  public static final class Observations {
@@ -42,8 +42,8 @@ public final class ForgeTracking {
    if(count>=2&&!signature.equals(accepted.get(slot))){replace(jobs,slot,entry);accepted.put(slot,signature);}
    else if(count>=2&&entry!=null){
     var current=jobs.stream().filter(e->e.key.equals("forge:"+slot)).findFirst().orElse(null);
-    if(current!=null&&current.active&&current.count>0){if(entry.readyAt<current.readyAt||Math.abs(entry.readyAt-current.readyAt)>3000)current.readyAt=entry.readyAt;}
-    else if(entry.readyAt>System.currentTimeMillis()+60000){replace(jobs,slot,entry);}
+    if(current!=null&&current.active&&current.count>0){current.readyAt=entry.readyAt;current.readyVerified=entry.readyVerified;current.observedAt=entry.observedAt;current.observedRemainingMs=entry.observedRemainingMs;}
+
    }
   }
  }

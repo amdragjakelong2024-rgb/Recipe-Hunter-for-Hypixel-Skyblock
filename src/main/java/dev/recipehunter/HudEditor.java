@@ -15,7 +15,7 @@ public final class HudEditor extends Screen {
     public HudEditor(RecipeHunter app){super(Component.literal("Recipe Hunter HUD editor"));this.app=app;}
     @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
  @Override protected void init(){
-        addRenderableWidget(new GlowButton("Settings",8,height-25,80,()->app.open(new HunterScreen(app,HunterScreen.Mode.SETTINGS,""))));
+        addRenderableWidget(new GlowButton("Settings",8,height-25,80,()->app.open(new SettingsScreen(app,app.mc.screen))));
         addRenderableWidget(new GlowButton("Done",width-88,height-25,80,this::onClose));
         for(Book.Goal goal:app.book.goals)if(goal.visible)app.hudPlans.put(goal.id,app.plan(goal));
     }
@@ -27,6 +27,7 @@ public final class HudEditor extends Screen {
     @Override public boolean mouseClicked(MouseButtonEvent e,boolean twice){
         if(super.mouseClicked(e,twice))return true;
         Book.Goal goal=hit(e.x(),e.y());if(goal==null)return false;
+        if(e.button()==0&&HudControls.click(app,goal,e.x(),e.y(),width,height))return true;
         if(e.button()==0&&HudPanels.pageClick(app,goal,e.x(),e.y(),width,height))return true;
         if(e.button()==1){goal.hudPage=BookViewport.page(goal.hudPage,1,HudPanels.pages(app,goal));app.persist();return true;}
         if(e.button()!=0)return false;
@@ -41,7 +42,7 @@ public final class HudEditor extends Screen {
     @Override public void onClose(){app.persist();app.closeBook();}
     @Override public boolean isPauseScreen(){return false;}
     @Override public void extractRenderState(GuiGraphicsExtractor g,int mx,int my,float dt){
-        g.fill(0,0,width,height,0x66101820);
+
         g.text(font,"Drag panel | Wheel: size | Right-click: next materials | ESC: save",8,4,0xffffffff,true);
         if(app.book.goals.stream().noneMatch(v->v.visible))g.text(font,"Save and show a recipe in /rh first.",12,35,0xffe1c991,true);
         super.extractRenderState(g,mx,my,dt);

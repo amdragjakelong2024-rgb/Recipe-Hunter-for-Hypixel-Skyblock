@@ -47,13 +47,17 @@ jobs:
           path: run/ui-smoke/
           if-no-files-found: ignore
       - name: Checksum artifacts
-        run: sha256sum build/libs/*.jar > build/libs/SHA256SUMS.txt
+        run: |
+          mkdir -p build/test-build
+          cp build/libs/recipe-hunter-0.4.3.jar build/test-build/recipe-hunter-0.4.3-TEST-2.jar
+          cd build/test-build
+          sha256sum recipe-hunter-0.4.3-TEST-2.jar > SHA256SUMS.txt
       # QA artifacts only. Never push to public Releases automatically.
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
-          name: recipe-hunter-0.4.3-mc26.1.2
+          name: recipe-hunter-0.4.3-TEST-2
           path: |
-            build/libs/
+            build/test-build/
             build/reports/catalogue-progress.txt
           if-no-files-found: error
