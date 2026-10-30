@@ -2,7 +2,7 @@
 
 A client-side recipe book and live material tracker for **Hypixel SkyBlock**.
 
-**Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.2**
+**Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.3**
 
 ## Install
 
