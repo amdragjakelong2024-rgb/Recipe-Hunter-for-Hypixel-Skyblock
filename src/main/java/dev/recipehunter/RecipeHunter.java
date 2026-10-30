@@ -140,9 +140,12 @@ public final class RecipeHunter implements ClientModInitializer {
     void tick(){
         if(catalog==null||mc.player==null)return;ensureAccount();ticks++;
         if(onHypixel()){
-            if(ticks%10==0)context=WorldContext.text(mc);
-            if(ticks%5==0){menus.tabForge(this);sackBridge.sync(this);}
-            ownership.scanPets(mc);ownership.scanChest(mc,context,catalog);menus.tick(this);estimates.tick(this);celebration.tick(this);
+            // Background Forge/bridge/scoreboard reads have no per-tick benefit.
+            // Packet Sack deltas still arrive immediately, and material stock is
+            // independently sampled every five ticks in the refresh block below.
+            if(ticks%20==0){context=WorldContext.text(mc);menus.tabForge(this);sackBridge.sync(this);}
+            if(ticks%5==0)ownership.scanPets(mc);
+            ownership.scanChest(mc,context,catalog);menus.tick(this);estimates.tick(this);celebration.tick(this);
         }
         if(nextScreen!=null){Screen s=nextScreen;nextScreen=null;mc.setScreen(s);}
         if(ticks%5==0){
