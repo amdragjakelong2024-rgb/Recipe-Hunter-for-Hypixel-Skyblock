@@ -76,3 +76,8 @@ The owner also gave a separate detailed **Settings / HUD redesign request**. The
 6. **Only after the owner personally tests 0.4.3 Test Build 2, confirms everything works, and explicitly requests the release**, may Work publish 0.4.3. This permission is NOT granted by this handoff or by asking for a test JAR.
 
 **Priority:** the FPS fixes have now passed CI and have been handed to the owner in a test JAR; preserve them. Finish the previously requested SETTINGS/HUD work, run fresh tests for those changes, deliver **0.4.3 TEST BUILD 2** as a verified candidate, then stop before any public release and await the owner's explicit go-ahead.
+
+
+## Test Build 2 implementation continuation
+
+Development continues on `update/test2-settings-043`, descending from performance branch commit `756219c2ed6cba2d070effaabee178760d82af33`. Internal version remains 0.4.3. See RELEASE_NOTES.md for current behavior and data limits. The workflow builds a test artifact only and requires the extended native UI smoke marker. Live Hypixel acceptance and FPS benchmarking remain user testing tasks. No public release is authorized.

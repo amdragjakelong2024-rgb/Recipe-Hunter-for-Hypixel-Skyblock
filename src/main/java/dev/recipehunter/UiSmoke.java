@@ -86,7 +86,7 @@ public final class UiSmoke {
       @Override public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor g,int mx,int my,float dt){g.fill(0,0,g.guiWidth(),g.guiHeight(),0xff20252c);hover.render(app,g,"ENCHANTED_MITHRIL",20,40);}
      });stage=13;ticks=0;
     }else if(stage==13&&ticks>65&&!pending){capture(app,"upgrade-hover.png");stage=14;ticks=0;
-    }else if(stage==14&&ticks>20&&!pending){
+    }else if(stage==14&&ticks>20&&!pending&&Test2UiSmoke.tick(app)){
      if(!failure.isEmpty())throw new IllegalStateException(failure);Path out=Path.of("ui-smoke");Files.createDirectories(out);Files.writeString(out.resolve("PASS.txt"),"Native Minecraft UI rendered. Search click/type/focus; Finish/Reset recipe; diary click/type/save/edit/check/delete/draft retention; raw/modern/legacy item identity and live counter checks passed. Forge preview hide/show/drag/resize and delayed next-step tooltip rendered. No Hypixel connection.\n");mc.stop();stage=15;
     }
     if(ticks>1200&&stage<15)throw new IllegalStateException("UI smoke timed out at stage "+stage);

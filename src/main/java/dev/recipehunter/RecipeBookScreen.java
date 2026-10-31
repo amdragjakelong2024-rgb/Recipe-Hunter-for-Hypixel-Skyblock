@@ -12,6 +12,7 @@ public final class RecipeBookScreen extends Screen {
  private final RecipeHunter app;private final UpgradeHover upgradeHover=new UpgradeHover();private boolean all,treeMode,emptyDetail;private String query="",selected="",category="All";
  private int page,materialPage,ticks,totalPages=1;private BookViewport viewport;private boolean refreshSearch;private CompletionFilter.Mode filter=CompletionFilter.Mode.ALL;private float scale;private int left,top;private long turnedAt;
  private static final int W=720,H=430,L=28,R=382,COL=306;
+ private RecipeProgress.Node displayedTree;private String displayedKey="";private List<RecipeProgress.Node> displayedNodes=List.of();
  private EditBox search;private final List<Entry> entries=new ArrayList<>();private final List<Text> texts=new ArrayList<>();private final List<ItemIcon> icons=new ArrayList<>();private final List<int[]> gridCells=new ArrayList<>();
  private record Text(String text,int x,int y,int width,int color){}
  private record Entry(Book.Goal goal,int x,int y,int width){}
@@ -87,7 +88,7 @@ public final class RecipeBookScreen extends Screen {
   button("Back",R+259,63,47,()->{selected="";emptyDetail=true;materialPage=0;rebuildWidgets();});
   RecipeProgress engine=new RecipeProgress(app.catalog);RecipeProgress.Node tree=app.tree(goal);
   text(ArmorSets.isSet(goal)?"Required Materials | "+ArmorSets.readyPieces(tree)+"/4 pieces ready":"Required Materials",R,94,COL,Theme.ink());
-  List<RecipeProgress.Node> materials;if(treeMode){materials=new ArrayList<>();for(var child:tree.children)treeRows(child,goal,materials);}else materials=engine.displayed(tree,goal);int pages=Math.max(1,(materials.size()+2)/3);materialPage=Math.clamp(materialPage,0,pages-1);
+  List<RecipeProgress.Node> materials=displayNodes(tree,goal);int pages=Math.max(1,(materials.size()+2)/3);materialPage=Math.clamp(materialPage,0,pages-1);
   for(int i=materialPage*3;i<Math.min(materials.size(),materialPage*3+3);i++){
    var node=materials.get(i);int y=112+(i-materialPage*3)*44;icons.add(new ItemIcon(node.id,R,y));
    control((node.children.isEmpty()?"":goal.expanded.contains(node.id)?"- ":"+ ")+app.trim(app.catalog.item(node.id).name,COL-39),R+24,y,COL-24,17,true,()->{if(!goal.expanded.remove(node.id))goal.expanded.add(node.id);treeMode=true;app.persist();flip();});
@@ -100,7 +101,6 @@ public final class RecipeBookScreen extends Screen {
   selector("Gemstone Display",new ArrayList<>(engine.gemOptions(tree)),goal.gemDisplay,R,306,value->{goal.gemDisplay=value;app.persist();rebuildWidgets();});
   if(ArmorSets.isSet(goal)){
    for(int i=0;i<4;i++){String piece=goal.armorPieces.get(i);button(app.catalog.item(piece).name,R+(i%2)*155,340+(i/2)*24,151,()->{selected=piece;treeMode=true;materialPage=0;rebuildWidgets();});}
-   button("Restore individual HUDs",R,375,COL,()->{ArmorSets.split(app.book,goal);app.persist();rebuildWidgets();});
   }else if(!item.routes.isEmpty()){
    Catalog.Route route=item.routes.get(Math.floorMod(goal.choices.getOrDefault(item.id,0),item.routes.size()));
    if(!route.slots.isEmpty())for(int i=0;i<route.slots.size()&&i<9;i++){int sx=R+i%3*19,sy=340+i/3*18;gridCells.add(new int[]{sx,sy});var slot=route.slots.get(i);if(slot!=null)icons.add(new ItemIcon(slot.id,sx,sy,slot.count));}
@@ -113,9 +113,10 @@ public final class RecipeBookScreen extends Screen {
   else {
    button(goal.finished?"Finished":"Finish",R,395,94,()->{app.finishGoal(goal);rebuildWidgets();}).active=!goal.finished;
    button("Reset recipe",R+102,395,108,()->{app.restartGoal(goal);rebuildWidgets();});
-   button("Save",R+218,395,88,()->{app.save(goal);rebuildWidgets();});
+   button(ArmorSets.isSet(goal)?"Split set":"Save",R+218,395,88,()->{if(ArmorSets.isSet(goal)){ArmorSets.split(app.book,goal);selected="";}else app.save(goal);app.persist();rebuildWidgets();});
   }
  }
+ private List<RecipeProgress.Node> displayNodes(RecipeProgress.Node tree,Book.Goal goal){String key=treeMode+":"+goal.materialDisplay+":"+goal.gemDisplay+":"+goal.expanded;if(tree!=displayedTree||!key.equals(displayedKey)){displayedTree=tree;displayedKey=key;if(treeMode){var rows=new ArrayList<RecipeProgress.Node>();for(var child:tree.children)treeRows(child,goal,rows);displayedNodes=List.copyOf(rows);}else displayedNodes=new RecipeProgress(app.catalog).displayed(tree,goal);}return displayedNodes;}
  private void treeRows(RecipeProgress.Node node,Book.Goal goal,List<RecipeProgress.Node> rows){var remaining=RecipeProgress.remaining(node);if(remaining.total==0)return;rows.add(remaining);if(goal.expanded.contains(node.id))for(var child:node.children)treeRows(child,goal,rows);}
  private void selector(String title,List<String> options,String current,int x,int y,java.util.function.Consumer<String> action){if(options.isEmpty())return;text(title,x,y,COL,Theme.muted());int w=COL/options.size();for(int i=0;i<options.size();i++){String option=options.get(i);button((option.equals(current)?"* ":"")+option,x+i*w,y+10,w-3,()->action.accept(option));}}
  private void quantity(Book.Goal goal,long n){if(n<1||n>1000000){app.say("Enter a whole quantity from 1 to 1000000.");return;}goal.count=n;app.persist();UiSounds.count(app);rebuildWidgets();}
@@ -145,7 +146,7 @@ public final class RecipeBookScreen extends Screen {
   for(var t:texts)g.text(font,app.trim(t.text,t.width),t.x,t.y,t.color,false);
   if(!selected.isEmpty()){
    var goal=app.goal(selected);var tree=app.tree(goal);g.fill(R+24,50,R+COL,56,Theme.well());g.fill(R+24,50,R+24+(int)((COL-24)*tree.fraction()),56,0xff4b9a24);
-   List<RecipeProgress.Node> nodes;if(treeMode){nodes=new ArrayList<>();for(var child:tree.children)treeRows(child,goal,nodes);}else nodes=new RecipeProgress(app.catalog).displayed(tree,goal);
+   List<RecipeProgress.Node> nodes=displayNodes(tree,goal);
    for(var view:materialViews)if(view.index<nodes.size()){
     var node=nodes.get(view.index);int y=view.y;
     g.fill(R,y,R+20,y+30,0x33795a30);
@@ -164,7 +165,7 @@ public final class RecipeBookScreen extends Screen {
   String brand="RECIPE HUNTER";float brandScale=Math.max(.65f,scale*1.4f);
   int brandY=Math.max(2,top-Math.round(11*brandScale));
   g.pose().pushMatrix();g.pose().translate((width-font.width(brand)*brandScale)/2,brandY);g.pose().scale(brandScale,brandScale);
-  double phase=(ticks+dt)/12.0;int bx=0;
+  double phase=app.book.animations?(ticks+dt)/12.0:0;int bx=0;
   for(int i=0;i<brand.length();i++){String letter=brand.substring(i,i+1);double glow=(Math.sin(phase-i*.55)+1)/2;int color=0xff000000|((int)(205+50*glow)<<16)|((int)(146+95*glow)<<8)|(int)(57+125*glow);g.text(font,letter,bx,0,color,true);bx+=font.width(letter);}
   g.pose().popMatrix();
   super.extractRenderState(g,mx,my,dt);

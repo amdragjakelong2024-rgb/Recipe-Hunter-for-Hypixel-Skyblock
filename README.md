@@ -4,6 +4,10 @@ A client-side recipe book and live material tracker for **Hypixel SkyBlock**.
 
 **Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.3**
 
+## Test Build 2
+
+See [Test Build 2 notes](RELEASE_NOTES.md). Use the top-right gear or `/rh settings` for persistent settings and Light/Dark themes. Material and gemstone controls are also available on HUDs while the cursor is open. Armor recipes offer **Track full armor set**; **Split set** restores the original individual HUDs. `/rh forge hide` and `/rh forge show` change visibility without stopping tracking. `/rh forge slot1 info` through `slot7 info` describe observed slots.
+
 ## Install
 
 Install Fabric and Fabric API for Minecraft 26.1.2. Put the release JAR in your instance's `mods` folder, replacing the previous Recipe Hunter JAR. Keep only one copy. Back up `config/recipehunter/` before upgrading.
@@ -97,6 +101,6 @@ HUD item icons now reuse a read-only inventory lookup per client tick instead of
 
 Use `/rh forge` for observed Forge slots and countdowns; drag the preview and scroll to resize the persistent HUD. `HUD: On/Off` and `Alerts: On/Off` are saved. Unknown slots are never treated as free or locked. All-job wait time is the longest remaining observed timer.
 
-Hover recipe materials for two seconds for next-step ingredients and missing quantities. Readiness notifications apply to steps in saved active recipe goals and use physical ingredients, not uncollected Forge jobs. Unlock requirements still apply.
+Hover recipe materials for three seconds for next-step ingredients and missing quantities. Readiness notifications apply to steps in saved active recipe goals and use physical ingredients, not uncollected Forge jobs. Unlock requirements still apply.
 
 Sack updates are read from server packets independently of chat visibility. If compatible SkyHanni is installed, its exact active-profile Sack balances are reused without adding duplicate counts. Otherwise itemized Sack notifications update observed balances; unseen initial contents remain unknown. `/rh sackstatus` reports the active source. No API credentials, session tokens or automatic inventory clicks are used.

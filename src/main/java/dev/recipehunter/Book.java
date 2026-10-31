@@ -42,9 +42,9 @@ public final class Book {
             if(b.celebrated==null)b.celebrated=new HashSet<>();if(b.completed==null)b.completed=new HashSet<>();if(b.diary==null)b.diary=new ArrayList<>();
             if(b.diaryDraft==null)b.diaryDraft="";if(b.diaryEditingKey==null)b.diaryEditingKey="";
             b.guiScale=Math.clamp(b.guiScale,0.65,1.6);b.hudScale=Math.clamp(b.hudScale,0.65,1.6);
-            if(!List.of("Craft Ready","Goal Reached","Both").contains(b.notificationTrigger))b.notificationTrigger="Both";
-            if(!List.of("Compact","Enchanted","Enchanted Block").contains(b.defaultMaterialDisplay))b.defaultMaterialDisplay="Compact";
-            if(!List.of("Fine","Flawless","Perfect").contains(b.defaultGemDisplay))b.defaultGemDisplay="Fine";
+            if(b.notificationTrigger==null||!List.of("Craft Ready","Goal Reached","Both").contains(b.notificationTrigger))b.notificationTrigger="Both";
+            if(b.defaultMaterialDisplay==null||!List.of("Compact","Enchanted","Enchanted Block").contains(b.defaultMaterialDisplay))b.defaultMaterialDisplay="Compact";
+            if(b.defaultGemDisplay==null||!List.of("Fine","Flawless","Perfect").contains(b.defaultGemDisplay))b.defaultGemDisplay="Fine";
             for(Goal g:b.goals){if(g.armorPieces==null)g.armorPieces=new ArrayList<>();if(g.armorPreviousVisibility==null)g.armorPreviousVisibility=new LinkedHashMap<>();g.freshCraft=true;if(g.materialDisplay==null)g.materialDisplay="Compact";if(g.gemDisplay==null)g.gemDisplay="Fine";if(g.expanded==null)g.expanded=new HashSet<>();if(g.checked==null)g.checked=new HashSet<>();b.history.add(g.id);if(g.id==null||g.count<1)throw new IOException("Invalid goal");if(g.owned==null)g.owned=new HashMap<>();if(g.choices==null)g.choices=new HashMap<>();if(g.rates==null)g.rates=new HashMap<>();}
             return b;
         }catch(JsonParseException e){throw new IOException("Invalid book; original file preserved",e);}

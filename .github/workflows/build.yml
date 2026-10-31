@@ -38,6 +38,7 @@ jobs:
         run: |
           timeout 300s xvfb-run -a /tmp/gradle-9.7.0/bin/gradle runClient -PuiSmoke --args='--width 1280 --height 800'
           test -f run/ui-smoke/PASS.txt
+          test -f run/ui-smoke/TEST2-PASS.txt
           test ! -f run/ui-smoke/FAIL.txt
       - name: Upload native UI screenshots
         if: always()

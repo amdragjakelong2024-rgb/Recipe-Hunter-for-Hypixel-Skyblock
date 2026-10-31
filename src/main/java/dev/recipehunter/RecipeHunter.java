@@ -80,6 +80,7 @@ public final class RecipeHunter implements ClientModInitializer {
     public boolean persist(){previewTrees.clear();materialRevision++;progressTrees.clear();hudProgress.clear();refreshPolicy.clear();ensureAccount();if(!writable){say("Cannot save: fix or back up the unreadable book file first.");return false;}try{book.write(bookPath);return true;}catch(IOException e){say("Save failed: "+e.getMessage());return false;}}
     public void say(String s){if(mc.player!=null)mc.player.sendSystemMessage(Component.literal("[Recipe Hunter] "+s));}
     public void open(Screen s){nextScreen=s;}
+    void applyPendingScreen(){if(nextScreen!=null){Screen s=nextScreen;nextScreen=null;mc.setScreen(s);}}
     public void openHome(){ensureAccount();if(catalog==null){say(error);return;}if(mc.screen instanceof RecipeBookScreen||mc.screen instanceof ToolsScreen||mc.screen instanceof HunterScreen)openHomeContent();else if(book.animations)open(new BookOpening(this));else openHomeContent();}
     public void closeBook(){if(book.animations)open(new BookOpening(this,true));else mc.setScreen(null);}
     public void openHomeContent(){open(new RecipeBookScreen(this,true,"",""));}
@@ -136,6 +137,7 @@ public final class RecipeHunter implements ClientModInitializer {
         if(g.crafted>=g.count){book.completed.add(id);book.finish(g);hudPlans.remove(id);say("Completed: "+catalog.item(id).name+". You can start this recipe again.");}persist();
     }
     void tick(){
+        applyPendingScreen();
         if(catalog==null||mc.player==null)return;ensureAccount();ticks++;
         if(onHypixel()){
             // Background Forge/bridge/scoreboard reads have no per-tick benefit.
@@ -145,7 +147,6 @@ public final class RecipeHunter implements ClientModInitializer {
             if(ticks%5==0)ownership.scanPets(mc);
             ownership.scanChest(mc,context,catalog);menus.tick(this);estimates.tick(this);
         }
-        if(nextScreen!=null){Screen s=nextScreen;nextScreen=null;mc.setScreen(s);}
         if(ticks%5==0){
             long cpuStart=System.nanoTime();
             long now=System.currentTimeMillis();

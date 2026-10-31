@@ -1,19 +1,21 @@
-# Recipe Hunter 0.4.3 — Forge dashboard and recipe milestones
+# Recipe Hunter 0.4.3 – TEST BUILD 2
 
-Minecraft 26.1.2 / Fabric / Java 25. Keep only one Recipe Hunter JAR installed.
+Minecraft 26.1.2 / Fabric / Java 25. Internal version remains 0.4.3. Test artifact only; no public release.
 
-- `/rh forge` previews observed Forge slots, live countdowns and the time until all observed jobs finish. Concurrent jobs use the longest remaining timer, not the sum.
-- A separate Forge HUD stays visible while playing. Drag and resize it in `/rh forge`; position, size, visibility and alert preferences are saved.
-- Notifications for materials sufficient for the first craft of a tracked recipe step, Forge jobs ready to collect, and a full Forge. Missing unlocks are not assumed; queued output is not spendable stock.
-- Hover a material row or item icon for two seconds to see the actual next recipe, its required ingredients, owned amounts and missing quantities. Mixed recipes check all inputs. Recipe relationships come from the catalogue, not guessed item-name tiers.
-- Recipe HUD clicks cover the header and displayed material rows without intercepting clicks in the unused background. Use `/rh gui` to move recipe panels.
-- Small version text in the book and Forge HUD. All interface text is English.
-- Sack messages are read from incoming server packets even if another mod hides their chat display. An optional read-only SkyHanni bridge imports only exact balances from its active profile, replacing rather than duplicating the same source.
+- Dedicated SETTINGS page, accessible through the book gear or `/rh settings`, with persistent General, Forge, Notifications and Display controls and Back navigation.
+- Persistent Light/Dark parchment theme throughout the book, goals, settings, diary, calculator, Forge, HUDs and recipe tooltips.
+- `/rh forge hide`, `/rh forge show` and `/rh forge slot1 info` through `slot7 info`. Hiding the HUD keeps tracking active. Concurrent countdowns use the longest remaining observed time. Timer expiry is distinguished from server-confirmed Ready to Collect.
+- Three-second next-craft hover shows the selected recipe's complete ingredients, known ownership, craftable equivalents and missing inputs. Uncollected Forge output never becomes physical ownership.
+- Newly craftable unfinished saved goals notify `You can craft now <ITEM_NAME>`. Craft Ready / Goal Reached / Both, notification sound and Forge alerts are independently configurable. Goal Reached requires the final item or recorded completion, rather than ingredient equivalents alone.
+- Material and gemstone display controls directly on recipe HUDs while the cursor is available. Ordinary hidden-cursor gameplay clicks remain untouched.
+- Integer progress percentages truncate incomplete progress; positive progress below 1% displays `<1%`.
+- Recognized four-piece armor sets combine into one goal/HUD, retaining individual recipe access and original saved goals. Split set restores individual HUD visibility. Shared stock is allocated once. Final Destination catalogue totals: 1,536 Null Spheres, 384 Enchanted Obsidian and 768 Enchanted Redstone.
+- Shared stock/icon caches and existing polling intervals preserved. Next-craft readiness and book display lists are cached. `/rh perf` remains available.
 
-## Data freshness
+## Data freshness and test limitations
 
-Forge is observed from its menu and the Forge Tab widget; countdowns then run locally. Unknown slots remain unknown. A full warning requires all seven slot states to be observed, including locked slots. Enable the Forge widget for remote server updates.
+Inventory observation runs every five client ticks. Forge, WorldContext and optional read-only SkyHanni polling remain once per 20 ticks; pet menus remain every five ticks. Sack changes depend on itemized server notifications or exact SkyHanni balances. An unseen initial Sack/storage balance remains unknown; old storage observations are not guaranteed live. No API key or fabricated ownership is used.
 
-Sacks use itemized server notifications and, when available, SkyHanni's exact profile balances. Enable Sack Notifications in Hypixel settings. Without an existing exact balance, Recipe Hunter can only track observed changes; it cannot recover an unseen initial total. Hidden or incomplete server data is not invented. There is no API-key requirement and no claim of zero-latency polling of Hypixel's web API.
+Automated coverage includes catalogue consistency, planner/accounting/notification regressions, armor aggregation and persistence round trips, plus a native Minecraft startup/UI smoke suite. Native UI scenarios include both themes, settings navigation and 1/4/8 HUD diagnostics. Offline diagnostics are not gameplay CPU/FPS benchmarks. Live Hypixel behavior and actual FPS require player acceptance testing before any public release.
 
-Validation includes whole-catalogue regression tests, every crafting/Forge next-step route, parallel timer calculations, readiness notification edges, bridge deduplication, profile-independent resets and native Minecraft UI smoke tests. Live Hypixel acceptance is not performed by CI.
+Install only `recipe-hunter-0.4.3-TEST-2.jar`, alongside the required Fabric API, replacing your prior Recipe Hunter JAR. Keep one copy and back up `config/recipehunter/` first.

@@ -14,6 +14,7 @@ public final class CraftReadiness {
   long batches=(n-1)/r.count+1;for(var in:r.inputs)if(!consume(in.id,Math.multiplyExact(in.count,batches),pool,path))return false;
   pool.merge(id,Math.multiplyExact(r.count,batches)-n,Long::sum);path.remove(id);return true;
  }
+ public static boolean canCraft(Catalog c,String id,Map<String,Integer> choices,Map<String,Long> stock){var item=c.item(id);if(item.routes.isEmpty())return false;var r=item.routes.get(Math.floorMod(choices.getOrDefault(id,0),item.routes.size()));if(r.inputs.isEmpty()||!Set.of("crafting","forge","armor_set").contains(r.type))return false;Map<String,Long> pool=new HashMap<>(stock);var evaluator=new CraftReadiness(c,choices);for(var in:r.inputs)if(!evaluator.consume(in.id,in.count,pool,new HashSet<>()))return false;return true;}
  public static Result assess(Catalog c,String id,Map<String,Integer> choices,Map<String,Long> stock){
   var item=c.item(id);if(item.routes.isEmpty())return new Result(id,1,Map.of(),Map.of(),Map.of(),false);
   var r=item.routes.get(Math.floorMod(choices.getOrDefault(id,0),item.routes.size()));Map<String,Long> required=new LinkedHashMap<>(),owned=new LinkedHashMap<>(),available=new LinkedHashMap<>();
