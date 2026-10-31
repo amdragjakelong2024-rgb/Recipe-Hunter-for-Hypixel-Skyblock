@@ -1,12 +1,12 @@
-# RECIPE HUNTER 0.4.3 — TEST BUILD 2 WORK HANDOFF
+# RECIPE HUNTER 0.4.4 — RELEASE HANDOFF
 
-**Owner-approved development target:** the **final candidate for 0.4.3**, distributed as **TEST BUILD 2**, not a public release. Do not bump to 0.4.4. Do not publish GitHub Releases or change the current public release until the owner installs the test JAR, verifies that all requested features work, and **explicitly authorizes publishing**.
+**Superseding owner authorization (2026-10-31):** The owner explicitly requested that the successfully tested 0.4.3 Test Build 2 source be versioned as **0.4.4** and published as a public GitHub Release. This supersedes the original 0.4.3 test-only release freeze below. Preserve the tested feature set; update the actual Gradle and Fabric metadata to 0.4.4, rebuild the exact release commit, and publish only after the fresh release workflow passes.
 
 ## Repository and precise starting point
 
 - Repository: https://github.com/amdragjakelong2024-rgb/Recipe-Hunter-for-Hypixel-Skyblock
 - **FPS fix tested source commit:** `2215832dc8e60074e4641671b23556c4d2dbabc8`; successful CI [41102450015](https://github.com/amdragjakelong2024-rgb/Recipe-Hunter-for-Hypixel-Skyblock/actions/runs/41102450015). Handoff-only commits after that may advance the branch head; always fetch current HEAD before editing.
-- **CONTINUE FROM:** branch `update/performance-043-20261030` (this handoff and the performance fixes).
+- **Release source:** branch `update/test2-settings-043`, tested commit `349bba21c1e82e1152aeb66bc813f59059728d53`. The release branch `release/0.4.4` is created from that exact commit.
 - Prior 0.4.3 Forge branch: `update/forge-dashboard-043`. It does **not** include the new performance optimizations until merged intentionally.
 - `main` / public release remain older; do **not** use `main` or public v0.4.2 as the new starting point.
 - Read `README.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, `WORK_HANDOFF.md`, the newest GitHub Actions runs and diff against `update/forge-dashboard-043` before editing.
@@ -25,13 +25,13 @@ These are **code optimizations, not verified FPS gains**. User reports that Reci
 6. `.github/workflows/build.yml`: continuous integration stays **test-artifact-only**. A concurrency group was added to cancel superseded runs for the same branch. Never re-enable automatic publishing.
 7. README and CHANGELOG document these optimization changes, limitations and `/rh perf`.
 8. **Final FPS fix on `2215832...`**: `RecipeHunter.java` now scans WorldContext/scoreboard, Forge Tab widget and optional SkyHanni Sack bridge **once every 20 ticks (roughly once per second)**, rather than every 5–10 ticks; Pet menus are scanned every 5 ticks rather than every tick. **Inventory and recipe-progress stock observation remains every five ticks (roughly 4 Hz)** and incoming Sack packets are still event-driven. Do not undo the throttling or claim that the SkyHanni/Forge polls are real-time sub-second.
-9. The public `v0.4.2` release remains unchanged. `0.4.3` is still explicitly `TEST BUILD 2`. Do not merge or publish until the owner confirms it works in game.
+9. At the time of the original handoff, public `v0.4.2` was current and `0.4.3` was TEST BUILD 2. On 2026-10-31 the owner explicitly authorized promoting that tested feature set to public `v0.4.4`.
 
 **Verified FPS fix build (30 October 2026):** GitHub Actions run [41102450015](https://github.com/amdragjakelong2024-rgb/Recipe-Hunter-for-Hypixel-Skyblock/actions/runs/41102450015) completed successfully for source commit `2215832dc8e60074e4641671b23556c4d2dbabc8`. It built an installable `0.4.3` JAR, ran automated tests and native Minecraft GUI smoke tests, and uploaded artifact `recipe-hunter-0.4.3-mc26.1.2` (artifact ID `13000750577`). The owner was given an FPS-focused test JAR named `Recipe-Hunter-0.4.3-FPS-FIX-TEST-2.jar`. The successful build is for **the FPS fixes only**, NOT confirmation that the SETTINGS/Dark Mode/Forge command redesign below has been implemented, nor an actual Hypixel FPS benchmark. Changes to this handoff after commit `2215832...` are documentation-only. If Work modifies code, it must rebuild and rerun all tests on the new exact commit.
 
-## Mandatory owner-requested 0.4.3 Test Build 2 finishing work
+## 0.4.3 Test Build 2 implementation included in the 0.4.4 release
 
-The owner also gave a separate detailed **Settings / HUD redesign request**. These requirements are **not all implemented yet**; do not present them as finished. They must be implemented/verified before describing Test Build 2 as a final candidate.
+The owner gave a detailed **Settings / HUD redesign request**. These items were implemented on `update/test2-settings-043` and covered by successful automated and native Minecraft UI checks in run [41177823055](https://github.com/amdragjakelong2024-rgb/Recipe-Hunter-for-Hypixel-Skyblock/actions/runs/41177823055). Live Hypixel behavior and real FPS gains still require player-side testing.
 
 ### Clean SETTINGS page
 - Replace the cluttered screenshot's settings view with a dedicated, large `SETTINGS` heading, clean sections and short labels. Preserve working scan/backend features, but remove unrelated chest/pet explanations, search field and old disorganized layout **from the settings screen**.
@@ -59,25 +59,24 @@ The owner also gave a separate detailed **Settings / HUD redesign request**. The
 ## Performance test / acceptance procedure
 
 - First run `gradle build plannerTest`, catalogue checks and native client UI smoke test. Inspect logs and screenshots. Correct compilation and runtime regressions.
-- Prefer an A/B in-game comparison in **the same SkyBlock location, render distance, Minecraft settings, resource packs, mods and active saved goals**: Recipe Hunter disabled vs public 0.4.2 vs pre-optimization 0.4.3 vs **0.4.3 Test 2**. Allow several seconds for warm-up; record median/1% low FPS and visible goal count if possible. This needs owner in-game testing; CI cannot prove the real FPS impact.
+- Prefer an A/B in-game comparison in **the same SkyBlock location, render distance, Minecraft settings, resource packs, mods and active saved goals**: Recipe Hunter disabled vs public 0.4.2 vs pre-optimization 0.4.3 vs **0.4.4**. Allow several seconds for warm-up; record median/1% low FPS and visible goal count if possible. This needs owner in-game testing; CI cannot prove the real FPS impact.
 - Have the user run `/rh perf` while stationary with 1, 4, and 8 goal HUDs, then moving/mining with material updates, Sacks receiving batched notifications, Forge running and Forge HUD shown/hidden. Document tracker/HUD last/peak CPU timings and whether counts update without manual Sack reopening.
 - Verify icons preserve game-supplied NBT/custom textures, Inventory stays live and refreshes on same-tick changes, reloading resource packs invalidates caches, switching profiles/reconnecting clears known stock, Forge changes and save/edit operations invalidate planner caches, and notifications do not disappear or spam.
 - Check multi-goal cost scaling, no duplicate item ownership, correct multi-tier material equivalence, no fake zero for unknown remote stock, and all menus stable at different GUI scales.
 - Work within Minecraft 26.1.2 / Fabric / Java 25.
 - No invented benchmark metrics. A successful synthetic test is not an in-game Hypixel acceptance test.
 
-## Deliverables and owner-controlled release gate
+## 0.4.4 release deliverables and status
 
-1. Keep version string and artifact metadata at **0.4.3**. Mark the installer externally as `recipe-hunter-0.4.3-TEST-2.jar` (the version itself is still `0.4.3`).
-2. Provide **one verified installable JAR**, plus an optional ZIP and a GitHub Actions artifact link. Confirm exact commit SHA, integrity, and what CI actually tested.
-3. Provide an English Test Build 2 changelog distinguishing implemented vs not implemented and known limits.
-4. Commit source changes on `update/performance-043-20261030` (or branch from its latest commit, and provide its precise branch name). Do not lose the FPS fixes.
-5. Do **NOT** create a GitHub Release, edit public release assets or move public tags. Do **NOT** merge to `main` solely to publish a test.
-6. **Only after the owner personally tests 0.4.3 Test Build 2, confirms everything works, and explicitly requests the release**, may Work publish 0.4.3. This permission is NOT granted by this handoff or by asking for a test JAR.
+1. Internal Gradle and Fabric mod version: **0.4.4**. Public JAR filename: `recipe-hunter-0.4.4+26.1.2.jar`.
+2. Build the release commit with JDK 25 / Gradle 9.7.0, run catalogue validation, `gradle clean build plannerTest`, and the native Minecraft UI smoke test. Do not publish if any required check fails.
+3. Publish the JAR and its SHA-256 checksum as assets on GitHub Release **v0.4.4**. Keep all public text and patch notes in English.
+4. Release branch: `release/0.4.4`, based on tested commit `349bba21c1e82e1152aeb66bc813f59059728d53`. Preserve the entire source history and FPS fixes; never force-push.
+5. The owner explicitly authorized this public GitHub release on 2026-10-31. This authorization applies to GitHub v0.4.4 only; do not publish to Modrinth or other platforms without separate approval.
+6. Regular development CI remains test-artifact-only. Only the dedicated release workflow on the designated release branch may publish v0.4.4.
 
-**Priority:** the FPS fixes have now passed CI and have been handed to the owner in a test JAR; preserve them. Finish the previously requested SETTINGS/HUD work, run fresh tests for those changes, deliver **0.4.3 TEST BUILD 2** as a verified candidate, then stop before any public release and await the owner's explicit go-ahead.
-
+**Priority:** preserve the tested Test Build 2 feature set, make the actual project and Fabric metadata consistently report 0.4.4, rebuild and retest the exact release commit, then publish the JAR and checksum on GitHub.
 
 ## Test Build 2 implementation continuation
 
-Development continues on `update/test2-settings-043`, descending from performance branch commit `756219c2ed6cba2d070effaabee178760d82af33`. Internal version remains 0.4.3. See RELEASE_NOTES.md for current behavior and data limits. The workflow builds a test artifact only and requires the extended native UI smoke marker. Live Hypixel acceptance and FPS benchmarking remain user testing tasks. No public release is authorized.
+Release candidate `0.4.4` descends from tested commit `349bba21c1e82e1152aeb66bc813f59059728d53` on `update/test2-settings-043`. The release branch updates only version metadata and documentation, then rebuilds the exact source. The release workflow requires catalogue validation, regression tests and the extended native UI smoke markers before creating GitHub Release `v0.4.4`. Live Hypixel acceptance and FPS benchmarking remain user testing tasks.

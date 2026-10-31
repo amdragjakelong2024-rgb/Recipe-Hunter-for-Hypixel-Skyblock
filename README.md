@@ -2,11 +2,11 @@
 
 A client-side recipe book and live material tracker for **Hypixel SkyBlock**.
 
-**Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.3**
+**Minecraft 26.1.2 · Fabric · Java 25 · Version 0.4.4**
 
-## Test Build 2
+## What's New in 0.4.4
 
-See [Test Build 2 notes](RELEASE_NOTES.md). Use the top-right gear or `/rh settings` for persistent settings and Light/Dark themes. Material and gemstone controls are also available on HUDs while the cursor is open. Armor recipes offer **Track full armor set**; **Split set** restores the original individual HUDs. `/rh forge hide` and `/rh forge show` change visibility without stopping tracking. `/rh forge slot1 info` through `slot7 info` describe observed slots.
+See [0.4.4 release notes](RELEASE_NOTES.md). Use the top-right gear or `/rh settings` for persistent settings and Light/Dark themes. Material and gemstone controls are also available on HUDs while the cursor is open. Armor recipes offer **Track full armor set**; **Split set** restores the original individual HUDs. `/rh forge hide` and `/rh forge show` change visibility without stopping tracking. `/rh forge slot1 info` through `slot7 info` describe observed slots.
 
 ## Install
 
@@ -81,7 +81,7 @@ gradle build plannerTest
 
 CI checks the catalogue, recipe calculations, inventory/Sack event sequences, compaction, repeat goals, diary persistence, and native Minecraft screen input. Synthetic events and offline client tests do not constitute a Hypixel server session. `/rh sackstatus` and `/rh status` help identify server-format or synchronisation problems.
 
-Code: MIT (`LICENSE`). Catalogue: NEU (`NEU-DATA-LICENSE.txt`). Existing source history is retained. Routine CI creates test artifacts and does not publish releases automatically.
+Code: MIT (`LICENSE`). Catalogue: NEU (`NEU-DATA-LICENSE.txt`). Existing source history is retained. Routine development CI creates test artifacts only. Public releases are created by the dedicated, owner-authorized release workflow.
 
 ### Restarting a recipe
 Use **Finish** to mark the saved goal done, then **Reset recipe** to start another craft with the same quantity and display settings. The initial owned output is excluded; newly collected or compacted output counts. Existing ingredient stock is kept. The search field uses larger text and the book has an animated RECIPE HUNTER title.
@@ -91,13 +91,13 @@ Observed running/ready Forge jobs now cover their recipe inputs in the acquisiti
 
 Open The Forge to synchronise its slots. A visible Forge tab-list widget can also update exact slot observations without reopening the menu. Unreadable/absent slots preserve their last observation; only an explicit empty/locked slot clears a job. Ready jobs remain pending until collection is observed. Closed menus and absent tab widgets cannot provide live server evidence.
 
-## Performance diagnostics (0.4.3)
+## Performance diagnostics
 
 Use `/rh perf` for CPU-only timings from the material tracker and HUD rendering submissions. This is not an FPS benchmark and does not measure GPU work or other mods. Compare FPS in the same SkyBlock location with the same graphics settings and a single Recipe Hunter JAR enabled/disabled.
 
 HUD item icons now reuse a read-only inventory lookup per client tick instead of scanning the inventory for every icon on every rendered frame. The inventory is still checked every five client ticks; expensive recipe/planner graph recalculations are skipped while stock, Forge reservations and saved goal settings remain unchanged. Forge readiness alerts continue on a periodic heartbeat.
 
-## 0.4.3 Forge dashboard
+## Forge dashboard (introduced in 0.4.3, included in 0.4.4)
 
 Use `/rh forge` for observed Forge slots and countdowns; drag the preview and scroll to resize the persistent HUD. `HUD: On/Off` and `Alerts: On/Off` are saved. Unknown slots are never treated as free or locked. All-job wait time is the longest remaining observed timer.
 

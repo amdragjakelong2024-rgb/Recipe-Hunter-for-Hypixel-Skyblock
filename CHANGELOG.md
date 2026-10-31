@@ -1,6 +1,8 @@
-# Recipe Hunter 0.4.3 – TEST BUILD 2
+# Recipe Hunter 0.4.4
 
-Minecraft 26.1.2 / Fabric / Java 25. Internal version remains 0.4.3. Test artifact only; no public release.
+Minecraft 26.1.2 / Fabric / Java 25. Public release.
+
+Version 0.4.4 is the public release of the feature set previously distributed as 0.4.3 Test Build 2. The build and Fabric metadata are now consistently versioned 0.4.4; the tested feature set is otherwise unchanged.
 
 - Dedicated SETTINGS page, accessible through the book gear or `/rh settings`, with persistent General, Forge, Notifications and Display controls and Back navigation.
 - Persistent Light/Dark parchment theme throughout the book, goals, settings, diary, calculator, Forge, HUDs and recipe tooltips.
@@ -12,23 +14,28 @@ Minecraft 26.1.2 / Fabric / Java 25. Internal version remains 0.4.3. Test artifa
 - Recognized four-piece armor sets combine into one goal/HUD, retaining individual recipe access and original saved goals. Split set restores individual HUD visibility. Shared stock is allocated once. Final Destination catalogue totals: 1,536 Null Spheres, 384 Enchanted Obsidian and 768 Enchanted Redstone.
 - Shared stock/icon caches and existing polling intervals preserved. Next-craft readiness and book display lists are cached. `/rh perf` remains available.
 
-
 # Changelog
+
+## 0.4.4 — Public release
+
+- Promoted the successfully tested 0.4.3 Test Build 2 feature set to a public release.
+- Updated Gradle and Fabric mod metadata to report version 0.4.4.
+- Rebuilt and reran the regression and native Minecraft UI smoke suites for the release commit.
 
 ## 0.4.3 — Forge dashboard and crafting milestones (development)
 
 - Added `/rh forge` to preview seven observed Forge slots, local countdowns, and parallel-job wait time.
 - Added an independently movable, resizable and persistent Forge HUD with visibility and alert toggles.
-- Added 2-second hover previews for the next catalogue-defined crafting/Forge step, with missing ingredients.
+- Added three-second hover previews for the next catalogue-defined crafting/Forge step, with missing ingredients.
 - Added debounced material-ready and Forge-ready notifications; only unfinished active saved goals trigger material milestones.
 - Observes itemized Sack updates from incoming server packets, including messages hidden by another chat mod.
 - Added an optional read-only SkyHanni active-profile Sack balance bridge; exact balances replace, rather than duplicate, server deltas.
 - Keeps unknown Forge slots unknown; never treats queued Forge output as inventory.
 - Shows the installed mod version in small type; interface and alerts are in English.
 - Extended offline regression, full-catalogue and native Minecraft GUI smoke tests.
-- **Limitations:** Live Hypixel formats and optional SkyHanni compatibility still need an in-game test. A successful synthetic test does not guarantee a live server observation.
+- **Limitations:** Live Hypixel formats and optional SkyHanni compatibility still need in-game testing. A successful synthetic test does not guarantee a live server observation.
 
-## 0.4.3 – Performance maintenance (development test)
+## 0.4.3 – Performance maintenance
 
 - Avoided per-frame inventory rescans and repeated item-stack copies for every rendered HUD icon.
 - Shared one inventory observation across all saved goals in each material update.
@@ -40,7 +47,7 @@ Minecraft 26.1.2 / Fabric / Java 25. Internal version remains 0.4.3. Test artifa
 
 ## 0.4.1
 
-See [release notes](RELEASE_NOTES.md) for the consolidated release. Superseded 0.4.1 patch descriptions have been replaced by this single entry.
+See [release notes](RELEASE_NOTES.md) for the original 0.4.1 release history.
 
 - Centered recipe book, accurate search/input bounds and direct navigation.
 - Per-goal HUD controls, seven material rows and manual page selection.
