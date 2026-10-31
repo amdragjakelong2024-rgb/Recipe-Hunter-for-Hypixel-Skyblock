@@ -38,7 +38,7 @@ public final class RecipeBookScreen extends Screen {
   control("Hide completed",L+(all?92:155),66,all?112:151,18,false,()->{filter=filter==CompletionFilter.Mode.HIDE_COMPLETED?CompletionFilter.Mode.ALL:CompletionFilter.Mode.HIDE_COMPLETED;page=0;rebuildWidgets();}).selected(filter==CompletionFilter.Mode.HIDE_COMPLETED);
   if(all)control("Owned only",L+208,66,98,18,false,()->{filter=filter==CompletionFilter.Mode.OWNED_ONLY?CompletionFilter.Mode.ALL:CompletionFilter.Mode.OWNED_ONLY;page=0;rebuildWidgets();}).selected(filter==CompletionFilter.Mode.OWNED_ONLY);
   search=addRenderableWidget(new SearchBox(font,viewport.x(L+8),viewport.y(93),viewport.size(COL-53),Math.max(14,viewport.size(20)),Component.literal("Search recipe or item"),viewport.scale()*1.2f));
-  search.setMaxLength(100);search.setValue(query);search.setTextColor(Theme.ink());search.setBordered(false);search.setHint(Component.literal("Search recipes..."));
+  search.setMaxLength(100);search.setValue(query);search.setTextColor(Theme.ink());search.setBordered(false);search.setHint(Component.literal("Search recipes...").withStyle(style->style.withColor(Theme.muted()&0xffffff)));
   search.setResponder(value->{query=value;page=0;refreshSearch=true;});
   control("Go",L+COL-38,90,38,22,false,()->{refreshSearch=false;rebuildWidgets();setFocused(search);});
   if(all){List<String> categories=List.of("All","Crafting","Forge","Pets","Other");int x=L;for(String c:categories){control(c,x,117,60,18,false,()->{category=c;page=0;rebuildWidgets();}).selected(category.equals(c));x+=62;}}

@@ -17,7 +17,7 @@ public final class ToolsScreen extends Screen {
  private BookButton button(String s,int x,int y,int w,Runnable action){return addRenderableWidget(new BookButton(s,view.x(x),view.y(y),view.size(w),view.size(21),view.scale(),false,action));}
  private EditBox field(String key,int x,int y,int w,String hint,String fallback){
   EditBox e=addRenderableWidget(new EditBox(font,view.x(x),view.y(y),view.size(w),Math.max(14,view.size(22)),Component.literal(hint)));
-  e.setMaxLength(1000);e.setTextColor(Theme.ink());e.setBordered(false);e.setHint(Component.literal(hint));e.setValue(fields.getOrDefault(key,fallback));e.setResponder(value->fields.put(key,value));return e;
+  e.setMaxLength(1000);e.setTextColor(Theme.ink());e.setBordered(false);e.setHint(Component.literal(hint).withStyle(style->style.withColor(Theme.muted()&0xffffff)));e.setValue(fields.getOrDefault(key,fallback));e.setResponder(value->fields.put(key,value));return e;
  }
  @Override public void extractBackground(GuiGraphicsExtractor g,int mx,int my,float dt){}
  @Override public boolean isPauseScreen(){return false;}
@@ -28,7 +28,7 @@ public final class ToolsScreen extends Screen {
   if(!diary()){calculator();return;}
   journal=addRenderableWidget(MultiLineEditBox.builder().setX(view.x(L+7)).setY(view.y(111))
    .setTextColor(Theme.ink()).setTextShadow(false).setCursorColor(Theme.ink()).setShowBackground(false)
-   .setPlaceholder(Component.literal("Write a note...")).build(font,view.size(COL-14),view.size(238),Component.literal("Diary entry")));
+   .setPlaceholder(Component.literal("Write a note...").withStyle(style->style.withColor(Theme.muted()&0xffffff))).build(font,view.size(COL-14),view.size(238),Component.literal("Diary entry")));
   journal.setCharacterLimit(4000);journal.setValue(app.book.diaryDraft);
   journal.setValueListener(value->{app.book.diaryDraft=value;draftDirty=true;});
   button(app.book.diaryEditingKey.isEmpty()?"Save entry":"Save changes",L,361,132,this::saveEntry);
