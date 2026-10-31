@@ -9,9 +9,10 @@ public final class ProgressAlerts {
  public List<String> update(Catalog c,Book book,Map<String,Long> stock,Collection<RecipeProgress.Node> trees,MenuTracker menus,long now){
   String signature=book.goals.stream().map(g->g.id+g.choices+g.count+g.crafted+g.finished+g.visible).toList().toString();if(!stock.equals(previousStock)||!signature.equals(settings)){readiness.clear();previousStock=new HashMap<>(stock);settings=signature;}
   List<String> out=new ArrayList<>();Set<String> live=new HashSet<>();
+  Set<String> combinedPieces=new HashSet<>();for(var set:book.goals)if(ArmorSets.isSet(set)&&set.visible&&!set.finished)combinedPieces.addAll(set.armorPieces);
   for(var goal:book.goals){
    String key="craft:"+goal.id;live.add(key);boolean ready=false;
-   if(goal.visible&&!goal.finished){ready=readiness.computeIfAbsent(goal.id,id->CraftReadiness.canCraft(c,id,goal.choices,stock));}
+   if(!goal.finished&&!combinedPieces.contains(goal.id)){ready=readiness.computeIfAbsent(goal.id,id->CraftReadiness.canCraft(c,id,goal.choices,stock));}
    if(edge(key,ready,now)&&book.craftAlerts()&&book.triggerCraft())out.add("You can craft now "+c.item(goal.id).name);
    key="goal:"+goal.id;live.add(key);long owned=Math.max(0,stock.getOrDefault(goal.id,0L)-(goal.freshCraft?Math.max(0,goal.targetBaseline):0));
    boolean reached=goal.finished||goal.crafted>=goal.count||owned>=goal.count;

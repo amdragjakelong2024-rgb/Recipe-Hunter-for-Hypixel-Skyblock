@@ -29,6 +29,7 @@ final class TestBuild2Test {
   for(int i=0;i<3;i++)alerts.update(c,book,Map.of(),List.of(),menus,now+i);
   List<String> notices=List.of();for(int i=0;i<3;i++)notices=alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(),menus,now+100+i);
   PlannerTest.check(notices.equals(List.of("You can craft now Refined Mithril")),"exact craft message on readiness edge");PlannerTest.check(alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(),menus,now+1000).isEmpty(),"no refresh spam");
+  alerts.reset();g.visible=false;for(int i=0;i<3;i++)notices=alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(),menus,now+2000+i);PlannerTest.check(notices.equals(List.of("You can craft now Refined Mithril")),"hiding a goal HUD does not disable crafting notifications");g.visible=true;
   alerts.reset();book.notificationTrigger="Goal Reached";for(int i=0;i<3;i++)notices=alerts.update(c,book,Map.of("ENCHANTED_MITHRIL",160L),List.of(),menus,now+i);PlannerTest.check(notices.isEmpty(),"goal-only ignores materials ready");
   for(int i=0;i<3;i++)notices=alerts.update(c,book,Map.of("REFINED_MITHRIL",1L),List.of(),menus,now+100+i);PlannerTest.check(notices.contains("Goal reached: Refined Mithril"),"observed goal reached");
   var job=ForgeTracking.job(c,1,"Refined Mithril","Time Remaining: 1s",now);menus.forge.add(job);PlannerTest.check(!job.readyVerified&&ForgeCommands.info(c,menus,1,now+2000).stream().noneMatch(x->x.equals("Ready to Collect")),"timer expiry is not verified ready");
